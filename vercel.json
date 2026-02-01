@@ -1,0 +1,28 @@
+{
+  "version": 2,
+  "name": "DashBoard",
+  "builds": [
+    {
+      "src": "flask_app.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "flask_app.py"
+    },
+    {
+      "src": "/static/(.*)",
+      "dest": "/static/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "flask_app.py"
+    }
+  ],
+  "env": {
+    "PYTHON_VERSION": "3.10"
+  },
+  "installCommand": "pip install -r requirements.txt"
+}
