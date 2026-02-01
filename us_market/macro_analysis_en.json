@@ -1,0 +1,61 @@
+{
+  "timestamp": "2026-02-02T00:21:28.137817",
+  "macro_indicators": {
+    "VIX": {
+      "value": 17.44,
+      "change_1d": 3.32,
+      "pct_from_high": -71.0
+    },
+    "DXY": {
+      "value": 97.15,
+      "change_1d": 0.9,
+      "pct_from_high": -11.6
+    },
+    "2Y_Yield": {
+      "value": 3.57,
+      "change_1d": -0.22,
+      "pct_from_high": -17.0
+    },
+    "10Y_Yield": {
+      "value": 4.24,
+      "change_1d": 0.33,
+      "pct_from_high": -9.0
+    },
+    "GOLD": {
+      "value": 5067.5,
+      "change_1d": -4.72,
+      "pct_from_high": -9.3
+    },
+    "OIL": {
+      "value": 65.55,
+      "change_1d": 0.2,
+      "pct_from_high": -16.4
+    },
+    "BTC": {
+      "value": 77171.73,
+      "change_1d": -1.84,
+      "pct_from_high": -38.8
+    },
+    "SPY": {
+      "value": 691.97,
+      "change_1d": -0.3,
+      "pct_from_high": -0.8
+    },
+    "QQQ": {
+      "value": 621.87,
+      "change_1d": -1.2,
+      "pct_from_high": -2.3
+    },
+    "YieldSpread": {
+      "value": 0.67,
+      "change_1d": 0,
+      "pct_from_high": 0
+    },
+    "FearGreed": {
+      "value": 65,
+      "change_1d": 0,
+      "pct_from_high": 0
+    }
+  },
+  "ai_analysis": "Failed to generate"
+}
