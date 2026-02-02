@@ -1,0 +1,111 @@
+name: Update Market Data
+
+on:
+  schedule:
+    # 매일 평일 한국 시간 오전 9시 (UTC 00:00)
+    # Cron: 분 시 일 월 요일 (0=일, 1=월, ..., 5=금, 6=토)
+    - cron: '0 0 * * 1-5'
+
+  # 수동으로도 실행 가능
+  workflow_dispatch:
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360  # 6시간 타임아웃
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas numpy yfinance tqdm requests python-dotenv
+
+      - name: Create us_market directory
+        run: |
+          mkdir -p us_market/data
+          ls -la us_market/
+
+      - name: Update market data (without AI)
+        env:
+          # API Keys for AI features (optional)
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          DATA_DIR: us_market
+        run: |
+          cd us_market
+          echo "🚀 Starting market data update..."
+          python update_all.py --quick
+          echo "✅ Market data update completed"
+
+      - name: Check for changes
+        id: git-check
+        run: |
+          git add us_market/*.csv us_market/*.json us_market/data/
+          git diff --staged --quiet
+          if [ $? -eq 0 ]; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "📊 No changes detected"
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "📊 Changes detected"
+            git diff --staged --stat
+          fi
+
+      - name: Commit and push changes
+        if: steps.git-check.outputs.has_changes == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+          # Get current date and time
+          DATE=$(date +'%Y-%m-%d')
+          TIME=$(date +'%H:%M:%S')
+
+          # Commit changes
+          git commit -m "📊 Auto-update market data - ${DATE} ${TIME}
+
+          🔄 Updated by GitHub Actions
+          📅 Date: ${DATE} ${TIME}
+          🤖 Bot: github-actions[bot]"
+
+          # Push changes
+          git push
+
+          echo "✅ Changes committed and pushed successfully"
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## 📊 Market Data Update Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Changes**: ${{ steps.git-check.outputs.has_changes }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Timestamp**: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.git-check.outputs.has_changes }}" = "true" ]; then
+            echo "✅ **Market data updated successfully**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "ℹ️ **No new data to commit**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload updated files as artifacts
+        if: steps.git-check.outputs.has_changes == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: market-data-${{ github.run_number }}
+          path: |
+            us_market/*.csv
+            us_market/*.json
+          retention-days: 30
+          compression-level: 6
