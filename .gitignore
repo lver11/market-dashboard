@@ -47,9 +47,14 @@ instance/
 Thumbs.db
 
 # Data files
-us_market/data/
 us_market/*.csv
 us_market/history/
+
+# Include data/ folder for deployment
+!us_market/data/*.csv
+
+# Exclude large price data file
+us_market/data/us_daily_prices.csv
 
 # Include these JSON files for deployment
 !us_market/*.json

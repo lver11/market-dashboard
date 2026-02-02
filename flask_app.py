@@ -267,7 +267,9 @@ def get_us_smart_money():
                 }
             })
         else:
-            csv_path = 'us_market/smart_money_picks_v2.csv'
+            csv_path = 'us_market/data/smart_money_picks_v2.csv'
+            if not os.path.exists(csv_path):
+                csv_path = 'us_market/smart_money_picks_v2.csv'
             if not os.path.exists(csv_path):
                 return jsonify({'error': 'Smart money picks not found. Run screener first.'}), 404
 
@@ -330,7 +332,9 @@ def get_us_smart_money():
 def get_us_etf_flows():
     try:
         import json
-        csv_path = 'us_market/us_etf_flows.csv'
+        csv_path = 'us_market/data/us_etf_flows.csv'
+        if not os.path.exists(csv_path):
+            csv_path = 'us_market/us_etf_flows.csv'
         if not os.path.exists(csv_path):
             return jsonify({'error': 'ETF flows not found. Run analyze_etf_flows.py first.'}), 404
 
