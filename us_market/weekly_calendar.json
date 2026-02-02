@@ -1,0 +1,18 @@
+{
+  "updated": "2026-02-01T23:41:46.481919",
+  "events": [
+    {
+      "date": "2026-02-01",
+      "event": "Construction Spending MM",
+      "impact": "Medium",
+      "description": "Actual: - | Est: -"
+    },
+    {
+      "date": "2025-12-10",
+      "event": "FOMC Interest Rate Decision",
+      "impact": "High",
+      "description": "Fed rate decision."
+    }
+  ],
+  "week_start": "2026-02-01"
+}

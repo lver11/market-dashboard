@@ -50,11 +50,12 @@ Thumbs.db
 us_market/data/
 us_market/*.csv
 us_market/history/
-us_market/*.json
-!us_market/smart_money_current.json
-!us_market/ai_summaries.json
-!us_market/macro_analysis.json
-!us_market/macro_analysis_en.json
+
+# Include these JSON files for deployment
+!us_market/*.json
+
+# Exclude large/generated JSON files only
+us_market/data/*.json
 
 # Logs
 *.log

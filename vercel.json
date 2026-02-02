@@ -3,22 +3,14 @@
   "name": "DashBoard",
   "builds": [
     {
-      "src": "flask_app.py",
+      "src": "api/index.py",
       "use": "@vercel/python"
     }
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "flask_app.py"
-    },
-    {
-      "src": "/static/(.*)",
-      "dest": "/static/$1"
-    },
-    {
       "src": "/(.*)",
-      "dest": "flask_app.py"
+      "dest": "api/index.py"
     }
   ],
   "env": {
