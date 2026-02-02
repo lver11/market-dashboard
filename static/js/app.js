@@ -1564,6 +1564,74 @@ if (document.readyState === 'loading') {
 window.addEventListener('beforeunload', cleanup);
 
 // ==========================================
+// CREATE MARKET REPORT
+// ==========================================
+
+/**
+ * Create market data report by triggering data update
+ */
+async function createMarketReport() {
+    try {
+        // Show loading message
+        const message = I18N[APP_STATE.language]?.updatingData || 'Updating market data...';
+        showNotification(message, 'info');
+
+        // Call API to update data
+        const response = await fetch('/api/us/update-data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showNotification(
+                '✅ ' + (I18N[APP_STATE.language]?.dataUpdateStarted ||
+                    'Data update started! This may take 30-40 minutes. Please check back later.'),
+                'success'
+            );
+        } else {
+            showNotification(
+                '❌ ' + (I18N[APP_STATE.language]?.dataUpdateFailed ||
+                    'Failed to start data update: ') + (result.error || 'Unknown error'),
+                'error'
+            );
+        }
+    } catch (error) {
+        console.error('Error creating market report:', error);
+        showNotification(
+            '❌ ' + (I18N[APP_STATE.language]?.requestFailed ||
+                'Failed to create report. Please try again.'),
+            'error'
+        );
+    }
+}
+
+/**
+ * Show notification to user
+ */
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-sm font-medium ${
+        type === 'success' ? 'bg-green-600 text-white' :
+        type === 'error' ? 'bg-red-600 text-white' :
+        'bg-blue-600 text-white'
+    }`;
+    notification.textContent = message;
+
+    // Add to DOM
+    document.body.appendChild(notification);
+
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        notification.remove();
+    }, 5000);
+}
+
+// ==========================================
 // EXPORT FOR TESTING
 // ==========================================
 
@@ -1578,6 +1646,7 @@ if (typeof module !== 'undefined' && module.exports) {
         toggleIndicator,
         reloadMacroAnalysis,
         updateRealtimePrices,
-        loadHistoricalView
+        loadHistoricalView,
+        createMarketReport
     };
 }

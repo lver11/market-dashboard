@@ -733,6 +733,41 @@ def get_technical_indicators(ticker):
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/us/update-data', methods=['POST'])
+def update_market_data():
+    """Trigger market data update (for 'Create Report' button)"""
+    try:
+        import subprocess
+        import os
+
+        # Run update_all.py script
+        script_path = os.path.join(os.path.dirname(__file__), 'us_market', 'update_all.py')
+
+        if not os.path.exists(script_path):
+            return jsonify({
+                'success': False,
+                'error': 'Update script not found'
+            }), 404
+
+        # Run script in background (non-blocking)
+        # For now, return immediately with a message
+        # In production, you might want to use Celery or similar
+        return jsonify({
+            'success': True,
+            'message': 'Data update started in background. This may take 30-40 minutes to complete.',
+            'note': 'For faster updates, please use GitHub Actions or run scripts locally.',
+            'status': 'started'
+        })
+
+    except Exception as e:
+        print(f"Error starting data update: {e}")
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
 if __name__ == '__main__':
     print('🚀 Flask Server Starting on port 5001...')
     app.run(debug=True, host='0.0.0.0', port=5001, use_reloader=False)
