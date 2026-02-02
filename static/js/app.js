@@ -1015,7 +1015,7 @@ async function loadUSAISummary(ticker) {
         container.innerHTML = `<p class="text-gray-500">${I18N[APP_STATE.language]['msg.loading']}</p>`;
 
         const data = await fetchWithErrorHandling(
-            `/api/us/stock-analysis/${ticker}?lang=${APP_STATE.language}&model=${APP_STATE.model}`,
+            `/api/us/ai-summary/${ticker}?lang=${APP_STATE.language}&model=${APP_STATE.model}`,
             'Stock AI Analysis'
         );
 

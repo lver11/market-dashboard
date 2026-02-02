@@ -564,6 +564,61 @@ def get_us_options_flow():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/us/indices')
+def get_us_indices():
+    """Get major US market indices data"""
+    try:
+        indices_map = [
+            ('^GSPC', 'S&P 500'),
+            ('^IXIC', 'NASDAQ'),
+            ('^DJI', 'Dow Jones'),
+            ('^RUT', 'Russell 2000')
+        ]
+
+        indices_data = []
+
+        for symbol, name in indices_map:
+            try:
+                stock = yf.Ticker(symbol)
+                hist = stock.history(period='5d')
+
+                if not hist.empty and len(hist) >= 2:
+                    current_price = float(hist['Close'].iloc[-1])
+                    prev_price = float(hist['Close'].iloc[-2])
+                    change = current_price - prev_price
+                    change_pct = (change / prev_price) * 100 if prev_price != 0 else 0
+
+                    indices_data.append({
+                        'name': name,
+                        'symbol': symbol,
+                        'price': round(current_price, 2),
+                        'change': round(change_pct, 2)
+                    })
+                else:
+                    # Fallback values if no data available
+                    indices_data.append({
+                        'name': name,
+                        'symbol': symbol,
+                        'price': 0,
+                        'change': 0
+                    })
+            except Exception as e:
+                print(f"Error fetching data for {symbol}: {e}")
+                # Fallback values if error occurs
+                indices_data.append({
+                    'name': name,
+                    'symbol': symbol,
+                    'price': 0,
+                    'change': 0
+                })
+
+        return jsonify({'indices': indices_data})
+
+    except Exception as e:
+        print(f"Error getting US indices data: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
 # =============================================================================
 # NEW ENDPOINTS ADDED
 # =============================================================================
