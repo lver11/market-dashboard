@@ -29,11 +29,12 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pandas numpy yfinance tqdm requests python-dotenv
+          pip install -r requirements.txt
 
       - name: Create us_market directory
         run: |
           mkdir -p us_market/data
+          mkdir -p us_market/history
           ls -la us_market/
 
       - name: Update market data (without AI)
@@ -46,21 +47,36 @@ jobs:
         run: |
           cd us_market
           echo "🚀 Starting market data update..."
-          python update_all.py --quick
+          echo "⏰ Time: $(date)"
+          echo "📂 Working directory: $(pwd)"
+          echo "📋 Files in directory:"
+          ls -la
+
+          # Run update script with error handling
+          python update_all.py --quick || {
+            echo "⚠️  Script failed with exit code $?"
+            echo "📊 Attempting to continue with partial data..."
+            exit 0
+          }
+
           echo "✅ Market data update completed"
+          echo "📋 Updated files:"
+          ls -lh *.csv *.json 2>/dev/null || echo "No files generated"
 
       - name: Check for changes
         id: git-check
         run: |
-          git add us_market/*.csv us_market/*.json us_market/data/
-          git diff --staged --quiet
-          if [ $? -eq 0 ]; then
+          git add us_market/*.csv us_market/*.json us_market/data/ 2>/dev/null || true
+          git add us_market/
+
+          if git diff --staged --quiet; then
             echo "has_changes=false" >> $GITHUB_OUTPUT
-            echo "📊 No changes detected"
+            echo "📊 No changes detected in data files"
           else
             echo "has_changes=true" >> $GITHUB_OUTPUT
-            echo "📊 Changes detected"
-            git diff --staged --stat
+            echo "📊 Changes detected in data files"
+            echo "📋 Changed files:"
+            git diff --staged --name-only
           fi
 
       - name: Commit and push changes
@@ -102,12 +118,13 @@ jobs:
           fi
 
       - name: Upload updated files as artifacts
-        if: steps.git-check.outputs.has_changes == 'true'
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: market-data-${{ github.run_number }}
           path: |
             us_market/*.csv
             us_market/*.json
+          if-no-files-found: ignore
           retention-days: 30
           compression-level: 6
