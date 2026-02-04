@@ -386,7 +386,11 @@ def get_us_smart_money():
             current_prices = {}
             try:
                 price_data = yf.download(tickers, period="1d", progress=False)
-                if not price_data.empty and "Close" in price_data:
+                if (
+                    price_data is not None
+                    and not price_data.empty
+                    and "Close" in price_data
+                ):
                     closes = price_data["Close"]
                     for ticker in tickers:
                         try:
