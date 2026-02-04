@@ -211,3 +211,6 @@ secret-key-*
 .directory
 
 test_api.sh
+
+.vercel
+.env*.local
