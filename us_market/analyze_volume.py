@@ -7,10 +7,8 @@ Calculates OBV, Accumulation/Distribution Line, Volume Surge Detection
 
 import os
 import pandas as pd
-import numpy as np
 import logging
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 from tqdm import tqdm
 
 # Logging Configuration
@@ -121,7 +119,7 @@ class VolumeAnalyzer:
 
         # Get recent values
         latest = df.iloc[-1]
-        recent_20 = df.tail(20)
+        df.tail(20)
 
         # OBV Trend (20-day)
         obv_change = (obv.iloc[-1] - obv.iloc[-20]) / abs(obv.iloc[-20]) * 100 if obv.iloc[-20] != 0 else 0

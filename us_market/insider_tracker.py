@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-import os, json, logging
+import os
+import json
+import logging
 import pandas as pd
 import yfinance as yf
-from datetime import datetime
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -15,7 +16,8 @@ class InsiderTracker:
         try:
             stock = yf.Ticker(ticker)
             df = stock.insider_transactions
-            if df is None or df.empty: return []
+            if df is None or df.empty:
+                return []
 
             # Filter buys in last 6 months
             cutoff = pd.Timestamp.now() - pd.Timedelta(days=180)
@@ -23,9 +25,11 @@ class InsiderTracker:
 
             recent_buys = []
             for date, row in df.iterrows():
-                if date < cutoff: continue
+                if date < cutoff:
+                    continue
                 text = str(row.get('Text', '')).lower()
-                if 'purchase' not in text and 'buy' not in text: continue
+                if 'purchase' not in text and 'buy' not in text:
+                    continue
 
                 recent_buys.append({
                     'date': str(date.date()),
@@ -34,7 +38,8 @@ class InsiderTracker:
                     'shares': int(row.get('Shares', 0) or 0)
                 })
             return recent_buys
-        except: return []
+        except Exception:
+            return []
 
     def analyze_tickers(self, tickers):
         results = {}

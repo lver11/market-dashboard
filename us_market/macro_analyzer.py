@@ -12,7 +12,7 @@ import requests
 import yfinance as yf
 import logging
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List
 from dotenv import load_dotenv
 
 # Load .env
@@ -42,9 +42,11 @@ class MacroDataCollector:
 
             for name, ticker in self.macro_tickers.items():
                 try:
-                    if ticker not in data['Close'].columns: continue
+                    if ticker not in data['Close'].columns:
+                        continue
                     hist = data['Close'][ticker].dropna()
-                    if len(hist) < 2: continue
+                    if len(hist) < 2:
+                        continue
 
                     val = hist.iloc[-1]
                     prev = hist.iloc[-2]
@@ -60,7 +62,8 @@ class MacroDataCollector:
                         'change_1d': round(change, 2),
                         'pct_from_high': round(pct_high, 1)
                     }
-                except: pass
+                except Exception:
+                    pass
 
             # Yield Spread
             if '2Y_Yield' in macro_data and '10Y_Yield' in macro_data:
@@ -79,14 +82,14 @@ class MacroDataCollector:
         news = []
         try:
             import xml.etree.ElementTree as ET
-            from urllib.parse import quote
             url = "https://news.google.com/rss/search?q=Federal+Reserve+Economy&hl=en-US&gl=US&ceid=US:en"
             resp = requests.get(url, timeout=10)
             if resp.status_code == 200:
                 root = ET.fromstring(resp.content)
                 for item in root.findall('.//item')[:5]:
                     news.append({'title': item.find('title').text, 'source': 'Google News'})
-        except: pass
+        except (ET.ParseError, requests.RequestException):
+            pass
         return news
 
     def get_historical_patterns(self) -> List[Dict]:
@@ -106,7 +109,8 @@ class MacroAIAnalyzer:
         self.url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent"
 
     def analyze(self, data, news, patterns, lang='ko'):
-        if not self.api_key: return "API Key Missing"
+        if not self.api_key:
+            return "API Key Missing"
 
         prompt = self._build_prompt(data, news, patterns, lang)
 

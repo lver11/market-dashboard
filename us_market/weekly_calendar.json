@@ -1,9 +1,9 @@
 {
-  "updated": "2026-02-01T23:41:46.481919",
+  "updated": "2026-02-03T18:49:17.388111",
   "events": [
     {
-      "date": "2026-02-01",
-      "event": "Construction Spending MM",
+      "date": "2026-02-03",
+      "event": "Redbook YY *",
       "impact": "Medium",
       "description": "Actual: - | Est: -"
     },
@@ -11,8 +11,8 @@
       "date": "2025-12-10",
       "event": "FOMC Interest Rate Decision",
       "impact": "High",
-      "description": "Fed rate decision."
+      "description": "Fed rate decision.\n\n\ud83e\udd16 AI: FOMC interest rate decisions cause immediate and often volatile shifts across financial markets, particularly if the outcome deviates from investor expectations. Changes to rates or the Fed's forward guidance influence bond yields, stock prices, and the dollar as investors adjust their outlook on economic growth and inflation."
     }
   ],
-  "week_start": "2026-02-01"
+  "week_start": "2026-02-03"
 }

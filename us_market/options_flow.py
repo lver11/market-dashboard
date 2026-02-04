@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import os, json, logging
+import json
+import logging
 import yfinance as yf
-from datetime import datetime
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -15,7 +15,8 @@ class OptionsFlowAnalyzer:
         try:
             stock = yf.Ticker(ticker)
             exps = stock.options
-            if not exps: return {'error': 'No options'}
+            if not exps:
+                return {'error': 'No options'}
 
             opt = stock.option_chain(exps[0])
             calls, puts = opt.calls, opt.puts
@@ -46,7 +47,8 @@ class OptionsFlowAnalyzer:
         results = []
         for t in self.watchlist:
             res = self.get_options_summary(t)
-            if 'error' not in res: results.append(res)
+            if 'error' not in res:
+                results.append(res)
 
         with open('options_flow.json', 'w') as f:
             json.dump({'options_flow': results}, f, indent=2)

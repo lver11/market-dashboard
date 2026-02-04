@@ -9,8 +9,8 @@ import os
 import pandas as pd
 import yfinance as yf
 import logging
-from datetime import datetime, timedelta
-from typing import Dict, List
+from datetime import datetime
+from typing import Dict
 from tqdm import tqdm
 import json
 import requests

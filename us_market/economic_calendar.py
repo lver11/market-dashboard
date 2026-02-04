@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
-import os, json, requests, logging
-from datetime import datetime, timedelta
+import os
+import json
+import requests
+import logging
+from datetime import datetime
 import pandas as pd
 from io import StringIO
 from dotenv import load_dotenv
@@ -16,7 +19,7 @@ class EconomicCalendar:
         # Scrape Yahoo Finance Calendar (Simplified)
         events = []
         try:
-            url = f"https://finance.yahoo.com/calendar/economic"
+            url = "https://finance.yahoo.com/calendar/economic"
             headers = {'User-Agent': 'Mozilla/5.0'}
             resp = requests.get(url, headers=headers)
             if resp.status_code == 200:
@@ -31,7 +34,8 @@ class EconomicCalendar:
                             'impact': 'Medium',
                             'description': f"Actual: {row.get('Actual','-')} | Est: {row.get('Market Expectation','-')}"
                         })
-        except: pass
+        except Exception:
+            pass
 
         # Add Manual Major Events (Example)
         events.append({
@@ -42,7 +46,8 @@ class EconomicCalendar:
 
     def enrich_ai(self, events):
         key = os.getenv('GOOGLE_API_KEY')
-        if not key: return events
+        if not key:
+            return events
 
         url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
 
@@ -53,7 +58,8 @@ class EconomicCalendar:
                     resp = requests.post(f"{url}?key={key}", json=payload)
                     if resp.status_code == 200:
                         ev['description'] += "\n\n🤖 AI: " + resp.json()['candidates'][0]['content']['parts'][0]['text']
-                except: pass
+                except (requests.RequestException, KeyError, ValueError):
+                    pass
         return events
 
     def run(self):

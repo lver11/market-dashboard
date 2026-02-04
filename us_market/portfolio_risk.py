@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-import os, json, logging
-import pandas as pd
+import json
+import logging
 import numpy as np
 import yfinance as yf
 

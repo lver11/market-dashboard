@@ -12,11 +12,9 @@ Comprehensive analysis combining:
 
 import os
 import pandas as pd
-import numpy as np
 import yfinance as yf
 import logging
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Tuple
 from tqdm import tqdm
 import warnings
 warnings.filterwarnings('ignore')
@@ -191,7 +189,7 @@ class EnhancedSmartMoneyScreener:
                 'technical_score': tech_score
             }
 
-        except Exception as e:
+        except Exception:
             return self._default_technical()
 
     def _default_technical(self) -> Dict:
@@ -285,7 +283,7 @@ class EnhancedSmartMoneyScreener:
                 'fundamental_score': fund_score
             }
 
-        except Exception as e:
+        except Exception:
             return self._default_fundamental()
 
     def _default_fundamental(self) -> Dict:
@@ -310,7 +308,7 @@ class EnhancedSmartMoneyScreener:
 
             # Recommendation
             recommendation = info.get('recommendationKey', 'none')
-            num_analysts = info.get('numberOfAnalystOpinions', 0) or 0
+            info.get('numberOfAnalystOpinions', 0) or 0
 
             # Upside potential
             if current_price > 0 and target_price > 0:
@@ -329,11 +327,16 @@ class EnhancedSmartMoneyScreener:
             analyst_score += rec_map.get(recommendation, 0)
 
             # Upside contribution
-            if upside > 30: analyst_score += 20
-            elif upside > 20: analyst_score += 15
-            elif upside > 10: analyst_score += 10
-            elif upside > 0: analyst_score += 5
-            elif upside < -10: analyst_score -= 15
+            if upside > 30:
+                analyst_score += 20
+            elif upside > 20:
+                analyst_score += 15
+            elif upside > 10:
+                analyst_score += 10
+            elif upside > 0:
+                analyst_score += 5
+            elif upside < -10:
+                analyst_score -= 15
 
             analyst_score = max(0, min(100, analyst_score))
 
@@ -346,7 +349,7 @@ class EnhancedSmartMoneyScreener:
                 'analyst_score': analyst_score
             }
 
-        except Exception as e:
+        except Exception:
             return self._default_analyst()
 
     def _default_analyst(self) -> Dict:
@@ -379,15 +382,23 @@ class EnhancedSmartMoneyScreener:
 
             # RS Score (0-100)
             rs_score = 50
-            if rs_20d > 10: rs_score += 25
-            elif rs_20d > 5: rs_score += 15
-            elif rs_20d > 0: rs_score += 8
-            elif rs_20d < -10: rs_score -= 20
-            elif rs_20d < -5: rs_score -= 10
+            if rs_20d > 10:
+                rs_score += 25
+            elif rs_20d > 5:
+                rs_score += 15
+            elif rs_20d > 0:
+                rs_score += 8
+            elif rs_20d < -10:
+                rs_score -= 20
+            elif rs_20d < -5:
+                rs_score -= 10
 
-            if rs_60d > 15: rs_score += 15
-            elif rs_60d > 5: rs_score += 8
-            elif rs_60d < -15: rs_score -= 15
+            if rs_60d > 15:
+                rs_score += 15
+            elif rs_60d > 5:
+                rs_score += 8
+            elif rs_60d < -15:
+                rs_score -= 15
 
             rs_score = max(0, min(100, rs_score))
 
@@ -397,7 +408,7 @@ class EnhancedSmartMoneyScreener:
                 'rs_score': rs_score
             }
 
-        except Exception as e:
+        except Exception:
             return {'rs_20d': 0, 'rs_60d': 0, 'rs_score': 50}
 
     def calculate_composite_score(self, row: pd.Series, tech: Dict, fund: Dict, analyst: Dict, rs: Dict) -> Tuple[float, str]:
@@ -413,12 +424,18 @@ class EnhancedSmartMoneyScreener:
         )
 
         # Determine grade
-        if composite >= 80: grade = "🔥 S급 (즉시 매수)"
-        elif composite >= 70: grade = "🌟 A급 (적극 매수)"
-        elif composite >= 60: grade = "📈 B급 (매수 고려)"
-        elif composite >= 50: grade = "📊 C급 (관망)"
-        elif composite >= 40: grade = "⚠️ D급 (주의)"
-        else: grade = "🚫 F급 (회피)"
+        if composite >= 80:
+            grade = "🔥 S급 (즉시 매수)"
+        elif composite >= 70:
+            grade = "🌟 A급 (적극 매수)"
+        elif composite >= 60:
+            grade = "📈 B급 (매수 고려)"
+        elif composite >= 50:
+            grade = "📊 C급 (관망)"
+        elif composite >= 40:
+            grade = "⚠️ D급 (주의)"
+        else:
+            grade = "🚫 F급 (회피)"
 
         return round(composite, 1), grade
 

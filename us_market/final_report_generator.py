@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-import os, json, logging
+import os
+import json
+import logging
 import pandas as pd
-from datetime import datetime
 
 logging.basicConfig(level=logging.INFO)
 
@@ -12,29 +13,32 @@ class FinalReportGenerator:
     def run(self, top_n=10):
         # Load Quant Data
         stats_path = os.path.join(self.data_dir, 'smart_money_picks_v2.csv')
-        if not os.path.exists(stats_path): return
+        if not os.path.exists(stats_path):
+            return
         df = pd.read_csv(stats_path)
 
         # Load AI Data
         ai_path = os.path.join(self.data_dir, 'ai_summaries.json')
         ai_data = {}
         if os.path.exists(ai_path):
-            with open(ai_path) as f: ai_data = json.load(f)
+            with open(ai_path) as f:
+                ai_data = json.load(f)
 
         results = []
         for _, row in df.iterrows():
             ticker = row['ticker']
-            if ticker not in ai_data: continue
+            if ticker not in ai_data:
+                continue
 
-            summary = ai_data[ticker].get('summary', '')
+            summary = ai_data[ticker].get('summary') or ''
 
             # AI Bonus Score
             ai_score = 0
             rec = "Hold"
-            if "매수" in summary or "Buy" in summary:
+            if summary and ("매수" in summary or "Buy" in summary):
                 ai_score = 10
                 rec = "Buy"
-            if "적극" in summary or "Strong" in summary:
+            if summary and ("적극" in summary or "Strong" in summary):
                 ai_score = 20
                 rec = "Strong Buy"
 
@@ -54,7 +58,8 @@ class FinalReportGenerator:
         # Sort and Rank
         results.sort(key=lambda x: x['final_score'], reverse=True)
         top_picks = results[:top_n]
-        for i, p in enumerate(top_picks, 1): p['rank'] = i
+        for i, p in enumerate(top_picks, 1):
+            p['rank'] = i
 
         # Save Report
         with open(os.path.join(self.data_dir, 'final_top10_report.json'), 'w') as f:

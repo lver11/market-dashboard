@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
-import os, sys, subprocess, time, argparse
+import sys
+import subprocess
+import time
+import argparse
 
 scripts = [
     ("create_us_daily_prices.py", "Data Collection", 600),
+    ("analyze_volume.py", "Volume Analysis", 600),
     ("smart_money_screener_v2.py", "Screening", 600),
     ("sector_heatmap.py", "Heatmap", 300),
     ("options_flow.py", "Options", 300),
@@ -27,7 +31,8 @@ def main():
 
     start = time.time()
     for name, desc, timeout in scripts:
-        if args.quick and "AI" in desc: continue
+        if args.quick and "AI" in desc:
+            continue
         run_script(name, desc, timeout)
 
     print(f"Total time: {(time.time()-start)/60:.1f} min")

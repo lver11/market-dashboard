@@ -7,12 +7,8 @@ Fetches and analyzes institutional holdings from SEC EDGAR
 
 import os
 import pandas as pd
-import numpy as np
-import requests
 import logging
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional
-import json
+from typing import List
 import time
 
 # Logging Configuration
@@ -84,7 +80,7 @@ class SEC13FAnalyzer:
 
                 # Float and shares
                 float_shares = info.get('floatShares', 0) or 0
-                shares_outstanding = info.get('sharesOutstanding', 0) or 0
+                info.get('sharesOutstanding', 0) or 0
                 short_pct = info.get('shortPercentOfFloat', 0) or 0
 
                 # Insider transactions
@@ -99,7 +95,7 @@ class SEC13FAnalyzer:
                         insider_sentiment = 'Unknown'
                         buys = 0
                         sells = 0
-                except:
+                except Exception:
                     insider_sentiment = 'Unknown'
                     buys = 0
                     sells = 0
@@ -108,7 +104,7 @@ class SEC13FAnalyzer:
                 try:
                     inst_holders = stock.institutional_holders
                     num_inst_holders = len(inst_holders) if inst_holders is not None else 0
-                except:
+                except Exception:
                     num_inst_holders = 0
 
                 # Score calculation (0-100)

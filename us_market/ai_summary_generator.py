@@ -5,7 +5,11 @@ AI Stock Summary Generator
 Generates investment summaries using Gemini AI
 """
 
-import os, json, logging, time, requests
+import os
+import json
+import logging
+import time
+import requests
 import pandas as pd
 from datetime import datetime
 from tqdm import tqdm
@@ -27,7 +31,8 @@ class NewsCollector:
                 root = ET.fromstring(resp.content)
                 for item in root.findall('.//item')[:3]:
                     news.append({'title': item.find('title').text, 'published': item.find('pubDate').text})
-        except: pass
+        except (ET.ParseError, requests.RequestException):
+            pass
         return news
 
 class GeminiGenerator:
@@ -36,7 +41,8 @@ class GeminiGenerator:
         self.url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent"
 
     def generate(self, ticker, data, news, lang='ko'):
-        if not self.key: return "No API Key"
+        if not self.key:
+            return "No API Key"
 
         news_txt = "\n".join([n['title'] for n in news])
         score_info = f"Score: {data.get('composite_score')}/100, Quant: {data.get('grade')}"
@@ -57,7 +63,8 @@ Req: 3-4 sentence investment summary. No emojis."""
             resp = requests.post(f"{self.url}?key={self.key}", json=payload)
             if resp.status_code == 200:
                 return resp.json()['candidates'][0]['content']['parts'][0]['text']
-        except: return "Analysis Failed"
+        except (requests.RequestException, KeyError, ValueError):
+            return "Analysis Failed"
 
 class AIStockAnalyzer:
     def __init__(self, data_dir='.'):
@@ -68,18 +75,21 @@ class AIStockAnalyzer:
 
     def run(self, top_n=20):
         csv = os.path.join(self.data_dir, 'smart_money_picks_v2.csv')
-        if not os.path.exists(csv): return
+        if not os.path.exists(csv):
+            return
 
         df = pd.read_csv(csv).head(top_n)
         results = {}
 
         # Load existing
         if os.path.exists(self.output):
-            with open(self.output) as f: results = json.load(f)
+            with open(self.output) as f:
+                results = json.load(f)
 
         for _, row in tqdm(df.iterrows(), total=len(df)):
             ticker = row['ticker']
-            if ticker in results: continue # Skip if exists
+            if ticker in results:
+                continue  # Skip if exists
 
             news = self.news.get_news(ticker)
             summary_ko = self.gen.generate(ticker, row.to_dict(), news, 'ko')

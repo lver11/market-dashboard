@@ -8,7 +8,6 @@ Similar to create_complete_daily_prices.py for Korean stocks
 
 import os
 import pandas as pd
-import numpy as np
 import yfinance as yf
 import logging
 from datetime import datetime, timedelta
@@ -255,7 +254,7 @@ class USStockDailyPricesCreator:
                 logger.info("✨ All data is up to date!")
 
             # 6. Summary
-            logger.info(f"\n📊 Collection Summary:")
+            logger.info("\n📊 Collection Summary:")
             logger.info(f"   Total stocks: {len(stocks_df)}")
             logger.info(f"   Success: {len(stocks_df) - len(failed_tickers)}")
             logger.info(f"   Failed: {len(failed_tickers)}")
@@ -283,7 +282,7 @@ def main():
 
     if success:
         print("\n🎉 US Stock Daily Prices collection completed!")
-        print(f"📁 File location: ./us_daily_prices.csv")
+        print("📁 File location: ./us_daily_prices.csv")
     else:
         print("\n❌ Collection failed.")
 

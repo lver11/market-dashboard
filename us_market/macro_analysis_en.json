@@ -1,53 +1,53 @@
 {
-  "timestamp": "2026-02-02T00:21:28.137817",
+  "timestamp": "2026-02-03T18:49:10.075655",
   "macro_indicators": {
     "VIX": {
-      "value": 17.44,
-      "change_1d": 3.32,
-      "pct_from_high": -71.0
+      "value": 16.23,
+      "change_1d": -0.67,
+      "pct_from_high": -73.0
     },
     "DXY": {
-      "value": 97.15,
-      "change_1d": 0.9,
-      "pct_from_high": -11.6
+      "value": 97.53,
+      "change_1d": -0.08,
+      "pct_from_high": -11.2
     },
     "2Y_Yield": {
-      "value": 3.57,
-      "change_1d": -0.22,
-      "pct_from_high": -17.0
+      "value": 3.58,
+      "change_1d": 0.17,
+      "pct_from_high": -16.9
     },
     "10Y_Yield": {
-      "value": 4.24,
-      "change_1d": 0.33,
-      "pct_from_high": -9.0
+      "value": 4.28,
+      "change_1d": 0.8,
+      "pct_from_high": -8.3
     },
     "GOLD": {
-      "value": 5067.5,
-      "change_1d": -4.72,
-      "pct_from_high": -9.3
+      "value": 4937.8,
+      "change_1d": 6.82,
+      "pct_from_high": -11.6
     },
     "OIL": {
-      "value": 65.55,
-      "change_1d": 0.2,
-      "pct_from_high": -16.4
+      "value": 61.54,
+      "change_1d": -0.97,
+      "pct_from_high": -21.5
     },
     "BTC": {
-      "value": 77171.73,
-      "change_1d": -1.84,
-      "pct_from_high": -38.8
+      "value": 78245.35,
+      "change_1d": -0.56,
+      "pct_from_high": -38.0
     },
     "SPY": {
-      "value": 691.97,
-      "change_1d": -0.3,
-      "pct_from_high": -0.8
+      "value": 695.41,
+      "change_1d": 0.5,
+      "pct_from_high": -0.3
     },
     "QQQ": {
-      "value": 621.87,
-      "change_1d": -1.2,
-      "pct_from_high": -2.3
+      "value": 626.14,
+      "change_1d": 0.69,
+      "pct_from_high": -1.6
     },
     "YieldSpread": {
-      "value": 0.67,
+      "value": 0.7,
       "change_1d": 0,
       "pct_from_high": 0
     },

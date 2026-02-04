@@ -6,10 +6,9 @@ Sector Performance Heatmap Data Collector
 
 import os
 import json
-import pandas as pd
 import yfinance as yf
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict
 import logging
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -115,12 +114,18 @@ class SectorHeatmapCollector:
             return {'error': str(e)}
 
     def _get_color(self, change: float) -> str:
-        if change >= 3: return '#00C853'
-        elif change >= 1: return '#4CAF50'
-        elif change >= 0: return '#81C784'
-        elif change >= -1: return '#EF9A9A'
-        elif change >= -3: return '#F44336'
-        else: return '#B71C1C'
+        if change >= 3:
+            return '#00C853'
+        elif change >= 1:
+            return '#4CAF50'
+        elif change >= 0:
+            return '#81C784'
+        elif change >= -1:
+            return '#EF9A9A'
+        elif change >= -3:
+            return '#F44336'
+        else:
+            return '#B71C1C'
 
     def save_data(self, output_dir: str = '.'):
         data = self.get_full_market_map('5d')
