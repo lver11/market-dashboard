@@ -11,6 +11,9 @@ on:
   # 수동으로도 실행 가능
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   update-data:
     runs-on: ubuntu-latest
@@ -44,6 +47,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
           DATA_DIR: us_market
+        continue-on-error: true
         run: |
           cd us_market
           echo "🚀 Starting market data update..."
@@ -66,6 +70,9 @@ jobs:
       - name: Check for changes
         id: git-check
         run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
           git add us_market/*.csv us_market/*.json us_market/data/ 2>/dev/null || true
           git add us_market/
 
@@ -90,11 +97,7 @@ jobs:
           TIME=$(date +'%H:%M:%S')
 
           # Commit changes
-          git commit -m "📊 Auto-update market data - ${DATE} ${TIME}
-
-          🔄 Updated by GitHub Actions
-          📅 Date: ${DATE} ${TIME}
-          🤖 Bot: github-actions[bot]"
+          git commit -m "📊 Auto-update market data - ${DATE} ${TIME}" -m "🔄 Updated by GitHub Actions" -m "📅 Date: ${DATE} ${TIME}" -m "🤖 Bot: github-actions[bot]"
 
           # Push changes
           git push
