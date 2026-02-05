@@ -26,7 +26,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.11'
           cache: 'pip'
 
       - name: Install dependencies
@@ -47,25 +47,88 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
           DATA_DIR: us_market
-        continue-on-error: true
         run: |
-          cd us_market
           echo "🚀 Starting market data update..."
           echo "⏰ Time: $(date)"
           echo "📂 Working directory: $(pwd)"
+
+          # Verify we're in the right directory
+          if [ ! -d "us_market" ]; then
+            echo "❌ ERROR: us_market directory not found!"
+            exit 1
+          fi
+
+          cd us_market
+          echo "📂 Changed to: $(pwd)"
           echo "📋 Files in directory:"
           ls -la
 
-          # Run update script with error handling
-          python update_all.py --quick || {
-            echo "⚠️  Script failed with exit code $?"
-            echo "📊 Attempting to continue with partial data..."
-            exit 0
+          # Check if update_all.py exists
+          if [ ! -f "update_all.py" ]; then
+            echo "❌ ERROR: update_all.py not found in us_market/"
+            exit 1
+          fi
+
+          # Verify Python is available
+          python --version || {
+            echo "❌ ERROR: Python not available"
+            exit 1
           }
 
-          echo "✅ Market data update completed"
+          # Check required Python files exist
+          echo "🔍 Checking required scripts..."
+          required_scripts=(
+            "create_us_daily_prices.py"
+            "analyze_volume.py"
+            "smart_money_screener_v2.py"
+            "sector_heatmap.py"
+            "options_flow.py"
+            "economic_calendar.py"
+            "analyze_etf_flows.py"
+          )
+
+          missing_scripts=0
+          for script in "${required_scripts[@]}"; do
+            if [ ! -f "$script" ]; then
+              echo "⚠️  WARNING: $script not found"
+              ((missing_scripts++))
+            else
+              echo "✅ Found: $script"
+            fi
+          done
+
+          if [ $missing_scripts -gt 0 ]; then
+            echo "⚠️  WARNING: $missing_scripts required scripts are missing"
+            echo "Continuing anyway..."
+          fi
+
+          # Run update script with detailed logging
+          echo ""
+          echo "🎯 Running update_all.py --quick..."
+          echo "=================================="
+
+          if python update_all.py --quick; then
+            echo ""
+            echo "✅ update_all.py completed successfully"
+          else
+            exit_code=$?
+            echo ""
+            echo "⚠️  update_all.py failed with exit code $exit_code"
+            echo "📊 Checking for partial data..."
+
+            # List generated files
+            echo "📋 Generated files:"
+            ls -lh *.csv *.json 2>/dev/null || echo "No files generated"
+
+            # Exit with error to trigger alert
+            echo "❌ Workflow failed - check logs above"
+            exit 1
+          fi
+
+          echo ""
+          echo "✅ Market data update completed successfully"
           echo "📋 Updated files:"
-          ls -lh *.csv *.json 2>/dev/null || echo "No files generated"
+          ls -lh *.csv *.json 2>/dev/null | head -20 || echo "No files generated"
 
       - name: Check for changes
         id: git-check
@@ -73,17 +136,27 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
-          git add us_market/*.csv us_market/*.json us_market/data/ 2>/dev/null || true
-          git add us_market/
+          echo "🔍 Checking for file changes..."
 
+          # Add all data files
+          git add us_market/*.csv 2>/dev/null || echo "No CSV files to add"
+          git add us_market/*.json 2>/dev/null || echo "No JSON files to add"
+          git add us_market/data/ 2>/dev/null || echo "No data/ directory files"
+          git add us_market/history/ 2>/dev/null || echo "No history/ directory files"
+
+          # Check if there are any changes
           if git diff --staged --quiet; then
             echo "has_changes=false" >> $GITHUB_OUTPUT
             echo "📊 No changes detected in data files"
           else
             echo "has_changes=true" >> $GITHUB_OUTPUT
             echo "📊 Changes detected in data files"
+            echo ""
             echo "📋 Changed files:"
             git diff --staged --name-only
+            echo ""
+            echo "📈 Change summary:"
+            git diff --staged --stat
           fi
 
       - name: Commit and push changes
