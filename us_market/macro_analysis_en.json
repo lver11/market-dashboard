@@ -1,53 +1,53 @@
 {
-  "timestamp": "2026-02-05T21:48:13.440148",
+  "timestamp": "2026-02-05T15:40:43.169124",
   "macro_indicators": {
     "VIX": {
-      "value": 20.36,
-      "change_1d": 9.23,
-      "pct_from_high": -66.1
+      "value": 22.62,
+      "change_1d": 21.35,
+      "pct_from_high": -62.4
     },
     "DXY": {
-      "value": 97.81,
-      "change_1d": 0.19,
+      "value": 97.82,
+      "change_1d": 0.21,
       "pct_from_high": -9.9
     },
     "2Y_Yield": {
-      "value": 3.6,
-      "change_1d": 0.14,
-      "pct_from_high": -16.5
+      "value": 3.58,
+      "change_1d": -0.56,
+      "pct_from_high": -17.0
     },
     "10Y_Yield": {
-      "value": 4.28,
-      "change_1d": 0.02,
-      "pct_from_high": -8.3
+      "value": 4.22,
+      "change_1d": -1.38,
+      "pct_from_high": -9.5
     },
     "GOLD": {
-      "value": 4886.0,
-      "change_1d": -0.7,
-      "pct_from_high": -12.5
+      "value": 4841.3,
+      "change_1d": -1.61,
+      "pct_from_high": -13.3
     },
     "OIL": {
-      "value": 63.83,
-      "change_1d": -2.01,
-      "pct_from_high": -18.6
+      "value": 63.0,
+      "change_1d": -3.29,
+      "pct_from_high": -19.6
     },
     "BTC": {
-      "value": 69218.83,
-      "change_1d": -5.21,
-      "pct_from_high": -45.2
+      "value": 66888.17,
+      "change_1d": -8.4,
+      "pct_from_high": -47.0
     },
     "SPY": {
-      "value": 686.19,
-      "change_1d": -0.48,
-      "pct_from_high": -1.7
+      "value": 677.48,
+      "change_1d": -1.27,
+      "pct_from_high": -2.9
     },
     "QQQ": {
-      "value": 605.75,
-      "change_1d": -1.75,
-      "pct_from_high": -4.8
+      "value": 597.39,
+      "change_1d": -1.38,
+      "pct_from_high": -6.2
     },
     "YieldSpread": {
-      "value": 0.68,
+      "value": 0.64,
       "change_1d": 0,
       "pct_from_high": 0
     },
@@ -57,6 +57,6 @@
       "pct_from_high": 0
     }
   },
-  "ai_analysis": "Failed to generate - Check API key and quota",
-  "model": "Failed"
+  "ai_analysis": "Here's an analysis of the current macro conditions and a suggested investment strategy:\n\n1.  **Market Summary**:\n    Equity markets (SPY, QQQ) are in a strong bull run, supported by \"Greed\" sentiment (65) and high Bitcoin prices, indicating robust risk appetite. The yield curve (10Y-2Y spread of 0.64) is positively sloped, typically signaling economic expansion. However, an elevated VIX (22.62) suggests underlying market uncertainty, and high gold prices (4841.3) may point to inflation concerns or geopolitical hedges. The DXY (97.82) indicates a strong dollar, and oil prices are moderate (63.0). Significant uncertainty surrounds Federal Reserve policy and leadership, with potential shifts in interest rate strategy.\n\n2.  **Key Opportunities**:\n    *   **Financials**: A steepening yield curve (0.64) is beneficial for banks and other financial institutions, allowing them to profit from the spread between short-term borrowing and long-term lending.\n    *   **Growth Equities (Tech)**: Strong performance in QQQ, high BTC, and \"Greed\" sentiment suggest continued momentum in technology and growth-oriented sectors.\n    *   **Inflation Hedges**: The high price of gold, despite strong equities, could signal underlying inflation concerns. Commodities and real assets may offer protection.\n\n3.  **Risks to Monitor**:\n    *   **Monetary Policy Uncertainty**: News headlines indicate significant potential shifts in Federal Reserve leadership and interest rate policy, which could introduce volatility and impact market direction. The internal disagreement on interest rate pauses is a key risk.\n    *   **Elevated Valuation & Volatility**: High equity prices (SPY, QQQ) combined with a VIX of 22.62 suggest potential for sharp corrections, especially if monetary policy turns more hawkish than expected.\n    *   **Strong Dollar Impact**: A strong DXY could negatively affect earnings for U.S. multinational corporations with significant international revenue.\n\n4.  **Concrete Strategy**:\n    *   **Sector Focus**: Overweight Financials (e.g., XLF) due to the steep yield curve. Maintain exposure to quality Growth (e.g., QQQ) but with selective stock picking rather than broad market exposure.\n    *   **Inflation Hedging**: Allocate a portion to Gold (e.g., GLD) or broad commodities (e.g., DBC) as a hedge against potential inflation or geopolitical risks.\n    *   **Risk Management**: Implement a barbell strategy: maintain core long-term growth positions balanced with defensive assets or short-duration fixed income (e.g., SHY) to mitigate interest rate risk from potential Fed shifts.\n    *   **Cash Allocation**: Maintain a higher-than-usual cash allocation to capitalize on potential market pullbacks driven by Fed uncertainty or elevated volatility.",
+  "model": "Gemini"
 }
