@@ -23,10 +23,9 @@ class VolumeAnalyzer:
     """Volume-based technical analysis for supply/demand detection"""
 
     def __init__(self, data_dir: str = None):
-        # Use script directory as base path for consistent file locations
+        # Use current working directory by default (where script is invoked from)
         if data_dir is None:
-            script_dir = os.path.dirname(os.path.abspath(__file__))
-            data_dir = script_dir
+            data_dir = '.'
         self.data_dir = data_dir
         self.prices_file = os.path.join(data_dir, 'us_daily_prices.csv')
         self.output_file = os.path.join(data_dir, 'us_volume_analysis.csv')

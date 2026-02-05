@@ -24,9 +24,9 @@ logger = logging.getLogger(__name__)
 
 class USStockDailyPricesCreator:
     def __init__(self):
-        # Use script directory as base path for consistent file locations
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        self.data_dir = os.getenv('DATA_DIR', script_dir)
+        # Use current working directory by default (where script is invoked from)
+        # Can be overridden with DATA_DIR environment variable
+        self.data_dir = os.getenv('DATA_DIR', '.')
         self.output_dir = self.data_dir
         os.makedirs(self.output_dir, exist_ok=True)
 
