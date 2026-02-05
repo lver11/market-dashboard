@@ -258,7 +258,7 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description='US Stock Volume Analysis')
-    parser.add_argument('--dir', default='.', help='Data directory')
+    parser.add_argument('--dir', default=None, help='Data directory (default: script directory)')
     args = parser.parse_args()
 
     analyzer = VolumeAnalyzer(data_dir=args.dir)
