@@ -104,10 +104,10 @@ jobs:
 
           # Run update script with detailed logging
           echo ""
-          echo "🎯 Running update_all.py --quick..."
+          echo "🎯 Running update_all.py --scripts..."
           echo "=================================="
 
-          if python update_all.py --quick; then
+          if python update_all.py --scripts; then
             echo ""
             echo "✅ update_all.py completed successfully"
           else
