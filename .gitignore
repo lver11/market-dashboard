@@ -212,5 +212,29 @@ secret-key-*
 
 test_api.sh
 
+# MCP Server Configuration (contains API keys)
+.mcp.json
+
+# oh-my-claudecode State Files
+.omc/
+
+# Windows Null Device
+nul
+
+# Temporary Documentation Files
+SESSION_STATE_*.md
+TESTING_*.md
+RENDER_*.md
+FINAL_*.md
+WORK_LOG.md
+claude_insights_*.md
+
+# Temporary JSON files
+*_secret.json
+*_test_results*.json
+
+# Test Scripts (temporary)
+us_market/test_*.py
+
 .vercel
 .env*.local
