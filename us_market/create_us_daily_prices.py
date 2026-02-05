@@ -284,7 +284,7 @@ def main():
 
     if success:
         print("\n🎉 US Stock Daily Prices collection completed!")
-        print("📁 File location: ./us_daily_prices.csv")
+        print(f"📁 File location: {self.prices_file}")
     else:
         print("\n❌ Collection failed.")
 
