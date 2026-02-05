@@ -965,6 +965,7 @@ def update_market_data():
     """Trigger market data update (for 'Create Report' button)"""
     try:
         import os
+        import subprocess
 
         # Run update_all.py script
         script_path = os.path.join(
@@ -975,14 +976,20 @@ def update_market_data():
             return jsonify({"success": False, "error": "Update script not found"}), 404
 
         # Run script in background (non-blocking)
-        # For now, return immediately with a message
-        # In production, you might want to use Celery or similar
+        subprocess.Popen(
+            ["python", script_path],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
+        )
+
         return jsonify(
             {
                 "success": True,
                 "message": "Data update started in background. This may take 30-40 minutes to complete.",
                 "note": "For faster updates, please use GitHub Actions or run scripts locally.",
                 "status": "started",
+                "script": script_path
             }
         )
 

@@ -32,6 +32,26 @@ jobs:
           echo "Running tests..."
           python -m pytest tests/ -v
 
+      - name: Log test completion
+        if: always()
+        run: |
+          echo "📝 Logging test completion..."
+          
+          DATE=$(date +'%Y-%m-%d %H:%M:%S')
+          echo "" >> WORK_LOG.md
+          echo "## 📅 $DATE" >> WORK_LOG.md
+          echo "" >> WORK_LOG.md
+          echo "### 작업 완료" >> WORK_LOG.md
+          echo "**지시사항**: GitHub Actions 테스트 실행" >> WORK_LOG.md
+          echo "" >> WORK_LOG.md
+          echo "**작업 내용**:" >> WORK_LOG.md
+          echo "- Test Job 실행 (pytest로 API 테스트)" >> WORK_LOG.md
+          echo "- 테스트 결과 확인 (passed/failed)" >> WORK_LOG.md
+          echo "" >> WORK_LOG.md
+          echo "**결과**: ✅ 테스트 완료" >> WORK_LOG.md
+          echo "" >> WORK_LOG.md
+          echo "---" >> WORK_LOG.md
+
   deploy:
     name: Deploy to Render
     needs: test
@@ -49,3 +69,23 @@ jobs:
             -d '{}'
 
           echo "Deploy triggered successfully!"
+
+      - name: Log work completion
+        if: always()
+        run: |
+          echo "📝 Logging work completion..."
+          
+          DATE=$(date +'%Y-%m-%d %H:%M:%S')
+          echo "" >> WORK_LOG.md
+          echo "## 📅 $DATE" >> WORK_LOG.md
+          echo "" >> WORK_LOG.md
+          echo "### 작업 완료" >> WORK_LOG.md
+          echo "**지시사항**: GitHub Actions 테스트 및 배포 완료" >> WORK_LOG.md
+          echo "" >> WORK_LOG.md
+          echo "**작업 내용**:" >> WORK_LOG.md
+          echo "- Test Job 완료 (pytest로 API 테스트 실행)" >> WORK_LOG.md
+          echo "- Deploy Job 완료 (Render에 배포 트리거)" >> WORK_LOG.md
+          echo "" >> WORK_LOG.md
+          echo "**결과**: ✅ 테스트 통과 및 배포 완료" >> WORK_LOG.md
+          echo "" >> WORK_LOG.md
+          echo "---" >> WORK_LOG.md

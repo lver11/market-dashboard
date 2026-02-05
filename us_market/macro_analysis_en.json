@@ -1,40 +1,40 @@
 {
-  "timestamp": "2026-02-05T14:13:24.766880",
+  "timestamp": "2026-02-05T21:48:13.440148",
   "macro_indicators": {
     "VIX": {
-      "value": 21.25,
-      "change_1d": 14.0,
-      "pct_from_high": -64.7
+      "value": 20.36,
+      "change_1d": 9.23,
+      "pct_from_high": -66.1
     },
     "DXY": {
-      "value": 97.65,
-      "change_1d": 0.03,
-      "pct_from_high": -10.0
+      "value": 97.81,
+      "change_1d": 0.19,
+      "pct_from_high": -9.9
     },
     "2Y_Yield": {
-      "value": 3.59,
-      "change_1d": -0.19,
-      "pct_from_high": -16.7
+      "value": 3.6,
+      "change_1d": 0.14,
+      "pct_from_high": -16.5
     },
     "10Y_Yield": {
-      "value": 4.23,
-      "change_1d": -1.01,
-      "pct_from_high": -9.2
+      "value": 4.28,
+      "change_1d": 0.02,
+      "pct_from_high": -8.3
     },
     "GOLD": {
-      "value": 4857.0,
-      "change_1d": -1.29,
-      "pct_from_high": -13.1
+      "value": 4886.0,
+      "change_1d": -0.7,
+      "pct_from_high": -12.5
     },
     "OIL": {
-      "value": 63.52,
-      "change_1d": -2.49,
-      "pct_from_high": -19.0
+      "value": 63.83,
+      "change_1d": -2.01,
+      "pct_from_high": -18.6
     },
     "BTC": {
-      "value": 69628.36,
-      "change_1d": -4.64,
-      "pct_from_high": -44.8
+      "value": 69218.83,
+      "change_1d": -5.21,
+      "pct_from_high": -45.2
     },
     "SPY": {
       "value": 686.19,
@@ -47,7 +47,7 @@
       "pct_from_high": -4.8
     },
     "YieldSpread": {
-      "value": 0.64,
+      "value": 0.68,
       "change_1d": 0,
       "pct_from_high": 0
     },
@@ -57,5 +57,6 @@
       "pct_from_high": 0
     }
   },
-  "ai_analysis": "Failed to generate"
+  "ai_analysis": "Failed to generate - Check API key and quota",
+  "model": "Failed"
 }

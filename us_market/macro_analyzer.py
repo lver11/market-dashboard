@@ -3,7 +3,8 @@
 """
 Macro Market Analyzer
 - Collects macro indicators (VIX, Yields, Commodities, etc.)
-- Uses Gemini 3.0 & GPT 5.2 to generate investment strategy
+- Uses Gemini 2.5 Flash (primary) with OpenAI GPT-4o Mini fallback
+- Supports multi-model analysis with automatic fallback logic
 """
 
 import os
@@ -12,7 +13,7 @@ import requests
 import yfinance as yf
 import logging
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict, List, Optional
 from dotenv import load_dotenv
 
 # Load .env
@@ -102,81 +103,338 @@ class MacroDataCollector:
         ]
 
 
-class MacroAIAnalyzer:
-    """Gemini 3.0 Analysis"""
+class GeminiAnalyzer:
+    """Gemini Analysis"""
+
     def __init__(self):
         self.api_key = os.getenv('GOOGLE_API_KEY')
-        self.url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent"
+        # Try multiple model options for better availability/cost
+        self.models = [
+            "gemini-2.5-flash",  # Primary: Fast
+            "gemini-2.5-pro"     # Fallback: Capable
+        ]
+        self.base_url = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
 
-    def analyze(self, data, news, patterns, lang='ko'):
+    def analyze(self, data: Dict, news: List[Dict], patterns: List[Dict], lang: str = 'ko') -> str:
+        """
+        Analyze macro data using Gemini
+
+        Args:
+            data: Macro indicator data
+            news: News headlines
+            patterns: Historical patterns
+            lang: Language ('ko' or 'en')
+
+        Returns:
+            Analysis text string
+        """
         if not self.api_key:
-            return "API Key Missing"
+            logger.error("GOOGLE_API_KEY not found in .env")
+            return "API Key Missing - Check .env file"
 
         prompt = self._build_prompt(data, news, patterns, lang)
 
-        try:
-            payload = {
-                "contents": [{"parts": [{"text": prompt}]}],
-                "generationConfig": {"temperature": 0.7, "maxOutputTokens": 2000}
-            }
-            resp = requests.post(f"{self.url}?key={self.api_key}", json=payload)
-            if resp.status_code == 200:
-                return resp.json()['candidates'][0]['content']['parts'][0]['text']
-        except Exception as e:
-            return f"Error: {e}"
-        return "Failed to generate"
+        # Try each model until one works
+        for model in self.models:
+            try:
+                logger.info(f"Trying Gemini model: {model}")
 
-    def _build_prompt(self, data, news, patterns, lang):
-        metrics = "\n".join([f"- {k}: {v['value']}" for k,v in data.items()])
+                url = self.base_url.format(model=model, api_key=self.api_key)
+
+                payload = {
+                    "contents": [{"parts": [{"text": prompt}]}],
+                    "generationConfig": {
+                        "temperature": 0.7,
+                        "maxOutputTokens": 8000
+                    }
+                }
+
+                resp = requests.post(url, headers={"Content-Type": "application/json"}, json=payload, timeout=30)
+
+                if resp.status_code == 200:
+                    result = resp.json()
+                    if 'candidates' in result and len(result['candidates']) > 0:
+                        content = result['candidates'][0]['content']['parts'][0]['text']
+                        logger.info(f"Successfully generated analysis using {model}")
+                        return content
+                    else:
+                        logger.warning(f"No candidates in response from {model}")
+                        continue
+                else:
+                    logger.warning(f"{model} returned status {resp.status_code}: {resp.text[:200]}")
+                    continue
+
+            except requests.exceptions.Timeout:
+                logger.warning(f"Timeout with {model}, trying next...")
+                continue
+            except requests.exceptions.RequestException as e:
+                logger.warning(f"Request error with {model}: {e}")
+                continue
+            except (KeyError, IndexError) as e:
+                logger.warning(f"Response parsing error with {model}: {e}")
+                continue
+            except Exception as e:
+                logger.error(f"Unexpected error with {model}: {type(e).__name__}: {e}")
+                continue
+
+        logger.error("All Gemini models failed to generate analysis")
+        return "Failed to generate - Check API key and quota"
+
+    def _build_prompt(self, data: Dict, news: List[Dict], patterns: List[Dict], lang: str) -> str:
+        """Build analysis prompt based on language"""
+        metrics = "\n".join([f"- {k}: {v['value']}" for k, v in data.items()])
         headlines = "\n".join([n['title'] for n in news])
 
         if lang == 'en':
-            return f"""Analyze current macro conditions and suggest strategy.
-Indicators:
+            return f"""Analyze current macro conditions and suggest investment strategy.
+
+Current Macro Indicators:
 {metrics}
-News:
+
+Recent News Headlines:
 {headlines}
-Request: 1. Summary 2. Opportunity 3. Risks 4. Strategy. Be concise."""
+
+Provide analysis in this format:
+1. **Market Summary**: Brief overview of current conditions
+2. **Key Opportunities**: Which sectors/asset classes look attractive
+3. **Risks to Monitor**: Potential downside risks
+4. **Concrete Strategy**: Specific actionable recommendations
+
+Be concise and data-driven."""
         else:
-            return f"""현재 시장 상황을 분석하고 전략을 제안하세요.
-지표:
+            return f"""현재 시장 상황을 분석하고 투자 전략을 제안하세요.
+
+현재 거시 지표:
 {metrics}
-뉴스:
+
+최근 뉴스 헤드라인:
 {headlines}
-요청: 1. 요약 2. 기회(섹터) 3. 리스크 4. 구체적 전략. 한국어로 작성."""
+
+다음 형식으로 분석해주세요:
+1. **시장 요약**: 현재 상황에 대한 간략한 개요
+2. **핵심 기회**: 매력적인 섹터/자산 클래스
+3. **리스크 모니터링**: 잠재적 하방 리스크
+4. **구체적 전략**: 실행 가능한 투자 권고
+
+간결하고 데이터에 기반하여 작성해주세요."""
+
+
+class OpenAIAnalyzer:
+    """OpenAI Analysis fallback"""
+
+    def __init__(self):
+        self.api_key = os.getenv('OPENAI_API_KEY')
+        # Try multiple model options for better availability/cost
+        self.models = [
+            "gpt-4o-mini",  # Primary: Cheap and fast
+            "gpt-4o"        # Fallback: More capable
+        ]
+        self.base_url = "https://api.openai.com/v1/chat/completions"
+
+    def analyze(self, data: Dict, news: List[Dict], patterns: List[Dict], lang: str = 'ko') -> str:
+        """
+        Analyze macro data using OpenAI
+
+        Args:
+            data: Macro indicator data
+            news: News headlines
+            patterns: Historical patterns
+            lang: Language ('ko' or 'en')
+
+        Returns:
+            Analysis text string
+        """
+        if not self.api_key:
+            logger.error("OPENAI_API_KEY not found in .env")
+            return "API Key Missing - Check .env file"
+
+        prompt = self._build_prompt(data, news, patterns, lang)
+
+        # Try each model until one works
+        for model in self.models:
+            try:
+                logger.info(f"Trying OpenAI model: {model}")
+
+                payload = {
+                    "model": model,
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.7,
+                    "max_tokens": 8000
+                }
+
+                headers = {
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json"
+                }
+
+                resp = requests.post(self.base_url, headers=headers, json=payload, timeout=30)
+
+                if resp.status_code == 200:
+                    result = resp.json()
+                    if 'choices' in result and len(result['choices']) > 0:
+                        content = result['choices'][0]['message']['content']
+                        logger.info(f"Successfully generated analysis using {model}")
+                        return content
+                    else:
+                        logger.warning(f"No choices in response from {model}")
+                        continue
+                else:
+                    logger.warning(f"{model} returned status {resp.status_code}: {resp.text[:200]}")
+                    continue
+
+            except requests.exceptions.Timeout:
+                logger.warning(f"Timeout with {model}, trying next...")
+                continue
+            except requests.exceptions.RequestException as e:
+                logger.warning(f"Request error with {model}: {e}")
+                continue
+            except (KeyError, IndexError) as e:
+                logger.warning(f"Response parsing error with {model}: {e}")
+                continue
+            except Exception as e:
+                logger.error(f"Unexpected error with {model}: {type(e).__name__}: {e}")
+                continue
+
+        logger.error("All OpenAI models failed to generate analysis")
+        return "Failed to generate - Check API key and quota"
+
+    def _build_prompt(self, data: Dict, news: List[Dict], patterns: List[Dict], lang: str) -> str:
+        """Build analysis prompt based on language"""
+        metrics = "\n".join([f"- {k}: {v['value']}" for k, v in data.items()])
+        headlines = "\n".join([n['title'] for n in news])
+
+        if lang == 'en':
+            return f"""Analyze current macro conditions and suggest investment strategy.
+
+Current Macro Indicators:
+{metrics}
+
+Recent News Headlines:
+{headlines}
+
+Provide analysis in this format:
+1. **Market Summary**: Brief overview of current conditions
+2. **Key Opportunities**: Which sectors/asset classes look attractive
+3. **Risks to Monitor**: Potential downside risks
+4. **Concrete Strategy**: Specific actionable recommendations
+
+Be concise and data-driven."""
+        else:
+            return f"""현재 시장 상황을 분석하고 투자 전략을 제안하세요.
+
+현재 거시 지표:
+{metrics}
+
+최근 뉴스 헤드라인:
+{headlines}
+
+다음 형식으로 분석해주세요:
+1. **시장 요약**: 현재 상황에 대한 간략한 개요
+2. **핵심 기회**: 매력적인 섹터/자산 클래스
+3. **리스크 모니터링**: 잠재적 하방 리스크
+4. **구체적 전략**: 실행 가능한 투자 권고
+
+간결하고 데이터에 기반하여 작성해주세요."""
 
 
 class MultiModelAnalyzer:
+    """Multi-model macro analysis with Gemini primary, OpenAI fallback"""
+
     def __init__(self, data_dir='.'):
         self.data_dir = data_dir
         self.collector = MacroDataCollector()
-        self.gemini = MacroAIAnalyzer()
+        self.gemini = GeminiAnalyzer()  # Try first
+        self.openai = OpenAIAnalyzer()  # Fallback
 
-    def run(self):
-        data = self.collector.get_current_macro_data()
-        news = self.collector.get_macro_news()
-        patterns = self.collector.get_historical_patterns()
+    def analyze_with_fallback(self, data: Dict, news: List[Dict], patterns: List[Dict], lang: str = 'ko') -> tuple:
+        """
+        Analyze with Gemini first, fallback to OpenAI if Gemini fails
 
-        # Gemini Analysis
-        analysis_ko = self.gemini.analyze(data, news, patterns, 'ko')
-        analysis_en = self.gemini.analyze(data, news, patterns, 'en')
+        Args:
+            data: Macro indicator data
+            news: News headlines
+            patterns: Historical patterns
+            lang: Language ('ko' or 'en')
 
-        output = {
-            'timestamp': datetime.now().isoformat(),
-            'macro_indicators': data,
-            'ai_analysis': analysis_ko
-        }
+        Returns:
+            tuple: (analysis_text, used_model)
+        """
+        # Try Gemini first
+        logger.info("Attempting Gemini analysis...")
+        result = self.gemini.analyze(data, news, patterns, lang)
+        if "Failed to generate" not in result and "API Key Missing" not in result:
+            logger.info("Gemini analysis successful")
+            return result, "Gemini"
 
-        with open(os.path.join(self.data_dir, 'macro_analysis.json'), 'w') as f:
-            json.dump(output, f, indent=2, ensure_ascii=False)
+        # Fallback to OpenAI
+        logger.warning("Gemini failed, trying OpenAI fallback...")
+        result = self.openai.analyze(data, news, patterns, lang)
+        if "Failed to generate" not in result and "API Key Missing" not in result:
+            logger.info("OpenAI fallback successful")
+            return result, "OpenAI"
 
-        # English version
-        output['ai_analysis'] = analysis_en
-        with open(os.path.join(self.data_dir, 'macro_analysis_en.json'), 'w') as f:
-            json.dump(output, f, indent=2)
+        logger.error("Both Gemini and OpenAI failed")
+        return result, "Failed"
 
-        logger.info("Saved macro analysis")
+    def run(self) -> bool:
+        """
+        Run the analysis pipeline with fallback logic
+
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            # Collect data
+            logger.info("Starting macro analysis pipeline...")
+            data = self.collector.get_current_macro_data()
+            news = self.collector.get_macro_news()
+            patterns = self.collector.get_historical_patterns()
+
+            # Analysis with fallback
+            logger.info("Generating Korean analysis...")
+            analysis_ko, model_ko = self.analyze_with_fallback(data, news, patterns, 'ko')
+
+            logger.info("Generating English analysis...")
+            analysis_en, model_en = self.analyze_with_fallback(data, news, patterns, 'en')
+
+            # Save Korean version
+            output_ko = {
+                'timestamp': datetime.now().isoformat(),
+                'macro_indicators': data,
+                'ai_analysis': analysis_ko,
+                'model': model_ko
+            }
+
+            ko_path = os.path.join(self.data_dir, 'macro_analysis.json')
+            with open(ko_path, 'w', encoding='utf-8') as f:
+                json.dump(output_ko, f, indent=2, ensure_ascii=False)
+            logger.info(f"Saved Korean analysis to {ko_path} (Model: {model_ko})")
+
+            # Save English version
+            output_en = {
+                'timestamp': datetime.now().isoformat(),
+                'macro_indicators': data,
+                'ai_analysis': analysis_en,
+                'model': model_en
+            }
+
+            en_path = os.path.join(self.data_dir, 'macro_analysis_en.json')
+            with open(en_path, 'w', encoding='utf-8') as f:
+                json.dump(output_en, f, indent=2, ensure_ascii=False)
+            logger.info(f"Saved English analysis to {en_path} (Model: {model_en})")
+
+            return True
+
+        except Exception as e:
+            logger.error(f"Error in analysis pipeline: {type(e).__name__}: {e}")
+            return False
 
 
 if __name__ == "__main__":
-    MultiModelAnalyzer().run()
+    analyzer = MultiModelAnalyzer()
+    success = analyzer.run()
+
+    if success:
+        logger.info("Macro analysis completed successfully")
+    else:
+        logger.error("Macro analysis failed - check logs above")

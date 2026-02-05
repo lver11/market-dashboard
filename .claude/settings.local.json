@@ -3,7 +3,19 @@
     "allow": [
       "mcp__zread__search_doc",
       "Bash(gh run list:*)",
-      "Bash(gh run view:*)"
+      "Bash(gh run view:*)",
+      "Bash(bun install:*)",
+      "Bash(taskkill:*)",
+      "Bash(tasklist:*)",
+      "Bash(findstr:*)",
+      "mcp__filesystem__get_file_info",
+      "mcp__filesystem__read_text_file",
+      "Bash(more:*)",
+      "Bash(gh workflow run:*)",
+      "Bash(timeout:*)",
+      "Bash(ping:*)",
+      "Bash(gh run watch:*)",
+      "Bash(gh api:*)"
     ]
   },
   "enabledMcpjsonServers": [

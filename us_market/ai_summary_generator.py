@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 AI Stock Summary Generator
-Generates investment summaries using Gemini AI
+Generates investment summaries using OpenAI GPT-4o Mini
 """
 
 import os
@@ -35,10 +35,10 @@ class NewsCollector:
             pass
         return news
 
-class GeminiGenerator:
+class OpenAIAnalyzer:
     def __init__(self):
-        self.key = os.getenv('GOOGLE_API_KEY')
-        self.url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent"
+        self.key = os.getenv('OPENAI_API_KEY')
+        self.model = "gpt-4o-mini"
 
     def generate(self, ticker, data, news, lang='ko'):
         if not self.key:
@@ -47,30 +47,54 @@ class GeminiGenerator:
         news_txt = "\n".join([n['title'] for n in news])
         score_info = f"Score: {data.get('composite_score')}/100, Quant: {data.get('grade')}"
 
+        system_prompt = "You are an expert financial analyst providing stock investment summaries."
+
         if lang == 'ko':
-            prompt = f"""종목: {ticker}
+            user_prompt = f"""종목: {ticker}
 정보: {score_info}
 뉴스: {news_txt}
 요청: 3-4문장으로 투자 의견 요약 (수급, 펀더멘털, 전략). 이모지 X."""
         else:
-            prompt = f"""Stock: {ticker}
+            user_prompt = f"""Stock: {ticker}
 Info: {score_info}
 News: {news_txt}
 Req: 3-4 sentence investment summary. No emojis."""
 
         try:
-            payload = {"contents": [{"parts": [{"text": prompt}]}]}
-            resp = requests.post(f"{self.url}?key={self.key}", json=payload)
+            url = "https://api.openai.com/v1/chat/completions"
+            headers = {
+                "Authorization": f"Bearer {self.key}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "model": self.model,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                "temperature": 0.7,
+                "max_tokens": 500
+            }
+            resp = requests.post(url, headers=headers, json=payload, timeout=30)
             if resp.status_code == 200:
-                return resp.json()['candidates'][0]['content']['parts'][0]['text']
-        except (requests.RequestException, KeyError, ValueError):
-            return "Analysis Failed"
+                result = resp.json()
+                if 'choices' in result and len(result['choices']) > 0:
+                    return result['choices'][0]['message']['content'].strip()
+            elif resp.status_code == 429:
+                logger.warning("OpenAI API quota exceeded. Please check your plan and billing details.")
+                return "API Quota Exceeded"
+            else:
+                logger.error(f"OpenAI API error: {resp.status_code} - {resp.text}")
+        except (requests.RequestException, KeyError, ValueError) as e:
+            logger.error(f"OpenAI API request failed: {e}")
+
+        return "Analysis Failed"
 
 class AIStockAnalyzer:
     def __init__(self, data_dir='.'):
         self.data_dir = data_dir
         self.output = os.path.join(data_dir, 'ai_summaries.json')
-        self.gen = GeminiGenerator()
+        self.gen = OpenAIAnalyzer()
         self.news = NewsCollector()
 
     def run(self, top_n=20):
@@ -83,13 +107,17 @@ class AIStockAnalyzer:
 
         # Load existing
         if os.path.exists(self.output):
-            with open(self.output) as f:
-                results = json.load(f)
+            try:
+                with open(self.output, 'r', encoding='utf-8') as f:
+                    results = json.load(f)
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                logger.warning("Existing JSON file corrupted, creating new one")
+                results = {}
 
         for _, row in tqdm(df.iterrows(), total=len(df)):
             ticker = row['ticker']
-            if ticker in results:
-                continue  # Skip if exists
+            if ticker in results and results[ticker].get('summary') != 'Analysis Failed':
+                continue  # Skip if already has good summary
 
             news = self.news.get_news(ticker)
             summary_ko = self.gen.generate(ticker, row.to_dict(), news, 'ko')
@@ -103,7 +131,7 @@ class AIStockAnalyzer:
             }
             time.sleep(1) # Rate limit
 
-        with open(self.output, 'w') as f:
+        with open(self.output, 'w', encoding='utf-8') as f:
             json.dump(results, f, indent=2, ensure_ascii=False)
         logger.info(f"Saved {len(results)} summaries")
 

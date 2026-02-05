@@ -1,164 +1,128 @@
 {
+  "AVY": {
+    "summary": "API Quota Exceeded",
+    "summary_ko": "API Quota Exceeded",
+    "summary_en": "API Quota Exceeded",
+    "updated": "2026-02-05T21:00:26.784386"
+  },
   "FITB": {
-    "summary": null,
-    "summary_ko": null,
-    "summary_en": null,
-    "updated": "2026-02-02T00:20:21.834143"
-  },
-  "FDX": {
-    "summary": null,
-    "summary_ko": null,
-    "summary_en": null,
-    "updated": "2026-02-02T00:20:24.517980"
-  },
-  "PPG": {
-    "summary": null,
-    "summary_ko": null,
-    "summary_en": null,
-    "updated": "2026-02-02T00:20:26.715356"
+    "summary": "API Quota Exceeded",
+    "summary_ko": "API Quota Exceeded",
+    "summary_en": "API Quota Exceeded",
+    "updated": "2026-02-05T21:00:31.287199"
   },
   "NOC": {
-    "summary": null,
-    "summary_ko": null,
-    "summary_en": null,
-    "updated": "2026-02-02T00:20:28.962369"
-  },
-  "CMCSA": {
-    "summary": null,
-    "summary_ko": null,
-    "summary_en": null,
-    "updated": "2026-02-02T00:20:31.128193"
-  },
-  "AMP": {
-    "summary": null,
-    "summary_ko": null,
-    "summary_en": null,
-    "updated": "2026-02-02T00:20:33.345935"
-  },
-  "DECK": {
-    "summary": null,
-    "summary_ko": null,
-    "summary_en": null,
-    "updated": "2026-02-02T00:20:35.552268"
+    "summary": "API Quota Exceeded",
+    "summary_ko": "API Quota Exceeded",
+    "summary_en": "API Quota Exceeded",
+    "updated": "2026-02-05T21:00:33.683729"
   },
   "EIX": {
-    "summary": null,
-    "summary_ko": null,
-    "summary_en": null,
-    "updated": "2026-02-02T00:20:37.781795"
+    "summary": "API Quota Exceeded",
+    "summary_ko": "API Quota Exceeded",
+    "summary_en": "API Quota Exceeded",
+    "updated": "2026-02-05T21:00:36.854801"
   },
-  "CL": {
-    "summary": null,
-    "summary_ko": null,
-    "summary_en": null,
-    "updated": "2026-02-02T00:20:40.463772"
+  "RMD": {
+    "summary": "API Quota Exceeded",
+    "summary_ko": "API Quota Exceeded",
+    "summary_en": "API Quota Exceeded",
+    "updated": "2026-02-05T21:00:39.045577"
   },
-  "SYY": {
-    "summary": null,
-    "summary_ko": null,
-    "summary_en": null,
-    "updated": "2026-02-02T00:20:42.762804"
-  },
-  "AOS": {
-    "summary": null,
-    "summary_ko": null,
-    "summary_en": null,
-    "updated": "2026-02-02T00:20:44.922806"
-  },
-  "GILD": {
-    "summary": null,
-    "summary_ko": null,
-    "summary_en": null,
-    "updated": "2026-02-02T00:20:47.322955"
-  },
-  "MDLZ": {
-    "summary": null,
-    "summary_ko": null,
-    "summary_en": null,
-    "updated": "2026-02-02T00:20:49.449476"
-  },
-  "IEX": {
-    "summary": null,
-    "summary_ko": null,
-    "summary_en": null,
-    "updated": "2026-02-02T00:20:51.542972"
-  },
-  "JNJ": {
-    "summary": null,
-    "summary_ko": null,
-    "summary_en": null,
-    "updated": "2026-02-02T00:20:53.942620"
-  },
-  "NEM": {
-    "summary": null,
-    "summary_ko": null,
-    "summary_en": null,
-    "updated": "2026-02-02T00:20:56.073627"
-  },
-  "STX": {
-    "summary": null,
-    "summary_ko": null,
-    "summary_en": null,
-    "updated": "2026-02-02T00:20:58.292120"
-  },
-  "KMI": {
-    "summary": null,
-    "summary_ko": null,
-    "summary_en": null,
-    "updated": "2026-02-02T00:21:00.912474"
-  },
-  "KIM": {
-    "summary": null,
-    "summary_ko": null,
-    "summary_en": null,
-    "updated": "2026-02-02T00:21:03.159045"
-  },
-  "CPRT": {
-    "summary": null,
-    "summary_ko": null,
-    "summary_en": null,
-    "updated": "2026-02-02T00:21:05.272134"
-  },
-  "RF": {
-    "summary": null,
-    "summary_ko": null,
-    "summary_en": null,
-    "updated": "2026-02-03T18:48:49.547616"
+  "CMCSA": {
+    "summary": "API Quota Exceeded",
+    "summary_ko": "API Quota Exceeded",
+    "summary_en": "API Quota Exceeded",
+    "updated": "2026-02-05T21:00:41.325812"
   },
   "VZ": {
-    "summary": null,
-    "summary_ko": null,
-    "summary_en": null,
-    "updated": "2026-02-03T18:48:52.137026"
+    "summary": "API Quota Exceeded",
+    "summary_ko": "API Quota Exceeded",
+    "summary_en": "API Quota Exceeded",
+    "updated": "2026-02-05T21:00:44.660027"
   },
-  "DXCM": {
-    "summary": null,
-    "summary_ko": null,
-    "summary_en": null,
-    "updated": "2026-02-03T18:48:55.231849"
+  "LNT": {
+    "summary": "API Quota Exceeded",
+    "summary_ko": "API Quota Exceeded",
+    "summary_en": "API Quota Exceeded",
+    "updated": "2026-02-05T21:00:47.143333"
   },
-  "AVY": {
-    "summary": null,
-    "summary_ko": null,
-    "summary_en": null,
-    "updated": "2026-02-03T18:48:57.288530"
+  "BALL": {
+    "summary": "API Quota Exceeded",
+    "summary_ko": "API Quota Exceeded",
+    "summary_en": "API Quota Exceeded",
+    "updated": "2026-02-05T21:00:49.406147"
   },
-  "FCX": {
-    "summary": null,
-    "summary_ko": null,
-    "summary_en": null,
-    "updated": "2026-02-03T18:48:59.595836"
+  "PPG": {
+    "summary": "API Quota Exceeded",
+    "summary_ko": "API Quota Exceeded",
+    "summary_en": "API Quota Exceeded",
+    "updated": "2026-02-05T21:00:51.656117"
   },
-  "GL": {
-    "summary": null,
-    "summary_ko": null,
-    "summary_en": null,
-    "updated": "2026-02-03T18:49:01.954332"
+  "JNJ": {
+    "summary": "API Quota Exceeded",
+    "summary_ko": "API Quota Exceeded",
+    "summary_en": "API Quota Exceeded",
+    "updated": "2026-02-05T21:00:53.847389"
   },
-  "NWSA": {
-    "summary": null,
-    "summary_ko": null,
-    "summary_en": null,
-    "updated": "2026-02-03T18:49:03.940528"
+  "CL": {
+    "summary": "API Quota Exceeded",
+    "summary_ko": "API Quota Exceeded",
+    "summary_en": "API Quota Exceeded",
+    "updated": "2026-02-05T21:00:56.752796"
+  },
+  "AMCR": {
+    "summary": "API Quota Exceeded",
+    "summary_ko": "API Quota Exceeded",
+    "summary_en": "API Quota Exceeded",
+    "updated": "2026-02-05T21:00:59.179254"
+  },
+  "MOS": {
+    "summary": "API Quota Exceeded",
+    "summary_ko": "API Quota Exceeded",
+    "summary_en": "API Quota Exceeded",
+    "updated": "2026-02-05T21:01:01.305990"
+  },
+  "SYY": {
+    "summary": "API Quota Exceeded",
+    "summary_ko": "API Quota Exceeded",
+    "summary_en": "API Quota Exceeded",
+    "updated": "2026-02-05T21:01:03.554042"
+  },
+  "KMI": {
+    "summary": "API Quota Exceeded",
+    "summary_ko": "API Quota Exceeded",
+    "summary_en": "API Quota Exceeded",
+    "updated": "2026-02-05T21:01:05.776030"
+  },
+  "GILD": {
+    "summary": "API Quota Exceeded",
+    "summary_ko": "API Quota Exceeded",
+    "summary_en": "API Quota Exceeded",
+    "updated": "2026-02-05T21:01:08.265953"
+  },
+  "HBAN": {
+    "summary": "API Quota Exceeded",
+    "summary_ko": "API Quota Exceeded",
+    "summary_en": "API Quota Exceeded",
+    "updated": "2026-02-05T21:01:11.446336"
+  },
+  "SHW": {
+    "summary": "API Quota Exceeded",
+    "summary_ko": "API Quota Exceeded",
+    "summary_en": "API Quota Exceeded",
+    "updated": "2026-02-05T21:01:14.482686"
+  },
+  "NEE": {
+    "summary": "API Quota Exceeded",
+    "summary_ko": "API Quota Exceeded",
+    "summary_en": "API Quota Exceeded",
+    "updated": "2026-02-05T21:01:17.504983"
+  },
+  "IEX": {
+    "summary": "API Quota Exceeded",
+    "summary_ko": "API Quota Exceeded",
+    "summary_en": "API Quota Exceeded",
+    "updated": "2026-02-05T21:48:04.918572"
   }
 }
