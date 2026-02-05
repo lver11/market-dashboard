@@ -23,9 +23,10 @@ class VolumeAnalyzer:
     """Volume-based technical analysis for supply/demand detection"""
 
     def __init__(self, data_dir: str = None):
-        # Use current working directory by default (where script is invoked from)
+        # Use DATA_DIR environment variable or current directory
+        # This matches create_us_daily_prices.py behavior
         if data_dir is None:
-            data_dir = '.'
+            data_dir = os.getenv('DATA_DIR', '.')
         self.data_dir = data_dir
         self.prices_file = os.path.join(data_dir, 'us_daily_prices.csv')
         self.output_file = os.path.join(data_dir, 'us_volume_analysis.csv')
