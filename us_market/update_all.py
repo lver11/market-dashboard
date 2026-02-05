@@ -10,7 +10,7 @@ scripts = [
     ("analyze_volume.py", "Volume Analysis", 600),
     ("smart_money_screener_v2.py", "Screening", 600),
     ("sector_heatmap.py", "Heatmap", 300),
-    ("options_flow.py", "Options", 300),
+    ("options_flow.py", "Options", 300),    
     ("ai_summary_generator.py", "AI summaries", 1200),
     ("final_report_generator.py", "Final Report", 60),
     ("macro_analyzer.py", "Macro Analysis", 300),
@@ -69,7 +69,7 @@ def main():
 
     # Filter scripts based on arguments
     scripts_to_run = scripts
-    if args.scripts:
+    if args.scripts and len(args.scripts) > 0:
         # Run only specified scripts
         scripts_to_run = [(s, d, t) for s, d, t in scripts
                           if any(arg in s for arg in args.scripts)]
