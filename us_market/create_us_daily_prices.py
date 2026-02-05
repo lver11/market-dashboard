@@ -284,7 +284,7 @@ def main():
 
     if success:
         print("\n🎉 US Stock Daily Prices collection completed!")
-        print(f"📁 File location: {self.prices_file}")
+        print(f"📁 File location: {creator.prices_file}")
     else:
         print("\n❌ Collection failed.")
 
