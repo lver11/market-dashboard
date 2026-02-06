@@ -36,13 +36,13 @@ class NewsCollector:
         return news
 
 class ZAIAnalyzer:
-    """Z.ai (Zero One) API Analyzer - OpenAI Compatible"""
+    """Z.ai (Zero One) API Analyzer - Coding Plan"""
     def __init__(self):
         self.key = os.getenv('ZAI_API_KEY')
-        # Z.ai uses OpenAI-compatible API
-        self.base_url = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
+        # Z.ai Coding Plan base URL
+        self.base_url = "https://api.z.ai/api/coding/paas/v4"
         self.model = "glm-4-plus"  # Z.ai's latest model
-        self.min_request_interval = 2  # Minimum seconds between requests to avoid rate limit
+        self.min_request_interval = 2  # Minimum seconds between requests
 
     def generate(self, ticker, data, news, lang='ko'):
         if not self.key:
@@ -65,6 +65,9 @@ News: {news_txt}
 Req: 3-4 sentence investment summary. No emojis, be concise."""
 
         try:
+            # Construct full URL
+            url = f"{self.base_url}/chat/completions"
+
             headers = {
                 "Authorization": f"Bearer {self.key}",
                 "Content-Type": "application/json"
@@ -80,7 +83,7 @@ Req: 3-4 sentence investment summary. No emojis, be concise."""
             }
 
             logger.info(f"Calling Z.ai API for {ticker}...")
-            resp = requests.post(self.base_url, headers=headers, json=payload, timeout=30)
+            resp = requests.post(url, headers=headers, json=payload, timeout=30)
 
             if resp.status_code == 200:
                 result = resp.json()

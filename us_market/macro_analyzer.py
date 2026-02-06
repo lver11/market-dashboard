@@ -219,15 +219,15 @@ Be concise and data-driven."""
 간결하고 데이터에 기반하여 작성해주세요."""
 
 class ZAIAnalyzer:
-    """Z.ai (Zero One) Analysis - OpenAI Compatible API"""
+    """Z.ai (Zero One) Analysis - Coding Plan"""
 
     def __init__(self):
         self.api_key = os.getenv('ZAI_API_KEY')
-        # Z.ai GLM models - only use glm-4-plus as it's the only available model
+        # Z.ai Coding Plan base URL
         self.models = [
             "glm-4-plus",   # Primary: Most capable (only model available)
         ]
-        self.base_url = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
+        self.base_url = "https://api.z.ai/api/coding/paas/v4"
         self.min_request_interval = 2  # Seconds between requests to avoid rate limit
 
     def analyze(self, data: Dict, news: List[Dict], patterns: List[Dict], lang: str = 'ko') -> str:
@@ -266,7 +266,9 @@ class ZAIAnalyzer:
                     "Content-Type": "application/json"
                 }
 
-                resp = requests.post(self.base_url, headers=headers, json=payload, timeout=30)
+                # Construct full URL
+                url = f"{self.base_url}/chat/completions"
+                resp = requests.post(url, headers=headers, json=payload, timeout=30)
 
                 if resp.status_code == 200:
                     result = resp.json()
@@ -285,7 +287,7 @@ class ZAIAnalyzer:
                     logger.warning("Z.ai API rate limit reached. Waiting 5 seconds...")
                     time.sleep(5)  # Wait for rate limit to reset
                     # Retry once after rate limit
-                    resp = requests.post(self.base_url, headers=headers, json=payload, timeout=30)
+                    resp = requests.post(url, headers=headers, json=payload, timeout=30)
                     if resp.status_code == 200:
                         result = resp.json()
                         if 'choices' in result and len(result['choices']) > 0:
