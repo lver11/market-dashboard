@@ -168,7 +168,7 @@ Req: 3-4 sentence investment summary. No emojis, be concise."""
                     }],
                     "generationConfig": {
                         "temperature": 0.7,
-                        "maxOutputTokens": 500
+                        "maxOutputTokens": 2000  # Increased for longer summaries
                     }
                 }
 
