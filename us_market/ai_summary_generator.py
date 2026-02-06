@@ -35,6 +35,80 @@ class NewsCollector:
             pass
         return news
 
+class ZAIAnalyzer:
+    """Z.ai (Zero One) API Analyzer - OpenAI Compatible"""
+    def __init__(self):
+        self.key = os.getenv('ZAI_API_KEY')
+        # Z.ai uses OpenAI-compatible API
+        self.base_url = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
+        self.model = "glm-4-plus"  # Z.ai's latest model
+
+    def generate(self, ticker, data, news, lang='ko'):
+        if not self.key:
+            return "No Z.ai API Key"
+
+        news_txt = "\n".join([n['title'] for n in news]) if news else "최근 뉴스 없음"
+        score_info = f"Score: {data.get('composite_score')}/100, Quant: {data.get('grade')}"
+
+        system_prompt = "You are an expert financial analyst providing stock investment summaries."
+
+        if lang == 'ko':
+            user_prompt = f"""종목: {ticker}
+정보: {score_info}
+뉴스: {news_txt}
+요청: 3-4문장으로 투자 의견 요약 (수급, 펀더멘털, 전략). 이모지 사용하지 말고 간결하게 작성."""
+        else:
+            user_prompt = f"""Stock: {ticker}
+Info: {score_info}
+News: {news_txt}
+Req: 3-4 sentence investment summary. No emojis, be concise."""
+
+        try:
+            headers = {
+                "Authorization": f"Bearer {self.key}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "model": self.model,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                "temperature": 0.7,
+                "max_tokens": 500
+            }
+
+            logger.info(f"Calling Z.ai API for {ticker}...")
+            resp = requests.post(self.base_url, headers=headers, json=payload, timeout=30)
+
+            if resp.status_code == 200:
+                result = resp.json()
+                if 'choices' in result and len(result['choices']) > 0:
+                    summary = result['choices'][0]['message']['content'].strip()
+                    logger.info(f"Z.ai API success for {ticker}")
+                    return summary
+                else:
+                    logger.error(f"Z.ai API unexpected response format: {result}")
+                    return "API Response Format Error"
+            elif resp.status_code == 429:
+                logger.warning("Z.ai API quota exceeded.")
+                return "API Quota Exceeded"
+            elif resp.status_code == 401:
+                logger.error("Z.ai API authentication failed. Check API key.")
+                return "API Authentication Failed"
+            else:
+                logger.error(f"Z.ai API error: {resp.status_code} - {resp.text}")
+                return f"API Error ({resp.status_code})"
+
+        except requests.RequestException as e:
+            logger.error(f"Z.ai API request failed: {e}")
+            return "Network Error"
+        except (KeyError, ValueError) as e:
+            logger.error(f"Z.ai API response parsing failed: {e}")
+            return "Response Parsing Error"
+
+        return "Analysis Failed"
+
 class OpenAIAnalyzer:
     def __init__(self):
         self.key = os.getenv('OPENAI_API_KEY')
@@ -91,10 +165,16 @@ Req: 3-4 sentence investment summary. No emojis."""
         return "Analysis Failed"
 
 class AIStockAnalyzer:
-    def __init__(self, data_dir='.'):
+    def __init__(self, data_dir='.', use_zai=True):
         self.data_dir = data_dir
         self.output = os.path.join(data_dir, 'ai_summaries.json')
-        self.gen = OpenAIAnalyzer()
+        # Use Z.ai by default, fallback to OpenAI if needed
+        if use_zai and os.getenv('ZAI_API_KEY'):
+            self.gen = ZAIAnalyzer()
+            logger.info("Using Z.ai API for analysis")
+        else:
+            self.gen = OpenAIAnalyzer()
+            logger.info("Using OpenAI API for analysis")
         self.news = NewsCollector()
 
     def run(self, top_n=20):

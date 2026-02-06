@@ -218,6 +218,129 @@ Be concise and data-driven."""
 
 간결하고 데이터에 기반하여 작성해주세요."""
 
+class ZAIAnalyzer:
+    """Z.ai (Zero One) Analysis - OpenAI Compatible API"""
+
+    def __init__(self):
+        self.api_key = os.getenv('ZAI_API_KEY')
+        # Z.ai GLM models
+        self.models = [
+            "glm-4-plus",   # Primary: Most capable
+            "glm-4-0520",    # Fallback: Stable version
+        ]
+        self.base_url = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
+
+    def analyze(self, data: Dict, news: List[Dict], patterns: List[Dict], lang: str = 'ko') -> str:
+        """
+        Analyze macro data using Z.ai
+
+        Args:
+            data: Macro indicator data
+            news: News headlines
+            patterns: Historical patterns
+            lang: Language ('ko' or 'en')
+
+        Returns:
+            Analysis text string
+        """
+        if not self.api_key:
+            logger.error("ZAI_API_KEY not found in .env")
+            return "API Key Missing - Check .env file"
+
+        prompt = self._build_prompt(data, news, patterns, lang)
+
+        # Try each model until one works
+        for model in self.models:
+            try:
+                logger.info(f"Trying Z.ai model: {model}")
+
+                payload = {
+                    "model": model,
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.7,
+                    "max_tokens": 8000
+                }
+
+                headers = {
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json"
+                }
+
+                resp = requests.post(self.base_url, headers=headers, json=payload, timeout=30)
+
+                if resp.status_code == 200:
+                    result = resp.json()
+                    if 'choices' in result and len(result['choices']) > 0:
+                        content = result['choices'][0]['message']['content']
+                        logger.info(f"Successfully generated analysis using Z.ai {model}")
+                        return content
+                    else:
+                        logger.warning(f"No choices in response from Z.ai {model}")
+                        continue
+                elif resp.status_code == 401:
+                    logger.error("Z.ai authentication failed. Check API key.")
+                    return "API Authentication Failed"
+                elif resp.status_code == 429:
+                    logger.warning("Z.ai API quota exceeded.")
+                    return "API Quota Exceeded"
+                else:
+                    logger.warning(f"Z.ai {model} returned status {resp.status_code}: {resp.text[:200]}")
+                    continue
+
+            except requests.exceptions.Timeout:
+                logger.warning(f"Timeout with Z.ai {model}, trying next...")
+                continue
+            except requests.exceptions.RequestException as e:
+                logger.warning(f"Request error with Z.ai {model}: {e}")
+                continue
+            except (KeyError, IndexError) as e:
+                logger.warning(f"Response parsing error with Z.ai {model}: {e}")
+                continue
+            except Exception as e:
+                logger.error(f"Unexpected error with Z.ai {model}: {type(e).__name__}: {e}")
+                continue
+
+        logger.error("All Z.ai models failed to generate analysis")
+        return "Failed to generate - Check API key and quota"
+
+    def _build_prompt(self, data: Dict, news: List[Dict], patterns: List[Dict], lang: str) -> str:
+        """Build analysis prompt based on language"""
+        metrics = "\n".join([f"- {k}: {v['value']}" for k, v in data.items()])
+        headlines = "\n".join([n['title'] for n in news])
+
+        if lang == 'en':
+            return f"""Analyze current macro conditions and suggest investment strategy.
+
+Current Macro Indicators:
+{metrics}
+
+Recent News Headlines:
+{headlines}
+
+Provide analysis in this format:
+1. **Market Summary**: Brief overview of current conditions
+2. **Key Opportunities**: Which sectors/asset classes look attractive
+3. **Risks to Monitor**: Potential downside risks
+4. **Concrete Strategy**: Specific actionable recommendations
+
+Be specific and data-driven."""
+        else:
+            return f"""현재 마크로 경제 상황을 분석하고 투자 전략을 제시해주세요.
+
+현재 마크로 지표:
+{metrics}
+
+최근 뉴스 헤드라인:
+{headlines}
+
+다음 형식으로 분석을 제공해주세요:
+1. **시장 요약**: 현재 상황에 대한 간단한 개요
+2. **주요 기회**: 매력적인 섹터/자산 클래스
+3. **모니터링 필요 리스크**: 잠재적 하방 리스크
+4. **구체적 전략**: 실행 가능한 구체적 권장사항
+
+구체적이고 데이터 기반으로 작성해주세요."""
+
 
 class OpenAIAnalyzer:
     """OpenAI Analysis fallback"""
@@ -338,17 +461,18 @@ Be concise and data-driven."""
 
 
 class MultiModelAnalyzer:
-    """Multi-model macro analysis with Gemini primary, OpenAI fallback"""
+    """Multi-model macro analysis with Z.ai primary, Gemini/OpenAI fallback"""
 
     def __init__(self, data_dir='.'):
         self.data_dir = data_dir
         self.collector = MacroDataCollector()
-        self.gemini = GeminiAnalyzer()  # Try first
-        self.openai = OpenAIAnalyzer()  # Fallback
+        self.zai = ZAIAnalyzer()  # Try first (new Z.ai API)
+        self.gemini = GeminiAnalyzer()  # Second
+        self.openai = OpenAIAnalyzer()  # Final fallback
 
     def analyze_with_fallback(self, data: Dict, news: List[Dict], patterns: List[Dict], lang: str = 'ko') -> tuple:
         """
-        Analyze with Gemini first, fallback to OpenAI if Gemini fails
+        Analyze with Z.ai first, fallback to Gemini, then OpenAI
 
         Args:
             data: Macro indicator data
@@ -359,21 +483,28 @@ class MultiModelAnalyzer:
         Returns:
             tuple: (analysis_text, used_model)
         """
-        # Try Gemini first
-        logger.info("Attempting Gemini analysis...")
+        # Try Z.ai first
+        logger.info("Attempting Z.ai analysis...")
+        result = self.zai.analyze(data, news, patterns, lang)
+        if "Failed to generate" not in result and "API Key Missing" not in result and "API Authentication Failed" not in result and "API Quota Exceeded" not in result:
+            logger.info("Z.ai analysis successful")
+            return result, "Z.ai"
+
+        # Fallback to Gemini
+        logger.warning("Z.ai failed, trying Gemini fallback...")
         result = self.gemini.analyze(data, news, patterns, lang)
         if "Failed to generate" not in result and "API Key Missing" not in result:
-            logger.info("Gemini analysis successful")
+            logger.info("Gemini fallback successful")
             return result, "Gemini"
 
-        # Fallback to OpenAI
+        # Final fallback to OpenAI
         logger.warning("Gemini failed, trying OpenAI fallback...")
         result = self.openai.analyze(data, news, patterns, lang)
         if "Failed to generate" not in result and "API Key Missing" not in result:
             logger.info("OpenAI fallback successful")
             return result, "OpenAI"
 
-        logger.error("Both Gemini and OpenAI failed")
+        logger.error("All models (Z.ai, Gemini, OpenAI) failed")
         return result, "Failed"
 
     def run(self) -> bool:
