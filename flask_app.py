@@ -658,12 +658,23 @@ def get_us_macro_analysis():
         if not os.path.exists(analysis_path):
             analysis_path = "us_market/macro_analysis.json"
 
-        ai_analysis = "AI 분석을 로드할 수 없습니다. macro_analyzer.py를 실행하세요."
+        ai_analysis_default = "AI 분석을 로드할 수 없습니다. macro_analyzer.py를 실행하세요."
         if os.path.exists(analysis_path):
             with open(analysis_path, "r", encoding="utf-8") as f:
                 cached = json.load(f)
-                ai_analysis = cached.get("ai_analysis", ai_analysis)
+                ai_analysis = cached.get("ai_analysis", ai_analysis_default)
                 macro_indicators = cached.get("macro_indicators", {})
+
+        # Replace error messages with user-friendly fallback
+        error_messages = [
+            "Failed to generate - Check API key and quota",
+            "Failed to generate",
+            "API Quota Exceeded",
+            "API Error",
+        ]
+
+        if ai_analysis in error_messages or not ai_analysis or ai_analysis.strip() == "":
+            ai_analysis = ai_analysis_default
 
         for name, ticker in {
             "VIX": "^VIX",
@@ -846,6 +857,46 @@ def get_us_ai_summary(ticker):
             summary = summary_data.get("summary_en", summary_data.get("summary_ko", ""))
         else:
             summary = summary_data.get("summary_ko", summary_data.get("summary_en", ""))
+
+        # Replace error messages with user-friendly fallback
+        error_messages = [
+            "API Quota Exceeded",
+            "Failed to generate - Check API key and quota",
+            "Failed to generate",
+            "API Error",
+        ]
+
+        if summary in error_messages or not summary or summary.strip() == "":
+            if lang == "en":
+                summary = """### 📊 Stock Analysis Not Available
+
+AI-powered analysis is currently unavailable due to API limitations.
+
+**What you can still see:**
+- Real-time price charts
+- Technical indicators (RSI, MACD, Bollinger Bands)
+- Volume analysis and smart money flows
+
+**To enable AI analysis:**
+1. Check API key configuration in `.env` file
+2. Verify API quota is available
+3. Run `python us_market/ai_summary_generator.py` to generate summaries
+"""
+            else:
+                summary = """### 📊 AI 분석 임시 중단
+
+API 할당량 문제로 AI 분석 기능을 현재 사용할 수 없습니다.
+
+**현재 이용 가능한 기능:**
+- 실시간 가격 차트
+- 기술적 지표 (RSI, MACD, 볼린저 밴드)
+- 거래량 분석 및 스마트 머니 흐름
+
+**AI 분석 재개 방법:**
+1. `.env` 파일에서 API 키 설정 확인
+2. API 할당량 여부 확인
+3. `python us_market/ai_summary_generator.py` 실행하여 요약 생성
+"""
 
         return jsonify(
             {
