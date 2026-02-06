@@ -6,8 +6,8 @@
         "pc_ratio": 0.65,
         "call_vol": 291123,
         "put_vol": 188197,
-        "call_oi": 193776,
-        "put_oi": 112123
+        "call_oi": 0,
+        "put_oi": 0
       },
       "unusual": {
         "calls": 5,
@@ -18,10 +18,10 @@
       "ticker": "NVDA",
       "metrics": {
         "pc_ratio": 0.54,
-        "call_vol": 711254,
+        "call_vol": 711256,
         "put_vol": 380838,
-        "call_oi": 488515,
-        "put_oi": 449238
+        "call_oi": 431,
+        "put_oi": 0
       },
       "unusual": {
         "calls": 7,
@@ -32,14 +32,14 @@
       "ticker": "TSLA",
       "metrics": {
         "pc_ratio": 1.15,
-        "call_vol": 594179,
-        "put_vol": 683595,
-        "call_oi": 309125,
-        "put_oi": 290232
+        "call_vol": 594180,
+        "put_vol": 683601,
+        "call_oi": 3,
+        "put_oi": 1
       },
       "unusual": {
         "calls": 17,
-        "puts": 12
+        "puts": 13
       }
     },
     {
@@ -48,8 +48,8 @@
         "pc_ratio": 1.69,
         "call_vol": 190411,
         "put_vol": 322572,
-        "call_oi": 146381,
-        "put_oi": 66682
+        "call_oi": 0,
+        "put_oi": 0
       },
       "unusual": {
         "calls": 12,
@@ -62,8 +62,8 @@
         "pc_ratio": 0.6,
         "call_vol": 385078,
         "put_vol": 231399,
-        "call_oi": 284151,
-        "put_oi": 171226
+        "call_oi": 0,
+        "put_oi": 0
       },
       "unusual": {
         "calls": 7,
@@ -76,8 +76,8 @@
         "pc_ratio": 0.79,
         "call_vol": 147136,
         "put_vol": 116139,
-        "call_oi": 111284,
-        "put_oi": 72313
+        "call_oi": 4,
+        "put_oi": 0
       },
       "unusual": {
         "calls": 14,
@@ -90,8 +90,8 @@
         "pc_ratio": 0.64,
         "call_vol": 290862,
         "put_vol": 184797,
-        "call_oi": 172113,
-        "put_oi": 122780
+        "call_oi": 0,
+        "put_oi": 0
       },
       "unusual": {
         "calls": 11,
@@ -101,29 +101,29 @@
     {
       "ticker": "SPY",
       "metrics": {
-        "pc_ratio": 1.21,
-        "call_vol": 2695864,
-        "put_vol": 3272026,
-        "call_oi": 151604,
-        "put_oi": 174099
+        "pc_ratio": 1.04,
+        "call_vol": 807305,
+        "put_vol": 836374,
+        "call_oi": 0,
+        "put_oi": 0
       },
       "unusual": {
-        "calls": 9,
-        "puts": 11
+        "calls": 17,
+        "puts": 9
       }
     },
     {
       "ticker": "QQQ",
       "metrics": {
-        "pc_ratio": 1.35,
-        "call_vol": 1111518,
-        "put_vol": 1503333,
-        "call_oi": 135551,
-        "put_oi": 128639
+        "pc_ratio": 0.86,
+        "call_vol": 687586,
+        "put_vol": 590288,
+        "call_oi": 0,
+        "put_oi": 0
       },
       "unusual": {
-        "calls": 9,
-        "puts": 10
+        "calls": 14,
+        "puts": 11
       }
     },
     {
@@ -132,8 +132,8 @@
         "pc_ratio": 1.68,
         "call_vol": 239662,
         "put_vol": 402611,
-        "call_oi": 235540,
-        "put_oi": 148471
+        "call_oi": 0,
+        "put_oi": 0
       },
       "unusual": {
         "calls": 11,
