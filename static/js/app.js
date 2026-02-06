@@ -393,12 +393,20 @@ function renderUSSmartMoneyPicks(data) {
  * @param {Object} data - Macro analysis data
  */
 function renderUSMacroAnalysis(data) {
-    const container = document.getElementById('macro-analysis-grid');
+    const container = document.getElementById('us-macro-indicators');
     if (!container) return;
 
-    const indicators = data.macro_indicators || [];
+    const indicators = data.macro_indicators || {};
 
-    container.innerHTML = indicators.map(indicator => {
+    // Convert object to array and add category/style info
+    const indicatorArray = Object.entries(indicators).map(([name, values]) => ({
+        name,
+        value: values.value || 0,
+        change_percent: values.change_1d || 0,
+        category: getIndicatorCategory(name)
+    }));
+
+    container.innerHTML = indicatorArray.map(indicator => {
         const indicatorStyle = getMacroIndicatorStyle(indicator.category);
         const changeClass = indicator.change_percent >= 0 ? 'koyfin-green' : 'koyfin-red';
 
@@ -414,7 +422,7 @@ function renderUSMacroAnalysis(data) {
     }).join('');
 
     // Update AI analysis text
-    const aiAnalysisContainer = document.getElementById('macro-ai-analysis');
+    const aiAnalysisContainer = document.getElementById('us-macro-ai-analysis');
     if (aiAnalysisContainer && data.ai_analysis) {
         aiAnalysisContainer.innerHTML = marked.parse(data.ai_analysis);
     }
@@ -1009,7 +1017,7 @@ async function reloadMacroAnalysis() {
  */
 async function loadUSAISummary(ticker) {
     try {
-        const container = document.getElementById('stock-ai-summary');
+        const container = document.getElementById('us-ai-summary');
         if (!container) return;
 
         container.innerHTML = `<p class="text-gray-500">${I18N[APP_STATE.language]['msg.loading']}</p>`;
@@ -1019,8 +1027,10 @@ async function loadUSAISummary(ticker) {
             'Stock AI Analysis'
         );
 
-        if (data && data.ai_analysis) {
-            container.innerHTML = marked.parse(data.ai_analysis);
+        if (data && data.summary) {
+            container.innerHTML = marked.parse(data.summary);
+        } else if (data && data.error) {
+            container.innerHTML = `<p class="text-yellow-500">${data.error}</p>`;
         } else {
             container.innerHTML = `<p class="text-gray-500">${I18N[APP_STATE.language]['msg.no_data']}</p>`;
         }
@@ -1409,6 +1419,20 @@ function getMacroIndicatorStyle(category) {
         default:
             return 'border-gray-500/30';
     }
+}
+
+/**
+ * Get category for macro indicator
+ * @param {string} name - Indicator name
+ */
+function getIndicatorCategory(name) {
+    const upperName = name.toUpperCase();
+
+    if (upperName === 'VIX') return 'volatility';
+    if (upperName === 'BTC' || upperName.includes('CRYPTO')) return 'crypto';
+    if (upperName.includes('YIELD') || upperName === 'DXY') return 'yields';
+
+    return 'default';
 }
 
 /**
