@@ -125,6 +125,82 @@ Req: 3-4 sentence investment summary. No emojis, be concise."""
 
         return "Analysis Failed"
 
+class GeminiAnalyzer:
+    """Gemini API Analyzer for stock summaries"""
+
+    def __init__(self):
+        self.key = os.getenv('GOOGLE_API_KEY')
+        # Try multiple model options
+        self.models = [
+            "gemini-2.5-flash",  # Primary: Fast
+            "gemini-2.5-pro",     # Fallback: Capable
+            "gemini-1.5-flash"    # Last resort
+        ]
+
+    def generate(self, ticker, data, news, lang='ko'):
+        if not self.key:
+            return "No Gemini API Key"
+
+        news_txt = "\n".join([n['title'] for n in news]) if news else "최근 뉴스 없음"
+        score_info = f"Score: {data.get('composite_score')}/100, Quant: {data.get('grade')}"
+
+        if lang == 'ko':
+            user_prompt = f"""종목: {ticker}
+정보: {score_info}
+뉴스: {news_txt}
+요청: 3-4문장으로 투자 의견 요약 (수급, 펀더멘털, 전략). 이모지 사용하지 말고 간결하게 작성."""
+        else:
+            user_prompt = f"""Stock: {ticker}
+Info: {score_info}
+News: {news_txt}
+Req: 3-4 sentence investment summary. No emojis, be concise."""
+
+        # Try each model until one works
+        for model in self.models:
+            try:
+                logger.info(f"Trying Gemini model: {model}")
+
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={self.key}"
+
+                payload = {
+                    "contents": [{
+                        "parts": [{"text": user_prompt}]
+                    }],
+                    "generationConfig": {
+                        "temperature": 0.7,
+                        "maxOutputTokens": 500
+                    }
+                }
+
+                resp = requests.post(url, json=payload, timeout=30)
+
+                if resp.status_code == 200:
+                    result = resp.json()
+                    if 'candidates' in result and len(result['candidates']) > 0:
+                        content = result['candidates'][0]['content']['parts'][0]['text'].strip()
+                        logger.info(f"Successfully generated summary using {model}")
+                        time.sleep(2)  # Rate limit protection
+                        return content
+                    else:
+                        logger.warning(f"No candidates in response from {model}")
+                        continue
+                else:
+                    logger.warning(f"{model} returned status {resp.status_code}: {resp.text[:200]}")
+                    continue
+
+            except requests.RequestException as e:
+                logger.warning(f"Request error with {model}: {e}")
+                continue
+            except (KeyError, IndexError) as e:
+                logger.warning(f"Response parsing error with {model}: {e}")
+                continue
+            except Exception as e:
+                logger.error(f"Unexpected error with {model}: {type(e).__name__}: {e}")
+                continue
+
+        logger.error("All Gemini models failed")
+        return "Analysis Failed"
+
 class OpenAIAnalyzer:
     def __init__(self):
         self.key = os.getenv('OPENAI_API_KEY')
@@ -181,15 +257,24 @@ Req: 3-4 sentence investment summary. No emojis."""
         return "Analysis Failed"
 
 class AIStockAnalyzer:
-    def __init__(self, data_dir='.', use_zai=True):
+    def __init__(self, data_dir='.'):
         self.data_dir = data_dir
         self.output = os.path.join(data_dir, 'ai_summaries.json')
-        # Use Z.ai by default, fallback to OpenAI if needed
-        if use_zai and os.getenv('ZAI_API_KEY'):
+        # Priority: Gemini -> Z.ai -> OpenAI
+        if os.getenv('GOOGLE_API_KEY'):
+            self.gen = GeminiAnalyzer()
+            self.fallback1 = ZAIAnalyzer() if os.getenv('ZAI_API_KEY') else None
+            self.fallback2 = OpenAIAnalyzer() if os.getenv('OPENAI_API_KEY') else None
+            logger.info("Using Gemini API for analysis (with fallbacks)")
+        elif os.getenv('ZAI_API_KEY'):
             self.gen = ZAIAnalyzer()
+            self.fallback1 = None
+            self.fallback2 = OpenAIAnalyzer() if os.getenv('OPENAI_API_KEY') else None
             logger.info("Using Z.ai API for analysis")
         else:
             self.gen = OpenAIAnalyzer()
+            self.fallback1 = None
+            self.fallback2 = None
             logger.info("Using OpenAI API for analysis")
         self.news = NewsCollector()
 
@@ -216,8 +301,24 @@ class AIStockAnalyzer:
                 continue  # Skip if already has good summary
 
             news = self.news.get_news(ticker)
+
+            # Try primary analyzer
             summary_ko = self.gen.generate(ticker, row.to_dict(), news, 'ko')
             summary_en = self.gen.generate(ticker, row.to_dict(), news, 'en')
+
+            # If primary failed, try fallback1 (if exists)
+            if 'Failed' in summary_ko or 'API' in summary_ko:
+                if self.fallback1:
+                    logger.warning(f"Primary failed for {ticker}, trying fallback1...")
+                    summary_ko = self.fallback1.generate(ticker, row.to_dict(), news, 'ko')
+                    summary_en = self.fallback1.generate(ticker, row.to_dict(), news, 'en')
+
+            # If fallback1 also failed, try fallback2 (if exists)
+            if 'Failed' in summary_ko or 'API' in summary_ko:
+                if self.fallback2:
+                    logger.warning(f"Fallback1 failed for {ticker}, trying fallback2...")
+                    summary_ko = self.fallback2.generate(ticker, row.to_dict(), news, 'ko')
+                    summary_en = self.fallback2.generate(ticker, row.to_dict(), news, 'en')
 
             results[ticker] = {
                 'summary': summary_ko,

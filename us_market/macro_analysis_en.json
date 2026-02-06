@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-02-06T07:48:42.035945",
+  "timestamp": "2026-02-06T15:40:32.045514",
   "macro_indicators": {
     "VIX": {
       "value": 21.77,
@@ -7,8 +7,8 @@
       "pct_from_high": -63.8
     },
     "DXY": {
-      "value": 97.79,
-      "change_1d": -0.03,
+      "value": 97.77,
+      "change_1d": -0.05,
       "pct_from_high": -9.9
     },
     "2Y_Yield": {
@@ -22,19 +22,19 @@
       "pct_from_high": -9.7
     },
     "GOLD": {
-      "value": 4870.7,
-      "change_1d": 0.19,
-      "pct_from_high": -12.8
+      "value": 4875.5,
+      "change_1d": 0.29,
+      "pct_from_high": -12.7
     },
     "OIL": {
-      "value": 64.14,
-      "change_1d": 1.34,
-      "pct_from_high": -18.2
+      "value": 64.09,
+      "change_1d": 1.26,
+      "pct_from_high": -18.3
     },
     "BTC": {
-      "value": 65135.62,
-      "change_1d": 3.88,
-      "pct_from_high": -48.4
+      "value": 65205.26,
+      "change_1d": 3.99,
+      "pct_from_high": -48.3
     },
     "SPY": {
       "value": 677.62,
@@ -57,6 +57,6 @@
       "pct_from_high": 0
     }
   },
-  "ai_analysis": "### 1. Market Summary:\nCurrent macro conditions indicate a moderate level of market volatility with a VIX of 21.77, suggesting investor uncertainty. The DXY (US Dollar Index) at 97.79 signals a strong dollar, which can hurt exports. The yield curve shows a 2Y yield at 3.58% and a 10Y yield at 4.21%, resulting in a yield spread of 0.63%, indicating a flattening yield curve and potential signals of economic slowdown. Gold prices remain elevated at 4870.7, suggesting a flight to safety. Oil prices are relatively low at 64.14, while Bitcoin has surged to 65135.62, indicating a strong appetite for riskier assets. The SPY and QQQ are performing well, but the Fear & Greed Index at 65 suggests a shift towards greed, which can indicate market overextension.\n\n### 2. Key Opportunities:\n- **Tech Sector**: With QQQ at 597.03 and showing strong performance, tech stocks may continue to benefit from growth trends and innovation, particularly in AI and cloud computing.\n- **Commodities**: Gold remains a hedge against inflation and uncertainty. Consider allocating to gold as a defensive position.\n- **Cryptocurrency**: Bitcoin’s current momentum at 65135.62 suggests a bullish sentiment; consider exposure to cryptocurrencies as a high-risk, high-reward strategy.\n- **Energy Sector**: With oil prices at 64.14, look for opportunities in energy stocks, especially those that can capitalize on energy transition and sustainability.\n\n### 3. Risks to Monitor:\n- **Interest Rate Risk**: With the 10Y yield at 4.21%, further rate hikes may occur, impacting growth stocks and increasing borrowing costs.\n- **Geopolitical Risks**: Ongoing geopolitical tensions can affect oil prices and market stability.\n- **Market Overvaluation**: The Fear & Greed Index indicates a high level of greed, which can lead to corrections if market sentiment shifts.\n- **Economic Slowdown**: The flattening yield curve and declining yield spread signal potential economic slowdown, which could impact corporate earnings.\n\n### 4. Concrete Strategy:\n- **Equity Allocation**: Maintain a diversified equity position with a focus on technology and growth stocks. Consider ETFs like QQQ for tech exposure.\n- **Gold Investment**: Allocate 10-15% of the portfolio to gold to hedge against volatility and inflation.\n- **Crypto Exposure**: Invest a small portion (5-10%) in Bitcoin or a diversified crypto fund to gain exposure to the digital asset market.\n- **Energy Stocks**: Consider investing in select energy companies that focus on sustainable practices, particularly those positioned well in the current oil price environment.\n- **Monitor and Adjust**: Regularly assess macro indicators and adjust exposure based on shifts in economic data and market sentiment, particularly interest rates and geopolitical developments.",
-  "model": "OpenAI"
+  "ai_analysis": "API Quota Exceeded",
+  "model": "Z.ai"
 }

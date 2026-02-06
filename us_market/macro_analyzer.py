@@ -9,6 +9,7 @@ Macro Market Analyzer
 
 import os
 import json
+import time
 import requests
 import yfinance as yf
 import logging
