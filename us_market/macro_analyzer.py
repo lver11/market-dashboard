@@ -223,12 +223,12 @@ class ZAIAnalyzer:
 
     def __init__(self):
         self.api_key = os.getenv('ZAI_API_KEY')
-        # Z.ai GLM models
+        # Z.ai GLM models - only use glm-4-plus as it's the only available model
         self.models = [
-            "glm-4-plus",   # Primary: Most capable
-            "glm-4-0520",    # Fallback: Stable version
+            "glm-4-plus",   # Primary: Most capable (only model available)
         ]
         self.base_url = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
+        self.min_request_interval = 2  # Seconds between requests to avoid rate limit
 
     def analyze(self, data: Dict, news: List[Dict], patterns: List[Dict], lang: str = 'ko') -> str:
         """
@@ -273,6 +273,7 @@ class ZAIAnalyzer:
                     if 'choices' in result and len(result['choices']) > 0:
                         content = result['choices'][0]['message']['content']
                         logger.info(f"Successfully generated analysis using Z.ai {model}")
+                        time.sleep(self.min_request_interval)  # Rate limit protection
                         return content
                     else:
                         logger.warning(f"No choices in response from Z.ai {model}")
@@ -281,8 +282,19 @@ class ZAIAnalyzer:
                     logger.error("Z.ai authentication failed. Check API key.")
                     return "API Authentication Failed"
                 elif resp.status_code == 429:
-                    logger.warning("Z.ai API quota exceeded.")
-                    return "API Quota Exceeded"
+                    logger.warning("Z.ai API rate limit reached. Waiting 5 seconds...")
+                    time.sleep(5)  # Wait for rate limit to reset
+                    # Retry once after rate limit
+                    resp = requests.post(self.base_url, headers=headers, json=payload, timeout=30)
+                    if resp.status_code == 200:
+                        result = resp.json()
+                        if 'choices' in result and len(result['choices']) > 0:
+                            content = result['choices'][0]['message']['content']
+                            logger.info(f"Z.ai retry successful with {model}")
+                            time.sleep(self.min_request_interval)
+                            return content
+                    logger.warning("Z.ai rate limit retry also failed")
+                    return "Rate Limit - Try again later"
                 else:
                     logger.warning(f"Z.ai {model} returned status {resp.status_code}: {resp.text[:200]}")
                     continue

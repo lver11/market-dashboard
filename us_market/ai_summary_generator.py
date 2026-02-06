@@ -42,6 +42,7 @@ class ZAIAnalyzer:
         # Z.ai uses OpenAI-compatible API
         self.base_url = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
         self.model = "glm-4-plus"  # Z.ai's latest model
+        self.min_request_interval = 2  # Minimum seconds between requests to avoid rate limit
 
     def generate(self, ticker, data, news, lang='ko'):
         if not self.key:
@@ -86,13 +87,25 @@ Req: 3-4 sentence investment summary. No emojis, be concise."""
                 if 'choices' in result and len(result['choices']) > 0:
                     summary = result['choices'][0]['message']['content'].strip()
                     logger.info(f"Z.ai API success for {ticker}")
+                    time.sleep(self.min_request_interval)  # Rate limit protection
                     return summary
                 else:
                     logger.error(f"Z.ai API unexpected response format: {result}")
                     return "API Response Format Error"
             elif resp.status_code == 429:
-                logger.warning("Z.ai API quota exceeded.")
-                return "API Quota Exceeded"
+                logger.warning("Z.ai API rate limit reached. Waiting 5 seconds...")
+                time.sleep(5)  # Wait for rate limit to reset
+                # Retry once after rate limit
+                resp = requests.post(self.base_url, headers=headers, json=payload, timeout=30)
+                if resp.status_code == 200:
+                    result = resp.json()
+                    if 'choices' in result and len(result['choices']) > 0:
+                        summary = result['choices'][0]['message']['content'].strip()
+                        logger.info(f"Z.ai API retry success for {ticker}")
+                        time.sleep(self.min_request_interval)
+                        return summary
+                logger.warning("Z.ai API rate limit retry also failed")
+                return "Rate Limit - Try again later"
             elif resp.status_code == 401:
                 logger.error("Z.ai API authentication failed. Check API key.")
                 return "API Authentication Failed"
