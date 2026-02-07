@@ -118,5 +118,41 @@
     "summary_ko": "Rate Limit - Try again later",
     "summary_en": "Rate Limit - Try again later",
     "updated": "2026-02-06T18:49:22.893968"
+  },
+  "MU": {
+    "summary": "Rate Limit - Try again later",
+    "summary_ko": "Rate Limit - Try again later",
+    "summary_en": "Rate Limit - Try again later",
+    "updated": "2026-02-07T17:21:08.869005"
+  },
+  "CPAY": {
+    "summary": "Rate Limit - Try again later",
+    "summary_ko": "Rate Limit - Try again later",
+    "summary_en": "Rate Limit - Try again later",
+    "updated": "2026-02-07T17:21:25.156561"
+  },
+  "DRI": {
+    "summary": "Rate Limit - Try again later",
+    "summary_ko": "Rate Limit - Try again later",
+    "summary_en": "Rate Limit - Try again later",
+    "updated": "2026-02-07T17:21:40.443001"
+  },
+  "AOS": {
+    "summary": "Rate Limit - Try again later",
+    "summary_ko": "Rate Limit - Try again later",
+    "summary_en": "Rate Limit - Try again later",
+    "updated": "2026-02-07T17:21:55.806842"
+  },
+  "PSA": {
+    "summary": "Rate Limit - Try again later",
+    "summary_ko": "Rate Limit - Try again later",
+    "summary_en": "Rate Limit - Try again later",
+    "updated": "2026-02-07T17:22:11.327000"
+  },
+  "T": {
+    "summary": "Rate Limit - Try again later",
+    "summary_ko": "Rate Limit - Try again later",
+    "summary_en": "Rate Limit - Try again later",
+    "updated": "2026-02-07T17:22:26.765971"
   }
 }

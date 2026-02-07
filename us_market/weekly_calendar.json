@@ -1,11 +1,11 @@
 {
-  "updated": "2026-02-07T07:34:52.651954",
+  "updated": "2026-02-07T17:48:24.473661",
   "events": [
     {
       "date": "2025-12-10",
       "event": "FOMC Interest Rate Decision",
       "impact": "High",
-      "description": "Fed rate decision.\n\n\ud83e\udd16 AI: The FOMC's interest rate decision, especially if it deviates from market expectations, causes immediate shifts in bond yields, currency values, and stock prices. This is because the decision signals the Fed's economic outlook, shaping investor confidence and influencing future spending and investment decisions across the economy."
+      "description": "Fed rate decision."
     }
   ],
   "week_start": "2026-02-07"

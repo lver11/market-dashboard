@@ -28,7 +28,9 @@ def run_script(name, desc, timeout):
             timeout=timeout,
             check=True,
             capture_output=True,
-            text=True
+            text=True,
+            encoding='utf-8',
+            errors='replace'
         )
         print(f"✅ {desc} completed successfully")
         if result.stdout:

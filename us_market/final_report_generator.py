@@ -21,7 +21,7 @@ class FinalReportGenerator:
         ai_path = os.path.join(self.data_dir, 'ai_summaries.json')
         ai_data = {}
         if os.path.exists(ai_path):
-            with open(ai_path) as f:
+            with open(ai_path, encoding='utf-8') as f:
                 ai_data = json.load(f)
 
         results = []
