@@ -130,7 +130,7 @@
       "ticker": "AMD",
       "metrics": {
         "pc_ratio": 1.05,
-        "call_vol": 106174,
+        "call_vol": 106175,
         "put_vol": 111280,
         "call_oi": 101019,
         "put_oi": 99273
