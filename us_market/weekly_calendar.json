@@ -1,11 +1,11 @@
 {
-  "updated": "2026-02-09T15:55:41.688051",
+  "updated": "2026-02-09T23:34:24.544431",
   "events": [
     {
       "date": "2025-12-10",
       "event": "FOMC Interest Rate Decision",
       "impact": "High",
-      "description": "Fed rate decision.\n\n\ud83e\udd16 AI: An FOMC interest rate decision immediately impacts financial markets as it alters the cost of borrowing and lending across the economy. This shifts investor sentiment regarding future economic growth and inflation, causing volatility in equity, bond, and currency markets."
+      "description": "Fed rate decision.\n\n\ud83e\udd16 AI: FOMC interest rate decisions significantly move markets, especially when they diverge from expectations, as they directly impact borrowing costs and the perceived health of the economy. A hawkish move (like a rate hike or strong signal for future hikes) tends to strengthen the dollar and potentially weigh on risk assets, while a dovish stance can weaken the dollar and boost equities."
     }
   ],
   "week_start": "2026-02-09"
