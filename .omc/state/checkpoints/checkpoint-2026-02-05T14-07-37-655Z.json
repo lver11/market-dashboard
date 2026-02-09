@@ -1,0 +1,15 @@
+{
+  "created_at": "2026-02-05T14:07:37.654Z",
+  "trigger": "auto",
+  "active_modes": {
+    "ultrawork": {
+      "original_prompt": "<ide_opened_file>The user opened the file c:\\project\\DashBoard\\.github\\workflows\\update-data.yml in the IDE. This may or may not be related to the current task.</ide_opened_file>\n이 문제는 내일 다시 테스트하겠다. github action 문제 부터 해결하자 ulw"
+    }
+  },
+  "todo_summary": {
+    "pending": 0,
+    "in_progress": 0,
+    "completed": 0
+  },
+  "wisdom_exported": false
+}

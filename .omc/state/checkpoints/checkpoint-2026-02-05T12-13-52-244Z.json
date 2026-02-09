@@ -1,0 +1,15 @@
+{
+  "created_at": "2026-02-05T12:13:52.242Z",
+  "trigger": "auto",
+  "active_modes": {
+    "ultrawork": {
+      "original_prompt": "'AI 투자 분석'는 'Analysis Failed' 라고 나온다.  브라우저를 열어서 데이타가 제대로 표시되는지 테스트하라  ulw"
+    }
+  },
+  "todo_summary": {
+    "pending": 0,
+    "in_progress": 0,
+    "completed": 0
+  },
+  "wisdom_exported": false
+}

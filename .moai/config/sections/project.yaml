@@ -1,9 +1,9 @@
-project:
-  name: DashBoard
-  description: ''
-  type: ''
-  locale: '{{LOCALE}}'
-  created_at: '2026-02-03T17:12:25.959119Z'
-  initialized: 'true'
 github:
-  profile_name: taewook486
+    profile_name: taewook486
+project:
+    created_at: "2026-02-03T17:12:25.959119Z"
+    description: ""
+    initialized: "true"
+    locale: '{{LOCALE}}'
+    name: DashBoard
+    type: ""

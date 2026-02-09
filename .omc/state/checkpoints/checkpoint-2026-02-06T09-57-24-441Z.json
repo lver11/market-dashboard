@@ -1,0 +1,15 @@
+{
+  "created_at": "2026-02-06T09:57:24.440Z",
+  "trigger": "auto",
+  "active_modes": {
+    "ultrawork": {
+      "original_prompt": "<ide_opened_file>The user opened the file c:\\project\\DashBoard\\.env in the IDE. This may or may not be related to the current task.</ide_opened_file>\n어제 ai api 할당량 문제로 테스트 못했어. 'AI 투자 분석', 'Gemini 3.0 매크로 분석' 이 나오지 않아. 나오게 개선해줘 ulw"
+    }
+  },
+  "todo_summary": {
+    "pending": 0,
+    "in_progress": 0,
+    "completed": 0
+  },
+  "wisdom_exported": false
+}
