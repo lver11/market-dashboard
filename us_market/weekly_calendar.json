@@ -1,12 +1,12 @@
 {
-  "updated": "2026-02-08T23:26:14.077980",
+  "updated": "2026-02-09T08:00:27.382214",
   "events": [
     {
       "date": "2025-12-10",
       "event": "FOMC Interest Rate Decision",
       "impact": "High",
-      "description": "Fed rate decision.\n\n\ud83e\udd16 AI: The FOMC Interest Rate Decision directly influences the cost of borrowing across the economy, impacting bond yields, equity valuations, and currency strength. Market impact is amplified when the decision or accompanying guidance deviates from investor expectations, leading to immediate volatility as participants adjust their economic forecasts and asset allocations."
+      "description": "Fed rate decision.\n\n\ud83e\udd16 AI: The FOMC's interest rate decision immediately shifts investor expectations for future economic growth and inflation, directly impacting asset valuations across stocks, bonds, and currencies. Consequently, a hawkish surprise (rate hike or stronger signal) typically strengthens the dollar and bond yields while pressuring stock prices, while a dovish surprise has the opposite effect."
     }
   ],
-  "week_start": "2026-02-08"
+  "week_start": "2026-02-09"
 }
