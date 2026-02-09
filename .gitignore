@@ -192,4 +192,4 @@ dist-ssr/
 # ===========================================
 .vercel/
 .netlify/
-.firebase/
+.firebase/us_market/us_daily_prices.csv
