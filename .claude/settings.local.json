@@ -1,4 +1,7 @@
 {
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
   "permissions": {
     "allow": [
       "mcp__zread__search_doc",
@@ -15,7 +18,29 @@
       "Bash(timeout:*)",
       "Bash(ping:*)",
       "Bash(gh run watch:*)",
-      "Bash(gh api:*)"
+      "Bash(gh api:*)",
+      "Bash(/opt/homebrew/bin/python3.12:*)",
+      "Bash(source:*)",
+      "Bash(pip install:*)",
+      "Bash(python:*)",
+      "Bash(open \"/Users/macbookprom1max/Downloads/Spreadsheets/ETF_Demark/ETF_Demark_v2.xlsx\")",
+      "Bash(open:*)",
+      "Bash(/usr/bin/python3 --version)",
+      "Bash(/opt/homebrew/bin/python3 --version)",
+      "Bash(/usr/bin/python3 /Users/macbookprom1max/Downloads/Spreadsheets/ETF_Demark/build_v4.py)",
+      "Bash(/usr/bin/open \"/Users/macbookprom1max/Downloads/Spreadsheets/ETF_Demark/ETF_Demark_v4.xlsx\")",
+      "Bash(/usr/bin/python3 /Users/macbookprom1max/Downloads/Spreadsheets/ETF_Demark/build_v5.py)",
+      "Bash(/usr/bin/open \"/Users/macbookprom1max/Downloads/Spreadsheets/ETF_Demark/ETF_Demark_v5.xlsx\")",
+      "Bash(/usr/bin/python3 /Users/macbookprom1max/Downloads/Spreadsheets/ETF_Demark/build_v6.py)",
+      "Bash(/usr/bin/open \"/Users/macbookprom1max/Downloads/Spreadsheets/ETF_Demark/ETF_Demark_v6.xlsx\")",
+      "Bash(/usr/bin/python3 /Users/macbookprom1max/Downloads/Spreadsheets/ETF_Demark/build_v7.py)",
+      "Bash(/usr/bin/open \"/Users/macbookprom1max/Downloads/Spreadsheets/ETF_Demark/ETF_Demark_v7.xlsx\")",
+      "Bash(export PATH=\"/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/opt/python@3.13/bin:/opt/homebrew/opt/python@3.12/bin:/opt/homebrew/opt/python@3.11/bin\")",
+      "Bash(export PATH=\"/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin\")",
+      "Bash(export PATH=\"/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Users/macbookprom1max/Library/Python/3.9/bin\")",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(/usr/bin/open \"http://localhost:5001\")",
+      "Bash(/usr/bin/curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5001/)"
     ]
   },
   "enabledMcpjsonServers": [
