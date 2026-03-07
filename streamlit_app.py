@@ -150,8 +150,10 @@ MARKET_ASSETS = [
     {"group": "Equities",    "name": "Euro Stoxx 50",     "ticker": "^STOXX50E",},
     {"group": "Equities",    "name": "Nikkei 225",        "ticker": "^N225",    },
     {"group": "Equities",    "name": "MSCI EM (EEM)",     "ticker": "EEM",      },
+    {"group": "Bonds",       "name": "US 3M Yield",       "ticker": "^IRX",     },
+    {"group": "Bonds",       "name": "US 5Y Yield",       "ticker": "^FVX",     },
     {"group": "Bonds",       "name": "US 10Y Yield",      "ticker": "^TNX",     },
-    {"group": "Bonds",       "name": "US 2Y Yield",       "ticker": "^IRX",     },
+    {"group": "Bonds",       "name": "US 30Y Yield",      "ticker": "^TYX",     },
     {"group": "Bonds",       "name": "Long Treasury TLT", "ticker": "TLT",      },
     {"group": "Bonds",       "name": "High Yield HYG",    "ticker": "HYG",      },
     {"group": "Bonds",       "name": "IG Credit LQD",     "ticker": "LQD",      },
@@ -224,6 +226,14 @@ GEOPOLITICAL_RISKS = [
     {"region": "Americas",     "title": "US Fiscal Sustainability",      "level": "low",   "description": "Debt ceiling concerns; rising deficit affecting bond market sentiment.",               "impact": "Treasury yields, USD long-term"},
 ]
 
+CENTRAL_BANK_RATES = [
+    {"flag": "🇺🇸", "name": "États-Unis",  "bank": "Fed",  "rate": "4.25–4.50%", "bias": "neutral",  "change": "=",  "next_meeting": "18-19 mars"},
+    {"flag": "🇪🇺", "name": "Zone Euro",   "bank": "BCE",  "rate": "2.65%",      "bias": "dovish",   "change": "↓",  "next_meeting": "17 avr."},
+    {"flag": "🇨🇦", "name": "Canada",      "bank": "BdC",  "rate": "3.00%",      "bias": "dovish",   "change": "↓",  "next_meeting": "16 avr."},
+    {"flag": "🇬🇧", "name": "Royaume-Uni", "bank": "BOE",  "rate": "4.50%",      "bias": "neutral",  "change": "↓",  "next_meeting": "8 mai"},
+    {"flag": "🇯🇵", "name": "Japon",       "bank": "BOJ",  "rate": "0.50%",      "bias": "hawkish",  "change": "↑",  "next_meeting": "19 mars"},
+    {"flag": "🇨🇭", "name": "Suisse",      "bank": "BNS",  "rate": "0.25%",      "bias": "neutral",  "change": "↓",  "next_meeting": "20 mars"},
+]
 
 # ─── Data Fetching (cached 60s) ───────────────────────────────────────────────
 def _fetch_one(ticker: str) -> tuple[str, dict]:
@@ -588,7 +598,105 @@ with col_heat:
                     unsafe_allow_html=True,
                 )
 
-# ─── ROW 3: Market Table ──────────────────────────────────────────────────────
+# ─── ROW 3: Interest Rates ────────────────────────────────────────────────────
+st.markdown("")
+col_curve, col_cb = st.columns(2)
+
+with col_curve:
+    st.markdown('<div class="section-title">📈 Courbe des taux US — Structure à terme</div>', unsafe_allow_html=True)
+    yield_maturities = [
+        ("3M",  "^IRX"),
+        ("5A",  "^FVX"),
+        ("10A", "^TNX"),
+        ("30A", "^TYX"),
+    ]
+    yld_pts = [(lbl, market_data.get(tk, {}).get("price")) for lbl, tk in yield_maturities]
+    yld_pts = [(lbl, v) for lbl, v in yld_pts if v is not None]
+
+    if yld_pts:
+        yld_labels = [lbl for lbl, _ in yld_pts]
+        yld_values = [v   for _, v  in yld_pts]
+        # Yield curve is inverted if short > long
+        inverted = len(yld_values) >= 2 and yld_values[0] > yld_values[-1]
+        line_color = "#ef4444" if inverted else "#3b82f6"
+        dot_colors = ["#ef4444" if v > yld_values[-1] else "#22c55e" for v in yld_values]
+
+        fig_curve = go.Figure()
+        fig_curve.add_trace(go.Scatter(
+            x=yld_labels, y=yld_values,
+            mode="lines+markers+text",
+            line=dict(width=2.5, color=line_color),
+            marker=dict(size=9, color=dot_colors, line=dict(width=1, color="#0f172a")),
+            text=[f"{v:.2f}%" for v in yld_values],
+            textposition="top center",
+            textfont=dict(size=11, color="#e2e8f0"),
+            fill="tozeroy",
+            fillcolor="rgba(59,130,246,0.06)",
+            hovertemplate="<b>%{x}: %{y:.2f}%</b><extra></extra>",
+        ))
+        if inverted:
+            fig_curve.add_annotation(
+                text="⚠️ Courbe inversée — signal récessif",
+                x=0.5, y=0.92, xref="paper", yref="paper",
+                showarrow=False, font=dict(color="#ef4444", size=11),
+                bgcolor="rgba(239,68,68,0.1)", bordercolor="#ef4444",
+                borderwidth=1, borderpad=4,
+            )
+        fig_curve.update_layout(
+            height=210,
+            margin=dict(t=30, b=10, l=45, r=20),
+            paper_bgcolor="#0f172a", plot_bgcolor="#0f172a",
+            font={"color": "#94a3b8", "size": 11},
+            xaxis=dict(showgrid=False, color="#475569"),
+            yaxis=dict(showgrid=True, gridcolor="#1e293b", color="#475569",
+                       tickformat=".2f", ticksuffix="%"),
+            showlegend=False,
+        )
+        st.plotly_chart(fig_curve, use_container_width=True, config={"displayModeBar": False})
+
+        # Spread résumé sous le graphique
+        t10 = market_data.get("^TNX", {}).get("price")
+        t3m = market_data.get("^IRX", {}).get("price")
+        if t10 and t3m:
+            spread = round(t10 - t3m, 2)
+            sc = "#ef4444" if spread < 0 else "#22c55e"
+            sl = "Inversée ⚠️" if spread < 0 else "Normale ✅" if spread > 0.5 else "Plate ⚠️"
+            st.markdown(
+                f'<p style="font-size:0.72rem;color:#94a3b8;text-align:center;margin-top:-8px">'
+                f'Spread 10A – 3M : <span style="color:{sc};font-weight:700">{spread:+.2f}%</span>'
+                f' &nbsp;·&nbsp; Forme: <span style="color:{sc};font-weight:600">{sl}</span></p>',
+                unsafe_allow_html=True,
+            )
+    else:
+        st.info("Données de taux non disponibles")
+
+with col_cb:
+    st.markdown('<div class="section-title">🏦 Taux directeurs — Banques centrales</div>', unsafe_allow_html=True)
+    bias_color = {"hawkish": "#ef4444", "dovish": "#22c55e", "neutral": "#f59e0b"}
+    bias_label = {"hawkish": "Restrictif 🦅", "dovish": "Accommodant 🕊️", "neutral": "Neutre ⚖️"}
+    change_color = {"↑": "#ef4444", "↓": "#22c55e", "=": "#94a3b8"}
+
+    cb_html = ""
+    for cb in CENTRAL_BANK_RATES:
+        bc = bias_color[cb["bias"]]
+        bl = bias_label[cb["bias"]]
+        cc = change_color[cb["change"]]
+        cb_html += f"""
+        <div class="signal-card" style="margin-bottom:0.3rem">
+          <div class="signal-row">
+            <span class="sig-name">{cb['flag']} {cb['name']} <span style="color:#64748b;font-weight:400">({cb['bank']})</span></span>
+            <span style="font-size:1rem;font-family:monospace;font-weight:800;color:#e2e8f0">{cb['rate']}
+              <span style="color:{cc};font-size:0.85rem">{cb['change']}</span>
+            </span>
+          </div>
+          <div class="signal-row">
+            <span style="font-size:0.66rem;color:{bc};font-weight:600">{bl}</span>
+            <span style="font-size:0.63rem;color:#475569">Prochain: {cb['next_meeting']}</span>
+          </div>
+        </div>"""
+    st.markdown(cb_html, unsafe_allow_html=True)
+
+# ─── ROW 4: Market Table ──────────────────────────────────────────────────────
 st.markdown("")
 st.markdown('<div class="section-title">📋 Tableau de marché complet</div>', unsafe_allow_html=True)
 

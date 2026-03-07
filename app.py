@@ -48,8 +48,10 @@ MARKET_ASSETS = [
     {"group": "Equities",    "name": "Nikkei 225",         "ticker": "^N225",     "type": "index"},
     {"group": "Equities",    "name": "MSCI EM (EEM)",      "ticker": "EEM",       "type": "etf"},
     # Bonds / Rates
+    {"group": "Bonds",       "name": "US 3M Yield",        "ticker": "^IRX",      "type": "bond"},
+    {"group": "Bonds",       "name": "US 5Y Yield",        "ticker": "^FVX",      "type": "bond"},
     {"group": "Bonds",       "name": "US 10Y Yield",       "ticker": "^TNX",      "type": "bond"},
-    {"group": "Bonds",       "name": "US 2Y Yield",        "ticker": "^IRX",      "type": "bond"},
+    {"group": "Bonds",       "name": "US 30Y Yield",       "ticker": "^TYX",      "type": "bond"},
     {"group": "Bonds",       "name": "Long Treasury (TLT)","ticker": "TLT",       "type": "etf"},
     {"group": "Bonds",       "name": "High Yield (HYG)",   "ticker": "HYG",       "type": "etf"},
     {"group": "Bonds",       "name": "IG Credit (LQD)",    "ticker": "LQD",       "type": "etf"},
@@ -218,6 +220,15 @@ GEOPOLITICAL_RISKS = [
     },
 ]
 
+# ─── Central Bank Policy Rates ────────────────────────────────────────────────
+CENTRAL_BANK_RATES = [
+    {"flag": "🇺🇸", "name": "États-Unis",  "bank": "Fed",  "rate": "4.25–4.50%", "bias": "neutral",  "change": "=",  "next_meeting": "18-19 mars 2026"},
+    {"flag": "🇪🇺", "name": "Zone Euro",   "bank": "BCE",  "rate": "2.65%",      "bias": "dovish",   "change": "↓",  "next_meeting": "17 avr. 2026"},
+    {"flag": "🇨🇦", "name": "Canada",      "bank": "BdC",  "rate": "3.00%",      "bias": "dovish",   "change": "↓",  "next_meeting": "16 avr. 2026"},
+    {"flag": "🇬🇧", "name": "Royaume-Uni", "bank": "BOE",  "rate": "4.50%",      "bias": "neutral",  "change": "↓",  "next_meeting": "8 mai 2026"},
+    {"flag": "🇯🇵", "name": "Japon",       "bank": "BOJ",  "rate": "0.50%",      "bias": "hawkish",  "change": "↑",  "next_meeting": "19 mars 2026"},
+    {"flag": "🇨🇭", "name": "Suisse",      "bank": "BNS",  "rate": "0.25%",      "bias": "neutral",  "change": "↓",  "next_meeting": "20 mars 2026"},
+]
 
 # ─── Data Fetching ────────────────────────────────────────────────────────────
 def _fetch_one(ticker: str) -> tuple[str, dict]:
@@ -552,6 +563,7 @@ def api_data():
         "assets": assets_with_data,
         "news": fetch_news(),
         "geopolitical_risks": GEOPOLITICAL_RISKS,
+        "central_bank_rates": CENTRAL_BANK_RATES,
         "economic_calendar": calendar,
         "last_updated": datetime.now(timezone.utc).isoformat(),
     })
