@@ -161,6 +161,7 @@ MARKET_ASSETS = [
     {"group": "Currencies",  "name": "DXY (USD Index)",   "ticker": "DX-Y.NYB", },
     {"group": "Currencies",  "name": "EUR/USD",           "ticker": "EURUSD=X", },
     {"group": "Currencies",  "name": "USD/JPY",           "ticker": "JPY=X",    },
+    {"group": "Currencies",  "name": "USD/CAD",           "ticker": "USDCAD=X", },
     {"group": "Crypto",      "name": "Bitcoin",           "ticker": "BTC-USD",  },
     {"group": "Crypto",      "name": "Ethereum",          "ticker": "ETH-USD",  },
     {"group": "Volatility",  "name": "VIX",               "ticker": "^VIX",     },
@@ -168,12 +169,23 @@ MARKET_ASSETS = [
 ]
 
 NEWS_FEEDS = [
+    # Wire services
     ("Reuters Top",   "https://feeds.reuters.com/reuters/topNews"),
     ("Reuters Biz",   "https://feeds.reuters.com/reuters/businessNews"),
-    ("BBC Business",  "https://feeds.bbci.co.uk/news/business/rss.xml"),
-    ("BBC World",     "https://feeds.bbci.co.uk/news/world/rss.xml"),
     ("AP News",       "https://apnews.com/rss"),
+    # Finance media
+    ("CNBC Markets",  "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100003114"),
+    ("Bloomberg/GN",  "https://news.google.com/rss/search?q=bloomberg+finance+market&hl=en-US&gl=US&ceid=US:en"),
+    # Reddit finance communities (User-Agent required)
+    ("r/investing",       "https://www.reddit.com/r/investing/.rss"),
+    ("r/wallstreetbets",  "https://www.reddit.com/r/wallstreetbets/.rss"),
+    ("r/economics",       "https://www.reddit.com/r/economics/.rss"),
+    ("r/geopolitics",     "https://www.reddit.com/r/geopolitics/.rss"),
 ]
+
+# Feeds that require a User-Agent header (Reddit blocks default scrapers)
+_REDDIT_USER_AGENT = "Mozilla/5.0 (compatible; market-dashboard/1.0; +https://github.com/lver11/market-dashboard)"
+_FEEDS_NEEDING_UA  = {"r/investing", "r/wallstreetbets", "r/economics", "r/geopolitics"}
 
 ECONOMIC_CALENDAR = [
     {"date": "2026-03-06", "event": "Non-Farm Payrolls (Feb)",       "country": "🇺🇸", "importance": "critical", "forecast": "200K",   "previous": "256K"},
@@ -261,7 +273,8 @@ def fetch_news() -> list[dict]:
     items = []
     for source, url in NEWS_FEEDS:
         try:
-            feed = feedparser.parse(url)
+            req_headers = {"User-Agent": _REDDIT_USER_AGENT} if source in _FEEDS_NEEDING_UA else {}
+            feed = feedparser.parse(url, request_headers=req_headers)
             for e in feed.entries[:5]:
                 title = getattr(e, "title", "")
                 tl = title.lower()
@@ -698,7 +711,7 @@ for i, item in enumerate(filtered_news[:18]):
 st.markdown("---")
 st.markdown(
     '<p style="font-size:0.65rem;color:#475569;text-align:center">'
-    'Données: Yahoo Finance · RSS Reuters, BBC, AP · '
+    'Données: Yahoo Finance · Actualités: Reuters, AP, CNBC, Bloomberg (Google News), Reddit (r/investing, r/wallstreetbets, r/economics, r/geopolitics) · '
     'Actualisation automatique toutes les 60 secondes · '
     'Score Risk-On/Off: modèle composite 7 signaux pondérés · '
     'À des fins informatives uniquement — pas un conseil en investissement.'

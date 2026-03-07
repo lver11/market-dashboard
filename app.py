@@ -62,6 +62,7 @@ MARKET_ASSETS = [
     {"group": "Currencies",  "name": "EUR/USD",            "ticker": "EURUSD=X",  "type": "currency"},
     {"group": "Currencies",  "name": "USD/JPY",            "ticker": "JPY=X",     "type": "currency"},
     {"group": "Currencies",  "name": "USD/CHF",            "ticker": "CHFUSD=X",  "type": "currency"},
+    {"group": "Currencies",  "name": "USD/CAD",            "ticker": "USDCAD=X",  "type": "currency"},
     # Crypto
     {"group": "Crypto",      "name": "Bitcoin",            "ticker": "BTC-USD",   "type": "crypto"},
     {"group": "Crypto",      "name": "Ethereum",           "ticker": "ETH-USD",   "type": "crypto"},
@@ -73,12 +74,23 @@ MARKET_ASSETS = [
 
 # ─── News Feeds ───────────────────────────────────────────────────────────────
 NEWS_FEEDS = [
+    # Wire services
     ("Reuters Top",    "https://feeds.reuters.com/reuters/topNews"),
     ("Reuters Biz",    "https://feeds.reuters.com/reuters/businessNews"),
-    ("BBC Business",   "https://feeds.bbci.co.uk/news/business/rss.xml"),
-    ("BBC World",      "https://feeds.bbci.co.uk/news/world/rss.xml"),
     ("AP Top News",    "https://apnews.com/rss"),
+    # Finance media
+    ("CNBC Markets",   "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100003114"),
+    ("Bloomberg/GN",   "https://news.google.com/rss/search?q=bloomberg+finance+market&hl=en-US&gl=US&ceid=US:en"),
+    # Reddit finance communities (User-Agent required)
+    ("r/investing",       "https://www.reddit.com/r/investing/.rss"),
+    ("r/wallstreetbets",  "https://www.reddit.com/r/wallstreetbets/.rss"),
+    ("r/economics",       "https://www.reddit.com/r/economics/.rss"),
+    ("r/geopolitics",     "https://www.reddit.com/r/geopolitics/.rss"),
 ]
+
+# Feeds that require a browser-like User-Agent (Reddit blocks default scrapers)
+_REDDIT_USER_AGENT = "Mozilla/5.0 (compatible; market-dashboard/1.0; +https://github.com/lver11/market-dashboard)"
+_FEEDS_NEEDING_UA  = {"r/investing", "r/wallstreetbets", "r/economics", "r/geopolitics"}
 
 # ─── Economic Calendar (Q1-Q2 2026) ──────────────────────────────────────────
 ECONOMIC_CALENDAR = [
@@ -289,7 +301,8 @@ def fetch_news(max_items: int = 24) -> list[dict]:
     all_items = []
     for source, url in NEWS_FEEDS:
         try:
-            feed = feedparser.parse(url)
+            req_headers = {"User-Agent": _REDDIT_USER_AGENT} if source in _FEEDS_NEEDING_UA else {}
+            feed = feedparser.parse(url, request_headers=req_headers)
             for entry in feed.entries[:6]:
                 title = getattr(entry, "title", "")
                 link = getattr(entry, "link", "#")
