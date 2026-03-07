@@ -243,6 +243,11 @@ BOC_SERIES = {
     "CA30YT=RR": "BD.CDN.LONG.DQ.YLD",
 }
 
+# Tickers representing yield levels: MTD/YTD = absolute change in pp (e.g. +0.20%),
+# NOT a price return.  20 bps = +0.20 pp displayed as "+0.20%".
+YIELD_TICKERS = {"^IRX", "^FVX", "^TNX", "^TYX",
+                 "CA2YT=RR", "CA5YT=RR", "CA10YT=RR", "CA30YT=RR"}
+
 CENTRAL_BANK_RATES = [
     {"flag": "🇺🇸", "name": "États-Unis",  "bank": "Fed",  "rate": "4.25–4.50%", "bias": "neutral",  "change": "=",  "next_meeting": "18-19 mars"},
     {"flag": "🇪🇺", "name": "Zone Euro",   "bank": "BCE",  "rate": "2.65%",      "bias": "dovish",   "change": "↓",  "next_meeting": "17 avr."},
@@ -322,14 +327,14 @@ def fetch_ca_bond_yields() -> dict:
                 prev = float(obs[-2][series]["v"])
                 change = round(latest - prev, 3)
                 change_pct = round((change / prev) * 100, 2) if prev else None
-            # YTD: first obs of year
-            ytd = round((latest - float(obs[0][series]["v"])) / float(obs[0][series]["v"]) * 100, 2) if len(obs) >= 2 else None
-            # MTD: first obs on or after 1st of current month
+            # YTD: absolute change in percentage points (e.g. 4.70 - 4.50 = +0.20 pp)
+            ytd = round(latest - float(obs[0][series]["v"]), 2) if len(obs) >= 2 else None
+            # MTD: absolute change in pp since 1st of current month
             month_obs = [o for o in obs if o["d"] >= month_start]
             mtd = None
             if month_obs:
                 first = float(month_obs[0][series]["v"])
-                mtd = round((latest - first) / first * 100, 2) if first else None
+                mtd = round(latest - first, 2) if first is not None else None
 
             result[ticker] = {"price": round(latest, 3), "change": change, "change_pct": change_pct,
                                "mtd": mtd, "ytd": ytd}
@@ -350,15 +355,17 @@ def fetch_period_performance() -> dict:
             if len(hist) < 2:
                 return ticker, {"mtd": None, "ytd": None}
             latest = float(hist["Close"].iloc[-1])
-            # YTD: first available price of the current year
             ytd_start = float(hist["Close"].iloc[0])
-            ytd = round((latest - ytd_start) / ytd_start * 100, 2)
+            # Yield tickers: absolute change in percentage points (e.g. 4.70 - 4.50 = +0.20)
+            # All other assets: price return in %
+            is_yield = ticker in YIELD_TICKERS
+            ytd = round(latest - ytd_start, 2) if is_yield else round((latest - ytd_start) / ytd_start * 100, 2)
             # MTD: first available price on or after the 1st of the current month
             month_start = datetime.now(timezone.utc).replace(day=1).date()
             month_hist = hist[[d.date() >= month_start for d in hist.index]]
             if len(month_hist) >= 1:
                 mtd_start = float(month_hist["Close"].iloc[0])
-                mtd = round((latest - mtd_start) / mtd_start * 100, 2)
+                mtd = round(latest - mtd_start, 2) if is_yield else round((latest - mtd_start) / mtd_start * 100, 2)
             else:
                 mtd = ytd  # fallback: month started same as year start
             return ticker, {"mtd": mtd, "ytd": ytd}
@@ -886,12 +893,12 @@ st.dataframe(
     use_container_width=True,
     hide_index=True,
     column_config={
-        "Actif":  st.column_config.TextColumn("Actif",  width="medium"),
-        "Prix":   st.column_config.TextColumn("Prix",   width="small"),
-        "Jour":   st.column_config.TextColumn("Jour %", width="small"),
-        "MTD":    st.column_config.TextColumn("MTD %",  width="small"),
-        "YTD":    st.column_config.TextColumn("YTD %",  width="small"),
-        "Signal": st.column_config.TextColumn("Signal", width="small"),
+        "Actif":  st.column_config.TextColumn("Actif",        width="medium"),
+        "Prix":   st.column_config.TextColumn("Prix",         width="small"),
+        "Jour":   st.column_config.TextColumn("Jour %",       width="small"),
+        "MTD":    st.column_config.TextColumn("MTD (% / pp)", width="small"),
+        "YTD":    st.column_config.TextColumn("YTD (% / pp)", width="small"),
+        "Signal": st.column_config.TextColumn("Signal",       width="small"),
     },
 )
 

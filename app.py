@@ -236,6 +236,10 @@ BOC_SERIES = {
     "CA30YT=RR": "BD.CDN.LONG.DQ.YLD",
 }
 
+# Tickers representing yield levels: MTD/YTD = absolute change in pp (not % return)
+YIELD_TICKERS = {"^IRX", "^FVX", "^TNX", "^TYX",
+                 "CA2YT=RR", "CA5YT=RR", "CA10YT=RR", "CA30YT=RR"}
+
 # ─── Central Bank Policy Rates ────────────────────────────────────────────────
 CENTRAL_BANK_RATES = [
     {"flag": "🇺🇸", "name": "États-Unis",  "bank": "Fed",  "rate": "4.25–4.50%", "bias": "neutral",  "change": "=",  "next_meeting": "18-19 mars 2026"},
@@ -329,12 +333,13 @@ def fetch_ca_bond_yields() -> dict:
                 prev = float(obs[-2][series]["v"])
                 change = round(latest - prev, 3)
                 change_pct = round((change / prev) * 100, 2) if prev else None
-            ytd = round((latest - float(obs[0][series]["v"])) / float(obs[0][series]["v"]) * 100, 2) if len(obs) >= 2 else None
+            # YTD: absolute change in percentage points (e.g. 4.70 - 4.50 = +0.20 pp = +20 bps)
+            ytd = round(latest - float(obs[0][series]["v"]), 2) if len(obs) >= 2 else None
             month_obs = [o for o in obs if o["d"] >= month_start]
             mtd = None
             if month_obs:
                 first = float(month_obs[0][series]["v"])
-                mtd = round((latest - first) / first * 100, 2) if first else None
+                mtd = round(latest - first, 2) if first is not None else None
 
             result[ticker] = {"price": round(latest, 3), "change": change, "change_pct": change_pct,
                                "mtd": mtd, "ytd": ytd, "timestamp": obs[-1]["d"]}
