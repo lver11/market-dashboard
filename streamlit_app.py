@@ -11,6 +11,7 @@ import time
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 from typing import Any, Optional
 
 import feedparser
@@ -709,7 +710,7 @@ with st.spinner("Chargement des données de marché..."):
         period_perf[_tk] = {"mtd": _d.get("mtd"), "ytd": _d.get("ytd")}
 
 risk = calculate_risk_score(market_data)
-now  = datetime.now(timezone.utc)
+now  = datetime.now(ZoneInfo("America/Montreal"))
 
 # ─── Header ───────────────────────────────────────────────────────────────────
 col_h1, col_h2 = st.columns([3, 1])
@@ -718,7 +719,7 @@ with col_h1:
         f'<h2 style="margin:0;color:#e2e8f0;font-size:1.4rem;">🌊 Market Turbulence Dashboard</h2>'
         f'<p style="margin:0;color:#64748b;font-size:0.75rem;">Risk-On / Risk-Off Monitor &nbsp;·&nbsp; '
         f'<span class="live-dot"></span> Live &nbsp;·&nbsp; '
-        f'Mis à jour {now.strftime("%H:%M:%S")} UTC</p>',
+        f'Mis à jour {now.strftime("%H:%M:%S")} {now.strftime("%Z")}</p>',
         unsafe_allow_html=True,
     )
 with col_h2:
