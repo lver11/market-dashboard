@@ -167,15 +167,29 @@ MARKET_ASSETS = [
     {"group": "Bonds",       "name": "High Yield HYG",    "ticker": "HYG",      },
     {"group": "Bonds",       "name": "IG Credit LQD",     "ticker": "LQD",      },
     {"group": "Commodities", "name": "Gold",              "ticker": "GC=F",     },
-    {"group": "Commodities", "name": "WTI Oil",           "ticker": "CL=F",     },
-    {"group": "Commodities", "name": "Silver",            "ticker": "SI=F",     },
+    {"group": "Commodities", "name": "WTI Oil",          "ticker": "CL=F",     },
+    {"group": "Commodities", "name": "Brent Crude",      "ticker": "BZ=F",     },
+    {"group": "Commodities", "name": "Silver",           "ticker": "SI=F",     },
+    {"group": "Commodities", "name": "Cuivre",           "ticker": "HG=F",     },
+    {"group": "Commodities", "name": "Gaz Naturel",      "ticker": "NG=F",     },
+    {"group": "Commodities", "name": "Platine",          "ticker": "PL=F",     },
+    {"group": "Commodities", "name": "Maïs",             "ticker": "ZC=F",     },
+    {"group": "Commodities", "name": "Blé",              "ticker": "ZW=F",     },
     {"group": "Currencies",  "name": "DXY (USD Index)",   "ticker": "DX-Y.NYB", },
     {"group": "Currencies",  "name": "EUR/USD",           "ticker": "EURUSD=X", },
+    {"group": "Currencies",  "name": "GBP/USD",           "ticker": "GBPUSD=X", },
     {"group": "Currencies",  "name": "USD/JPY",           "ticker": "JPY=X",    },
+    {"group": "Currencies",  "name": "USD/CHF",           "ticker": "CHF=X",    },
     {"group": "Currencies",  "name": "USD/CAD",           "ticker": "USDCAD=X", },
+    {"group": "Currencies",  "name": "AUD/USD",           "ticker": "AUDUSD=X", },
+    {"group": "Currencies",  "name": "NZD/USD",           "ticker": "NZDUSD=X", },
+    {"group": "Currencies",  "name": "USD/CNY",           "ticker": "CNY=X",    },
+    {"group": "Currencies",  "name": "USD/MXN",           "ticker": "MXN=X",    },
+    {"group": "Currencies",  "name": "USD/BRL",           "ticker": "BRL=X",    },
     {"group": "Crypto",      "name": "Bitcoin",           "ticker": "BTC-USD",  },
     {"group": "Crypto",      "name": "Ethereum",          "ticker": "ETH-USD",  },
     {"group": "Volatility",  "name": "VIX",               "ticker": "^VIX",     },
+    {"group": "Volatility",  "name": "MOVE (Vol. Oblig.)","ticker": "^MOVE",    },
     {"group": "Risk Proxy",  "name": "SPY",               "ticker": "SPY",      },
 ]
 
@@ -817,13 +831,13 @@ with col_cb:
     st.markdown('<div class="section-title">🏦 Taux directeurs — Banques centrales</div>', unsafe_allow_html=True)
     bias_color = {"hawkish": "#ef4444", "dovish": "#22c55e", "neutral": "#f59e0b"}
     bias_label = {"hawkish": "Restrictif 🦅", "dovish": "Accommodant 🕊️", "neutral": "Neutre ⚖️"}
-    change_color = {"↑": "#ef4444", "↓": "#22c55e", "=": "#94a3b8"}
+    arrow_color = {"↑": "#ef4444", "↓": "#22c55e", "=": "#94a3b8"}
 
     cb_html = ""
     for cb in CENTRAL_BANK_RATES:
         bc = bias_color[cb["bias"]]
         bl = bias_label[cb["bias"]]
-        cc = change_color[cb["change"]]
+        cc = arrow_color[cb["change"]]
         cb_html += f"""
         <div class="signal-card" style="margin-bottom:0.3rem">
           <div class="signal-row">

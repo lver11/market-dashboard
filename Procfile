@@ -1,1 +1,1 @@
-web: gunicorn app:app --workers 2 --threads 4 --timeout 120
+web: streamlit run streamlit_app.py --server.port=$PORT --server.address=0.0.0.0
