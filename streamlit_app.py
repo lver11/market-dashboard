@@ -194,23 +194,44 @@ MARKET_ASSETS = [
 ]
 
 NEWS_FEEDS = [
-    # Wire services
-    ("Reuters Top",   "https://feeds.reuters.com/reuters/topNews"),
-    ("Reuters Biz",   "https://feeds.reuters.com/reuters/businessNews"),
-    ("AP News",       "https://apnews.com/rss"),
-    # Finance media
-    ("CNBC Markets",  "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100003114"),
-    ("Bloomberg/GN",  "https://news.google.com/rss/search?q=bloomberg+finance+market&hl=en-US&gl=US&ceid=US:en"),
-    # Reddit finance communities (User-Agent required)
-    ("r/investing",       "https://www.reddit.com/r/investing/.rss"),
-    ("r/wallstreetbets",  "https://www.reddit.com/r/wallstreetbets/.rss"),
-    ("r/economics",       "https://www.reddit.com/r/economics/.rss"),
-    ("r/geopolitics",     "https://www.reddit.com/r/geopolitics/.rss"),
+    # ── Wire services ──────────────────────────────────────────────────────
+    {"name": "Reuters Top",        "url": "https://feeds.reuters.com/reuters/topNews",                                                                    "type": "wire",       "ua": False},
+    {"name": "Reuters Biz",        "url": "https://feeds.reuters.com/reuters/businessNews",                                                               "type": "wire",       "ua": False},
+    {"name": "AP News",            "url": "https://apnews.com/rss",                                                                                       "type": "wire",       "ua": False},
+    # ── Finance media ──────────────────────────────────────────────────────
+    {"name": "CNBC Markets",       "url": "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100003114",                         "type": "media",      "ua": False},
+    {"name": "Bloomberg/GN",       "url": "https://news.google.com/rss/search?q=bloomberg+finance+market&hl=en-US&gl=US&ceid=US:en",                      "type": "media",      "ua": False},
+    # ── Reddit finance communities (User-Agent required) ───────────────────
+    {"name": "r/investing",        "url": "https://www.reddit.com/r/investing/.rss",                                                                      "type": "reddit",     "ua": True},
+    {"name": "r/wallstreetbets",   "url": "https://www.reddit.com/r/wallstreetbets/.rss",                                                                 "type": "reddit",     "ua": True},
+    {"name": "r/economics",        "url": "https://www.reddit.com/r/economics/.rss",                                                                      "type": "reddit",     "ua": True},
+    {"name": "r/geopolitics",      "url": "https://www.reddit.com/r/geopolitics/.rss",                                                                    "type": "reddit",     "ua": True},
+    {"name": "r/stocks",           "url": "https://www.reddit.com/r/stocks/.rss",                                                                         "type": "reddit",     "ua": True},
+    {"name": "r/worldnews",        "url": "https://www.reddit.com/r/worldnews/.rss",                                                                      "type": "reddit",     "ua": True},
+    {"name": "r/CanadianInvestor", "url": "https://www.reddit.com/r/CanadianInvestor/.rss",                                                               "type": "reddit",     "ua": True},
+    # ── Substack newsletters ───────────────────────────────────────────────
+    {"name": "Apricitas Econ",     "url": "https://apricitas.substack.com/feed",                                                                          "type": "newsletter", "ua": False},
+    {"name": "Chartbook",          "url": "https://adamtooze.substack.com/feed",                                                                          "type": "newsletter", "ua": False},
+    {"name": "Noahpinion",         "url": "https://noahpinion.substack.com/feed",                                                                         "type": "newsletter", "ua": False},
+    {"name": "Doomberg",           "url": "https://doomberg.substack.com/feed",                                                                           "type": "newsletter", "ua": False},
+    {"name": "Macro Compass",      "url": "https://themacrocompass.substack.com/feed",                                                                    "type": "newsletter", "ua": False},
 ]
 
-# Feeds that require a User-Agent header (Reddit blocks default scrapers)
-_REDDIT_USER_AGENT = "Mozilla/5.0 (compatible; market-dashboard/1.0; +https://github.com/lver11/market-dashboard)"
-_FEEDS_NEEDING_UA  = {"r/investing", "r/wallstreetbets", "r/economics", "r/geopolitics"}
+# User-Agent for Reddit & social scrapers
+_SCRAPER_UA = "Mozilla/5.0 (compatible; market-dashboard/1.0; +https://github.com/lver11/market-dashboard)"
+
+# X/Twitter: public Nitter instances (tried in order; first success wins)
+_NITTER_INSTANCES = [
+    "https://nitter.privacydev.net",
+    "https://nitter.poast.org",
+    "https://nitter.1d4.us",
+]
+_X_ACCOUNTS = [
+    ("X: @FederalReserve", "FederalReserve"),
+    ("X: @WSJ",             "WSJ"),
+    ("X: @charliebilello",  "charliebilello"),
+    ("X: @financialtimes",  "FinancialTimes"),
+]
 
 ECONOMIC_CALENDAR = [
     {"date": "2026-03-06", "event": "Non-Farm Payrolls (Feb)",       "country": "🇺🇸", "importance": "critical", "forecast": "200K",   "previous": "256K"},
@@ -398,27 +419,78 @@ def fetch_period_performance() -> dict:
     return result
 
 
+def _classify_tags(title: str) -> list[str]:
+    """Return topic tags for a news headline."""
+    tl = title.lower()
+    tags: list[str] = []
+    if any(w in tl for w in ["war", "conflict", "attack", "military", "nuclear",
+                               "sanctions", "nato", "ukraine", "russia", "china",
+                               "taiwan", "iran", "israel", "geopolit", "coup"]):
+        tags.append("geo")
+    if any(w in tl for w in ["inflation", "rate", "fed", "ecb", "boj", "gdp",
+                               "jobs", "recession", "cpi", "fomc", "pce",
+                               "unemployment", "tariff", "trade", "deficit"]):
+        tags.append("eco")
+    if any(w in tl for w in ["market", "stock", "equity", "bond", "gold", "oil",
+                               "crypto", "bitcoin", "rally", "crash", "nasdaq",
+                               "dow", "s&p", "vix", "yield", "dollar"]):
+        tags.append("mkt")
+    return tags
+
+
+def _fetch_feed_safe(url: str, ua: Optional[str] = None, timeout: int = 8) -> list:
+    """Fetch RSS via urllib with timeout; returns feedparser entries list."""
+    try:
+        headers = {"User-Agent": ua or "Mozilla/5.0 (market-dashboard/1.0)"}
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            content = resp.read()
+        return feedparser.parse(content).entries
+    except Exception:
+        return []
+
+
+def _fetch_nitter_feeds() -> list[dict]:
+    """Pull X/Twitter timelines via public Nitter instances (best-effort)."""
+    items: list[dict] = []
+    for display, username in _X_ACCOUNTS:
+        for instance in _NITTER_INSTANCES:
+            entries = _fetch_feed_safe(
+                f"{instance}/{username}/rss", ua=_SCRAPER_UA, timeout=5
+            )
+            if entries:
+                for e in entries[:3]:
+                    title = getattr(e, "title", "")
+                    items.append({
+                        "title":       title,
+                        "source":      display,
+                        "url":         getattr(e, "link", "#"),
+                        "tags":        _classify_tags(title),
+                        "source_type": "social",
+                    })
+                break  # first working instance is enough
+    return items
+
+
 @st.cache_data(ttl=300, show_spinner=False)
 def fetch_news() -> list[dict]:
-    items = []
-    for source, url in NEWS_FEEDS:
-        try:
-            req_headers = {"User-Agent": _REDDIT_USER_AGENT} if source in _FEEDS_NEEDING_UA else {}
-            feed = feedparser.parse(url, request_headers=req_headers)
-            for e in feed.entries[:5]:
-                title = getattr(e, "title", "")
-                tl = title.lower()
-                tags = []
-                if any(w in tl for w in ["war","conflict","attack","military","nuclear","sanctions","nato","ukraine","russia","china","taiwan","iran","israel"]):
-                    tags.append("geo")
-                if any(w in tl for w in ["inflation","rate","fed","ecb","boj","gdp","jobs","recession","cpi","fomc"]):
-                    tags.append("eco")
-                if any(w in tl for w in ["market","stock","equity","bond","gold","oil","crypto","bitcoin","rally","crash"]):
-                    tags.append("mkt")
-                items.append({"title": title, "source": source, "url": getattr(e, "link", "#"), "tags": tags})
-        except Exception:
-            pass
-    return items[:24]
+    items: list[dict] = []
+    for feed in NEWS_FEEDS:
+        entries = _fetch_feed_safe(
+            feed["url"], ua=_SCRAPER_UA if feed["ua"] else None
+        )
+        for e in entries[:5]:
+            title = getattr(e, "title", "")
+            items.append({
+                "title":       title,
+                "source":      feed["name"],
+                "url":         getattr(e, "link", "#"),
+                "tags":        _classify_tags(title),
+                "source_type": feed["type"],
+            })
+    # X / Twitter via Nitter (best-effort; may return nothing if all instances down)
+    items.extend(_fetch_nitter_feeds())
+    return items[:50]
 
 
 # ─── Risk Score ───────────────────────────────────────────────────────────────
@@ -960,26 +1032,53 @@ with col_geo:
 st.markdown("")
 st.markdown('<div class="section-title">📰 Fil d\'actualités — Marchés &amp; Géopolitique</div>', unsafe_allow_html=True)
 
-tag_filter = st.radio("Filtre:", ["Tous", "Géopolitique", "Économie", "Marchés"], horizontal=True, label_visibility="collapsed", key="news_filter")
-tag_map = {"Géopolitique": "geo", "Économie": "eco", "Marchés": "mkt"}
-filtered_news = news_items if tag_filter == "Tous" else [n for n in news_items if tag_map.get(tag_filter, "") in n.get("tags", [])]
+nf1, nf2 = st.columns([1.3, 2])
+with nf1:
+    src_filter = st.radio(
+        "Source:",
+        ["Toutes", "Wire", "Médias", "Reddit", "Newsletter", "X"],
+        horizontal=True, key="src_filter",
+    )
+with nf2:
+    tag_filter = st.radio(
+        "Thème:",
+        ["Tous", "Géopolitique", "Économie", "Marchés"],
+        horizontal=True, key="news_filter",
+    )
+
+src_type_map  = {"Wire": "wire", "Médias": "media", "Reddit": "reddit",
+                 "Newsletter": "newsletter", "X": "social"}
+tag_map       = {"Géopolitique": "geo", "Économie": "eco", "Marchés": "mkt"}
+src_filtered  = (news_items if src_filter == "Toutes"
+                 else [n for n in news_items if n.get("source_type") == src_type_map.get(src_filter)])
+filtered_news = (src_filtered if tag_filter == "Tous"
+                 else [n for n in src_filtered if tag_map.get(tag_filter, "") in n.get("tags", [])])
 
 tag_html_map = {
     "geo": '<span class="news-tag tag-geo">Géopolitique</span>',
     "eco": '<span class="news-tag tag-eco">Économie</span>',
     "mkt": '<span class="news-tag tag-mkt">Marchés</span>',
 }
+src_badge_map = {
+    "wire":       '<span class="news-tag" style="background:rgba(59,130,246,0.1);color:#60a5fa;border:1px solid rgba(59,130,246,0.2)">Wire</span>',
+    "media":      '<span class="news-tag" style="background:rgba(139,92,246,0.1);color:#a78bfa;border:1px solid rgba(139,92,246,0.2)">Médias</span>',
+    "reddit":     '<span class="news-tag" style="background:rgba(249,115,22,0.1);color:#fb923c;border:1px solid rgba(249,115,22,0.2)">Reddit</span>',
+    "newsletter": '<span class="news-tag" style="background:rgba(16,185,129,0.1);color:#34d399;border:1px solid rgba(16,185,129,0.2)">Newsletter</span>',
+    "social":     '<span class="news-tag" style="background:rgba(14,165,233,0.1);color:#38bdf8;border:1px solid rgba(14,165,233,0.2)">X</span>',
+}
 
 nc1, nc2, nc3 = st.columns(3)
 cols_cycle = [nc1, nc2, nc3]
-for i, item in enumerate(filtered_news[:18]):
-    tags_html = "".join(tag_html_map.get(t, "") for t in item.get("tags", []))
+for i, item in enumerate(filtered_news[:24]):
+    tags_html  = "".join(tag_html_map.get(t, "") for t in item.get("tags", []))
+    src_badge  = src_badge_map.get(item.get("source_type", ""), "")
     with cols_cycle[i % 3]:
         st.markdown(
             f'<a href="{item["url"]}" target="_blank" style="text-decoration:none">'
             f'<div class="news-card">'
             f'<div class="news-title">{item["title"]}</div>'
-            f'<div class="news-meta"><span style="color:#3b82f6">{item["source"]}</span> {tags_html}</div>'
+            f'<div class="news-meta"><span style="color:#3b82f6">{item["source"]}</span>'
+            f' {src_badge} {tags_html}</div>'
             f'</div></a>',
             unsafe_allow_html=True,
         )
@@ -988,7 +1087,9 @@ for i, item in enumerate(filtered_news[:18]):
 st.markdown("---")
 st.markdown(
     '<p style="font-size:0.65rem;color:#475569;text-align:center">'
-    'Données: Yahoo Finance · Actualités: Reuters, AP, CNBC, Bloomberg (Google News), Reddit (r/investing, r/wallstreetbets, r/economics, r/geopolitics) · '
+    'Données: Yahoo Finance · Actualités: Reuters, AP, CNBC, Bloomberg/GN · '
+    'Reddit (r/investing, r/wallstreetbets, r/economics, r/geopolitics, r/stocks, r/worldnews, r/CanadianInvestor) · '
+    'Substack (Apricitas, Chartbook, Noahpinion, Doomberg, Macro Compass) · X via Nitter · '
     'Actualisation automatique toutes les 60 secondes · '
     'Score Risk-On/Off: modèle composite 7 signaux pondérés · '
     'À des fins informatives uniquement — pas un conseil en investissement.'
