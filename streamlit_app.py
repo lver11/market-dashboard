@@ -279,6 +279,44 @@ def get_vix_history() -> list[dict]:
 
 
 @st.cache_data(ttl=300, show_spinner=False)
+def fetch_period_performance() -> dict:
+    """Fetch MTD and YTD % for all tickers (cached 5 min)."""
+    tickers = list({a["ticker"] for a in MARKET_ASSETS})
+
+    def _fetch_perf(ticker: str) -> tuple[str, dict]:
+        try:
+            hist = yf.Ticker(ticker).history(period="ytd", auto_adjust=True).dropna(subset=["Close"])
+            if len(hist) < 2:
+                return ticker, {"mtd": None, "ytd": None}
+            latest = float(hist["Close"].iloc[-1])
+            # YTD: first available price of the current year
+            ytd_start = float(hist["Close"].iloc[0])
+            ytd = round((latest - ytd_start) / ytd_start * 100, 2)
+            # MTD: first available price on or after the 1st of the current month
+            month_start = datetime.now(timezone.utc).replace(day=1).date()
+            month_hist = hist[[d.date() >= month_start for d in hist.index]]
+            if len(month_hist) >= 1:
+                mtd_start = float(month_hist["Close"].iloc[0])
+                mtd = round((latest - mtd_start) / mtd_start * 100, 2)
+            else:
+                mtd = ytd  # fallback: month started same as year start
+            return ticker, {"mtd": mtd, "ytd": ytd}
+        except Exception as e:
+            logger.warning(f"Perf fetch error {ticker}: {e}")
+            return ticker, {"mtd": None, "ytd": None}
+
+    result: dict = {}
+    with ThreadPoolExecutor(max_workers=10) as ex:
+        for future in as_completed({ex.submit(_fetch_perf, t): t for t in tickers}, timeout=35):
+            try:
+                tk, data = future.result()
+                result[tk] = data
+            except Exception:
+                pass
+    return result
+
+
+@st.cache_data(ttl=300, show_spinner=False)
 def fetch_news() -> list[dict]:
     items = []
     for source, url in NEWS_FEEDS:
@@ -504,9 +542,10 @@ st_autorefresh(interval=60_000, key="auto_refresh")
 
 # ─── Fetch data ───────────────────────────────────────────────────────────────
 with st.spinner("Chargement des données de marché..."):
-    market_data = fetch_market_data()
+    market_data  = fetch_market_data()
     vix_history  = get_vix_history()
     news_items   = fetch_news()
+    period_perf  = fetch_period_performance()
 
 risk = calculate_risk_score(market_data)
 now  = datetime.now(timezone.utc)
@@ -709,15 +748,20 @@ for a in MARKET_ASSETS:
         continue
     if selected_group != "Tous" and a["group"] != selected_group:
         continue
-    td  = market_data.get(a["ticker"], {})
-    pct = td.get("change_pct")
+    td   = market_data.get(a["ticker"], {})
+    pp   = period_perf.get(a["ticker"], {})
+    pct  = td.get("change_pct")
+    mtd  = pp.get("mtd")
+    ytd  = pp.get("ytd")
     rows.append({
-        "Actif":     a["name"],
-        "Groupe":    a["group"],
-        "Ticker":    a["ticker"],
-        "Prix":      td.get("price"),
-        "Var %":     pct,
-        "Signal":    "▲ Hausse forte" if (pct or 0) > 1 else "▲ Hausse" if (pct or 0) > 0.2 else "▼ Baisse forte" if (pct or 0) < -1 else "▼ Baisse" if (pct or 0) < -0.2 else "▸ Stable" if pct is not None else "—",
+        "Actif":  a["name"],
+        "Groupe": a["group"],
+        "Ticker": a["ticker"],
+        "Prix":   td.get("price"),
+        "Jour":   pct,
+        "MTD":    mtd,
+        "YTD":    ytd,
+        "Signal": "▲ Forte" if (pct or 0) > 1 else "▲ Hausse" if (pct or 0) > 0.2 else "▼ Forte" if (pct or 0) < -1 else "▼ Baisse" if (pct or 0) < -0.2 else "▸ Stable" if pct is not None else "—",
     })
 
 df = pd.DataFrame(rows)
@@ -733,17 +777,22 @@ def fmt_val(val):
     return str(val)
 
 display_df = df.copy()
-display_df["Prix"]  = display_df["Prix"].apply(lambda v: fmt_price(v, 2) if v else "—")
-display_df["Var %"] = display_df["Var %"].apply(fmt_val)
+display_df["Prix"]   = display_df["Prix"].apply(lambda v: fmt_price(v, 2) if v else "—")
+display_df["Jour"]   = display_df["Jour"].apply(fmt_val)
+display_df["MTD"]    = display_df["MTD"].apply(fmt_val)
+display_df["YTD"]    = display_df["YTD"].apply(fmt_val)
 
 st.dataframe(
-    display_df[["Actif", "Groupe", "Ticker", "Prix", "Var %", "Signal"]],
+    display_df[["Actif", "Groupe", "Ticker", "Prix", "Jour", "MTD", "YTD", "Signal"]],
     use_container_width=True,
     hide_index=True,
     column_config={
-        "Actif":   st.column_config.TextColumn("Actif", width="medium"),
-        "Var %":   st.column_config.TextColumn("Var %", width="small"),
-        "Signal":  st.column_config.TextColumn("Signal", width="medium"),
+        "Actif":  st.column_config.TextColumn("Actif",  width="medium"),
+        "Prix":   st.column_config.TextColumn("Prix",   width="small"),
+        "Jour":   st.column_config.TextColumn("Jour %", width="small"),
+        "MTD":    st.column_config.TextColumn("MTD %",  width="small"),
+        "YTD":    st.column_config.TextColumn("YTD %",  width="small"),
+        "Signal": st.column_config.TextColumn("Signal", width="small"),
     },
 )
 
