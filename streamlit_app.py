@@ -5,8 +5,10 @@ Live risk-on/off indicator with multi-asset market data aggregation.
 
 from __future__ import annotations
 
+import json as _json
 import logging
 import time
+import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from typing import Any, Optional
@@ -233,6 +235,14 @@ GEOPOLITICAL_RISKS = [
     {"region": "Americas",     "title": "US Fiscal Sustainability",      "level": "low",   "description": "Debt ceiling concerns; rising deficit affecting bond market sentiment.",               "impact": "Treasury yields, USD long-term"},
 ]
 
+# Bank of Canada Valet API series IDs for government bond benchmark yields
+BOC_SERIES = {
+    "CA2YT=RR":  "BD.CDN.2YR.DQ.YLD",
+    "CA5YT=RR":  "BD.CDN.5YR.DQ.YLD",
+    "CA10YT=RR": "BD.CDN.10YR.DQ.YLD",
+    "CA30YT=RR": "BD.CDN.LONG.DQ.YLD",
+}
+
 CENTRAL_BANK_RATES = [
     {"flag": "🇺🇸", "name": "États-Unis",  "bank": "Fed",  "rate": "4.25–4.50%", "bias": "neutral",  "change": "=",  "next_meeting": "18-19 mars"},
     {"flag": "🇪🇺", "name": "Zone Euro",   "bank": "BCE",  "rate": "2.65%",      "bias": "dovish",   "change": "↓",  "next_meeting": "17 avr."},
@@ -283,6 +293,50 @@ def get_vix_history() -> list[dict]:
         return [{"date": str(idx.date()), "value": round(float(r["Close"]), 2)} for idx, r in hist.iterrows()]
     except Exception:
         return []
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def fetch_ca_bond_yields() -> dict:
+    """Fetch Canadian government bond yields from Bank of Canada Valet API (free, no key)."""
+    today      = datetime.now(timezone.utc).date()
+    year_start = today.replace(month=1, day=1).isoformat()
+    month_start = today.replace(day=1).isoformat()
+    result: dict = {}
+
+    for ticker, series in BOC_SERIES.items():
+        try:
+            url = (f"https://www.bankofcanada.ca/valet/observations/{series}/json"
+                   f"?start_date={year_start}&end_date={today.isoformat()}")
+            with urllib.request.urlopen(url, timeout=10) as resp:
+                data = _json.loads(resp.read())
+            obs = [o for o in data.get("observations", [])
+                   if o.get(series, {}).get("v") not in (None, "")]
+            if not obs:
+                result[ticker] = {"price": None, "change": None, "change_pct": None, "mtd": None, "ytd": None}
+                continue
+
+            latest = float(obs[-1][series]["v"])
+            # Day change vs previous observation
+            change = change_pct = None
+            if len(obs) >= 2:
+                prev = float(obs[-2][series]["v"])
+                change = round(latest - prev, 3)
+                change_pct = round((change / prev) * 100, 2) if prev else None
+            # YTD: first obs of year
+            ytd = round((latest - float(obs[0][series]["v"])) / float(obs[0][series]["v"]) * 100, 2) if len(obs) >= 2 else None
+            # MTD: first obs on or after 1st of current month
+            month_obs = [o for o in obs if o["d"] >= month_start]
+            mtd = None
+            if month_obs:
+                first = float(month_obs[0][series]["v"])
+                mtd = round((latest - first) / first * 100, 2) if first else None
+
+            result[ticker] = {"price": round(latest, 3), "change": change, "change_pct": change_pct,
+                               "mtd": mtd, "ytd": ytd}
+        except Exception as e:
+            logger.warning(f"BOC fetch error {series}: {e}")
+            result[ticker] = {"price": None, "change": None, "change_pct": None, "mtd": None, "ytd": None}
+    return result
 
 
 @st.cache_data(ttl=300, show_spinner=False)
@@ -520,6 +574,7 @@ def make_vix_chart(vix_data: list[dict]) -> go.Figure:
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 def fmt_price(v, decimals=2):
     if v is None: return "—"
+    if isinstance(v, float) and v != v: return "—"  # NaN guard
     return f"{v:,.{decimals}f}"
 
 def fmt_pct(v):
@@ -550,9 +605,15 @@ st_autorefresh(interval=60_000, key="auto_refresh")
 # ─── Fetch data ───────────────────────────────────────────────────────────────
 with st.spinner("Chargement des données de marché..."):
     market_data  = fetch_market_data()
+    ca_yields    = fetch_ca_bond_yields()
+    # Inject BOC data into market_data (overrides the nan yfinance returns for CAxxYT=RR)
+    market_data.update(ca_yields)
     vix_history  = get_vix_history()
     news_items   = fetch_news()
     period_perf  = fetch_period_performance()
+    # Inject CA MTD/YTD into period_perf
+    for _tk, _d in ca_yields.items():
+        period_perf[_tk] = {"mtd": _d.get("mtd"), "ytd": _d.get("ytd")}
 
 risk = calculate_risk_score(market_data)
 now  = datetime.now(timezone.utc)
@@ -809,7 +870,9 @@ def color_pct(val):
 
 def fmt_val(val):
     if val is None: return "—"
-    if isinstance(val, float): return f"{val:+.2f}%" if abs(val) < 100 else f"{val:.4f}"
+    if isinstance(val, float):
+        if val != val: return "—"  # NaN guard
+        return f"{val:+.2f}%" if abs(val) < 100 else f"{val:.4f}"
     return str(val)
 
 display_df = df.copy()
