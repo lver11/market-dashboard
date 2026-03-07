@@ -48,10 +48,16 @@ MARKET_ASSETS = [
     {"group": "Equities",    "name": "Nikkei 225",         "ticker": "^N225",     "type": "index"},
     {"group": "Equities",    "name": "MSCI EM (EEM)",      "ticker": "EEM",       "type": "etf"},
     # Bonds / Rates
+    # US Yields
     {"group": "Bonds",       "name": "US 3M Yield",        "ticker": "^IRX",      "type": "bond"},
     {"group": "Bonds",       "name": "US 5Y Yield",        "ticker": "^FVX",      "type": "bond"},
     {"group": "Bonds",       "name": "US 10Y Yield",       "ticker": "^TNX",      "type": "bond"},
     {"group": "Bonds",       "name": "US 30Y Yield",       "ticker": "^TYX",      "type": "bond"},
+    # Canadian Yields
+    {"group": "Bonds",       "name": "CA 2Y Yield",        "ticker": "CA2YT=RR",  "type": "bond"},
+    {"group": "Bonds",       "name": "CA 5Y Yield",        "ticker": "CA5YT=RR",  "type": "bond"},
+    {"group": "Bonds",       "name": "CA 10Y Yield",       "ticker": "CA10YT=RR", "type": "bond"},
+    {"group": "Bonds",       "name": "CA 30Y Yield",       "ticker": "CA30YT=RR", "type": "bond"},
     {"group": "Bonds",       "name": "Long Treasury (TLT)","ticker": "TLT",       "type": "etf"},
     {"group": "Bonds",       "name": "High Yield (HYG)",   "ticker": "HYG",       "type": "etf"},
     {"group": "Bonds",       "name": "IG Credit (LQD)",    "ticker": "LQD",       "type": "etf"},

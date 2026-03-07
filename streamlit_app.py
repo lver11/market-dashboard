@@ -150,10 +150,17 @@ MARKET_ASSETS = [
     {"group": "Equities",    "name": "Euro Stoxx 50",     "ticker": "^STOXX50E",},
     {"group": "Equities",    "name": "Nikkei 225",        "ticker": "^N225",    },
     {"group": "Equities",    "name": "MSCI EM (EEM)",     "ticker": "EEM",      },
+    # US Yields
     {"group": "Bonds",       "name": "US 3M Yield",       "ticker": "^IRX",     },
     {"group": "Bonds",       "name": "US 5Y Yield",       "ticker": "^FVX",     },
     {"group": "Bonds",       "name": "US 10Y Yield",      "ticker": "^TNX",     },
     {"group": "Bonds",       "name": "US 30Y Yield",      "ticker": "^TYX",     },
+    # Canadian Yields
+    {"group": "Bonds",       "name": "CA 2Y Yield",       "ticker": "CA2YT=RR", },
+    {"group": "Bonds",       "name": "CA 5Y Yield",       "ticker": "CA5YT=RR", },
+    {"group": "Bonds",       "name": "CA 10Y Yield",      "ticker": "CA10YT=RR",},
+    {"group": "Bonds",       "name": "CA 30Y Yield",      "ticker": "CA30YT=RR",},
+    # Bond ETFs
     {"group": "Bonds",       "name": "Long Treasury TLT", "ticker": "TLT",      },
     {"group": "Bonds",       "name": "High Yield HYG",    "ticker": "HYG",      },
     {"group": "Bonds",       "name": "IG Credit LQD",     "ticker": "LQD",      },
@@ -642,68 +649,97 @@ st.markdown("")
 col_curve, col_cb = st.columns(2)
 
 with col_curve:
-    st.markdown('<div class="section-title">📈 Courbe des taux US — Structure à terme</div>', unsafe_allow_html=True)
-    yield_maturities = [
-        ("3M",  "^IRX"),
-        ("5A",  "^FVX"),
-        ("10A", "^TNX"),
-        ("30A", "^TYX"),
-    ]
-    yld_pts = [(lbl, market_data.get(tk, {}).get("price")) for lbl, tk in yield_maturities]
-    yld_pts = [(lbl, v) for lbl, v in yld_pts if v is not None]
+    st.markdown('<div class="section-title">📈 Courbe des taux — US vs Canada</div>', unsafe_allow_html=True)
 
-    if yld_pts:
-        yld_labels = [lbl for lbl, _ in yld_pts]
-        yld_values = [v   for _, v  in yld_pts]
-        # Yield curve is inverted if short > long
-        inverted = len(yld_values) >= 2 and yld_values[0] > yld_values[-1]
-        line_color = "#ef4444" if inverted else "#3b82f6"
-        dot_colors = ["#ef4444" if v > yld_values[-1] else "#22c55e" for v in yld_values]
+    # US curve: 3M · 5A · 10A · 30A
+    us_maturities = [("3M", "^IRX"), ("5A", "^FVX"), ("10A", "^TNX"), ("30A", "^TYX")]
+    us_pts = [(lbl, market_data.get(tk, {}).get("price")) for lbl, tk in us_maturities]
+    us_pts = [(lbl, v) for lbl, v in us_pts if v is not None]
 
+    # Canada curve: 2A · 5A · 10A · 30A
+    ca_maturities = [("2A", "CA2YT=RR"), ("5A", "CA5YT=RR"), ("10A", "CA10YT=RR"), ("30A", "CA30YT=RR")]
+    ca_pts = [(lbl, market_data.get(tk, {}).get("price")) for lbl, tk in ca_maturities]
+    ca_pts = [(lbl, v) for lbl, v in ca_pts if v is not None]
+
+    if us_pts or ca_pts:
         fig_curve = go.Figure()
-        fig_curve.add_trace(go.Scatter(
-            x=yld_labels, y=yld_values,
-            mode="lines+markers+text",
-            line=dict(width=2.5, color=line_color),
-            marker=dict(size=9, color=dot_colors, line=dict(width=1, color="#0f172a")),
-            text=[f"{v:.2f}%" for v in yld_values],
-            textposition="top center",
-            textfont=dict(size=11, color="#e2e8f0"),
-            fill="tozeroy",
-            fillcolor="rgba(59,130,246,0.06)",
-            hovertemplate="<b>%{x}: %{y:.2f}%</b><extra></extra>",
-        ))
-        if inverted:
-            fig_curve.add_annotation(
-                text="⚠️ Courbe inversée — signal récessif",
-                x=0.5, y=0.92, xref="paper", yref="paper",
-                showarrow=False, font=dict(color="#ef4444", size=11),
-                bgcolor="rgba(239,68,68,0.1)", bordercolor="#ef4444",
-                borderwidth=1, borderpad=4,
-            )
+
+        if us_pts:
+            us_vals = [v for _, v in us_pts]
+            us_inverted = len(us_vals) >= 2 and us_vals[0] > us_vals[-1]
+            us_color = "#ef4444" if us_inverted else "#3b82f6"
+            fig_curve.add_trace(go.Scatter(
+                x=[lbl for lbl, _ in us_pts], y=us_vals,
+                name="🇺🇸 US",
+                mode="lines+markers",
+                line=dict(width=2.5, color=us_color),
+                marker=dict(size=7),
+                fill="tozeroy",
+                fillcolor=f"rgba(59,130,246,0.05)",
+                hovertemplate="<b>US %{x}: %{y:.2f}%</b><extra></extra>",
+            ))
+            if us_inverted:
+                fig_curve.add_annotation(
+                    text="⚠️ US inversée",
+                    x=0.02, y=0.95, xref="paper", yref="paper",
+                    showarrow=False, font=dict(color="#ef4444", size=10),
+                    bgcolor="rgba(239,68,68,0.1)", bordercolor="#ef4444",
+                    borderwidth=1, borderpad=3,
+                )
+
+        if ca_pts:
+            ca_vals = [v for _, v in ca_pts]
+            ca_inverted = len(ca_vals) >= 2 and ca_vals[0] > ca_vals[-1]
+            ca_color = "#f97316" if ca_inverted else "#22d3ee"
+            fig_curve.add_trace(go.Scatter(
+                x=[lbl for lbl, _ in ca_pts], y=ca_vals,
+                name="🇨🇦 CA",
+                mode="lines+markers",
+                line=dict(width=2.5, color=ca_color, dash="dot"),
+                marker=dict(size=7),
+                hovertemplate="<b>CA %{x}: %{y:.2f}%</b><extra></extra>",
+            ))
+            if ca_inverted:
+                fig_curve.add_annotation(
+                    text="⚠️ CA inversée",
+                    x=0.98, y=0.95, xref="paper", yref="paper", xanchor="right",
+                    showarrow=False, font=dict(color="#f97316", size=10),
+                    bgcolor="rgba(249,115,22,0.1)", bordercolor="#f97316",
+                    borderwidth=1, borderpad=3,
+                )
+
         fig_curve.update_layout(
-            height=210,
-            margin=dict(t=30, b=10, l=45, r=20),
+            height=220,
+            margin=dict(t=10, b=10, l=45, r=20),
             paper_bgcolor="#0f172a", plot_bgcolor="#0f172a",
             font={"color": "#94a3b8", "size": 11},
-            xaxis=dict(showgrid=False, color="#475569"),
+            xaxis=dict(showgrid=False, color="#475569", categoryorder="array",
+                       categoryarray=["3M","2A","5A","10A","30A"]),
             yaxis=dict(showgrid=True, gridcolor="#1e293b", color="#475569",
                        tickformat=".2f", ticksuffix="%"),
-            showlegend=False,
+            legend=dict(bgcolor="rgba(0,0,0,0)", font=dict(size=11),
+                        orientation="h", x=0.5, xanchor="center", y=1.08),
+            showlegend=True,
         )
         st.plotly_chart(fig_curve, use_container_width=True, config={"displayModeBar": False})
 
-        # Spread résumé sous le graphique
-        t10 = market_data.get("^TNX", {}).get("price")
-        t3m = market_data.get("^IRX", {}).get("price")
-        if t10 and t3m:
-            spread = round(t10 - t3m, 2)
-            sc = "#ef4444" if spread < 0 else "#22c55e"
-            sl = "Inversée ⚠️" if spread < 0 else "Normale ✅" if spread > 0.5 else "Plate ⚠️"
+        # Spreads résumé
+        t10_us = market_data.get("^TNX",      {}).get("price")
+        t10_ca = market_data.get("CA10YT=RR", {}).get("price")
+        t3m_us = market_data.get("^IRX",      {}).get("price")
+        parts = []
+        if t10_us and t3m_us:
+            sp_us = round(t10_us - t3m_us, 2)
+            sc_us = "#ef4444" if sp_us < 0 else "#22c55e"
+            parts.append(f'🇺🇸 10A–3M: <span style="color:{sc_us};font-weight:700">{sp_us:+.2f}%</span>')
+        if t10_us and t10_ca:
+            sp_ca = round(t10_us - t10_ca, 2)
+            sc_ca = "#ef4444" if sp_ca < -0.3 else "#22c55e"
+            parts.append(f'US–CA 10A: <span style="color:{sc_ca};font-weight:700">{sp_ca:+.2f}%</span>')
+        if parts:
             st.markdown(
                 f'<p style="font-size:0.72rem;color:#94a3b8;text-align:center;margin-top:-8px">'
-                f'Spread 10A – 3M : <span style="color:{sc};font-weight:700">{spread:+.2f}%</span>'
-                f' &nbsp;·&nbsp; Forme: <span style="color:{sc};font-weight:600">{sl}</span></p>',
+                + " &nbsp;·&nbsp; ".join(parts) + "</p>",
                 unsafe_allow_html=True,
             )
     else:
