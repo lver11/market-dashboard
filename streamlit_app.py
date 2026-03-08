@@ -192,6 +192,18 @@ MARKET_ASSETS = [
     {"group": "Volatility",  "name": "VIX",               "ticker": "^VIX",     },
     {"group": "Volatility",  "name": "MOVE (Vol. Oblig.)","ticker": "^MOVE",    },
     {"group": "Risk Proxy",  "name": "SPY",               "ticker": "SPY",      },
+    # S&P 500 Sectors (SPDR ETFs)
+    {"group": "S&P Secteurs", "name": "Technologie",          "ticker": "XLK",  },
+    {"group": "S&P Secteurs", "name": "Finance",              "ticker": "XLF",  },
+    {"group": "S&P Secteurs", "name": "Santé",                "ticker": "XLV",  },
+    {"group": "S&P Secteurs", "name": "Consomm. discr.",      "ticker": "XLY",  },
+    {"group": "S&P Secteurs", "name": "Consomm. de base",     "ticker": "XLP",  },
+    {"group": "S&P Secteurs", "name": "Énergie",              "ticker": "XLE",  },
+    {"group": "S&P Secteurs", "name": "Industrie",            "ticker": "XLI",  },
+    {"group": "S&P Secteurs", "name": "Matériaux",            "ticker": "XLB",  },
+    {"group": "S&P Secteurs", "name": "Immobilier",           "ticker": "XLRE", },
+    {"group": "S&P Secteurs", "name": "Services collectifs",  "ticker": "XLU",  },
+    {"group": "S&P Secteurs", "name": "Communication",        "ticker": "XLC",  },
 ]
 
 NEWS_FEEDS = [
