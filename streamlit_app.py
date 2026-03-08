@@ -210,16 +210,16 @@ NEWS_FEEDS = [
     {"name": "r/stocks",           "url": "https://www.reddit.com/r/stocks/.rss",                                                                         "type": "reddit",     "ua": True},
     {"name": "r/worldnews",        "url": "https://www.reddit.com/r/worldnews/.rss",                                                                      "type": "reddit",     "ua": True},
     {"name": "r/CanadianInvestor", "url": "https://www.reddit.com/r/CanadianInvestor/.rss",                                                               "type": "reddit",     "ua": True},
-    # ── Substack newsletters ───────────────────────────────────────────────
-    {"name": "Apricitas Econ",     "url": "https://apricitas.substack.com/feed",                                                                          "type": "newsletter", "ua": False},
-    {"name": "Chartbook",          "url": "https://adamtooze.substack.com/feed",                                                                          "type": "newsletter", "ua": False},
-    {"name": "Noahpinion",         "url": "https://noahpinion.substack.com/feed",                                                                         "type": "newsletter", "ua": False},
-    {"name": "Doomberg",           "url": "https://doomberg.substack.com/feed",                                                                           "type": "newsletter", "ua": False},
-    {"name": "Macro Compass",      "url": "https://themacrocompass.substack.com/feed",                                                                    "type": "newsletter", "ua": False},
+    # ── Substack newsletters (ua:True → browser UA required to pass Cloudflare) ──
+    {"name": "Apricitas Econ",     "url": "https://apricitas.substack.com/feed",                                                                          "type": "newsletter", "ua": True},
+    {"name": "Chartbook",          "url": "https://adamtooze.substack.com/feed",                                                                          "type": "newsletter", "ua": True},
+    {"name": "Noahpinion",         "url": "https://noahpinion.substack.com/feed",                                                                         "type": "newsletter", "ua": True},
+    {"name": "No Mercy/No Malice", "url": "https://scottgalloway.substack.com/feed",                                                                      "type": "newsletter", "ua": True},
+    {"name": "Calculated Risk",    "url": "https://www.calculatedriskblog.com/feeds/posts/default",                                                       "type": "newsletter", "ua": False},
 ]
 
-# User-Agent for Reddit & social scrapers
-_SCRAPER_UA = "Mozilla/5.0 (compatible; market-dashboard/1.0; +https://github.com/lver11/market-dashboard)"
+# User-Agent — browser-like to pass Cloudflare/Substack checks
+_SCRAPER_UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 
 # X/Twitter: public Nitter instances (tried in order; first success wins)
 _NITTER_INSTANCES = [
@@ -1127,7 +1127,7 @@ st.markdown(
     '<p style="font-size:0.65rem;color:#475569;text-align:center">'
     'Données: Yahoo Finance · Actualités: Reuters, AP, CNBC, Bloomberg/GN · '
     'Reddit (r/investing, r/wallstreetbets, r/economics, r/geopolitics, r/stocks, r/worldnews, r/CanadianInvestor) · '
-    'Substack (Apricitas, Chartbook, Noahpinion, Doomberg, Macro Compass) · X via Nitter · '
+    'Substack (Apricitas, Chartbook, Noahpinion, No Mercy/No Malice) · Calculated Risk · X via Nitter · '
     'Actualisation automatique toutes les 60 secondes · '
     'Score Risk-On/Off: modèle composite 7 signaux pondérés · '
     'À des fins informatives uniquement — pas un conseil en investissement.'
