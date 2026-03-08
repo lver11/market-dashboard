@@ -468,6 +468,16 @@ def fetch_futures_data() -> dict:
     return result
 
 
+@st.cache_data(ttl=600, show_spinner=False)
+def fetch_asset_history_1y(ticker: str) -> pd.DataFrame:
+    """Fetch 1-year OHLC + volume history for a single ticker (10-min cache)."""
+    try:
+        hist = yf.Ticker(ticker).history(period="1y", auto_adjust=True)
+        return hist.dropna(subset=["Close"])
+    except Exception:
+        return pd.DataFrame()
+
+
 def _classify_tags(title: str) -> list[str]:
     """Return topic tags for a news headline."""
     tl = title.lower()
@@ -885,6 +895,112 @@ def make_vix_chart(vix_data: list[dict]) -> go.Figure:
         yaxis=dict(showgrid=True, gridcolor="#1e293b", color="#475569"),
         showlegend=False,
     )
+    return fig
+
+
+# ─── Plotly 1-Year Asset Chart ────────────────────────────────────────────────
+def make_asset_chart(ticker: str, name: str) -> go.Figure:
+    """Candlestick + volume + MA20/MA50 chart for 1 year of data."""
+    hist = fetch_asset_history_1y(ticker)
+    if hist.empty:
+        return go.Figure()
+
+    has_ohlc   = all(c in hist.columns for c in ("Open", "High", "Low"))
+    has_volume = "Volume" in hist.columns and hist["Volume"].sum() > 0
+    price_dom  = [0.22, 1.0] if has_volume else [0.0, 1.0]
+
+    fig = go.Figure()
+
+    # ── Price: candlestick or line ───────────────────────────────────────────
+    if has_ohlc:
+        fig.add_trace(go.Candlestick(
+            x=hist.index,
+            open=hist["Open"], high=hist["High"],
+            low=hist["Low"],   close=hist["Close"],
+            name=name,
+            increasing_line_color="#22c55e",
+            decreasing_line_color="#ef4444",
+            increasing_fillcolor="rgba(34,197,94,0.22)",
+            decreasing_fillcolor="rgba(239,68,68,0.22)",
+            showlegend=False,
+        ))
+    else:
+        fig.add_trace(go.Scatter(
+            x=hist.index, y=hist["Close"],
+            mode="lines", name=name,
+            line=dict(color="#3b82f6", width=2),
+            showlegend=False,
+        ))
+
+    # ── MA20 ────────────────────────────────────────────────────────────────
+    ma20 = hist["Close"].rolling(20).mean()
+    fig.add_trace(go.Scatter(
+        x=hist.index, y=ma20, name="MA 20",
+        line=dict(color="#f59e0b", width=1.5, dash="dot"),
+        hovertemplate="%{y:.3f}<extra>MA20</extra>",
+    ))
+
+    # ── MA50 ────────────────────────────────────────────────────────────────
+    ma50 = hist["Close"].rolling(50).mean()
+    fig.add_trace(go.Scatter(
+        x=hist.index, y=ma50, name="MA 50",
+        line=dict(color="#a78bfa", width=1.5, dash="dot"),
+        hovertemplate="%{y:.3f}<extra>MA50</extra>",
+    ))
+
+    # ── Volume bars ──────────────────────────────────────────────────────────
+    if has_volume:
+        open_col = hist["Open"] if has_ohlc else hist["Close"]
+        vol_clrs = [
+            "rgba(34,197,94,0.35)" if c >= o else "rgba(239,68,68,0.35)"
+            for c, o in zip(hist["Close"], open_col)
+        ]
+        fig.add_trace(go.Bar(
+            x=hist.index, y=hist["Volume"],
+            marker_color=vol_clrs, yaxis="y2",
+            hovertemplate="%{y:,.0f}<extra>Volume</extra>",
+            showlegend=False,
+        ))
+
+    # ── Layout ──────────────────────────────────────────────────────────────
+    layout_kwargs: dict = dict(
+        height=400,
+        margin=dict(t=35, b=10, l=60, r=20),
+        paper_bgcolor="#0f172a", plot_bgcolor="#0f172a",
+        font={"color": "#94a3b8", "size": 11},
+        xaxis=dict(
+            showgrid=False, color="#475569",
+            rangeslider=dict(visible=False),
+            rangeselector=dict(
+                buttons=[
+                    dict(count=1,  label="1M",  step="month", stepmode="backward"),
+                    dict(count=3,  label="3M",  step="month", stepmode="backward"),
+                    dict(count=6,  label="6M",  step="month", stepmode="backward"),
+                    dict(step="all", label="1A"),
+                ],
+                bgcolor="#1e293b", activecolor="#334155",
+                font=dict(color="#94a3b8", size=11),
+            ),
+        ),
+        yaxis=dict(
+            showgrid=True, gridcolor="#1e293b", color="#475569",
+            domain=price_dom,
+        ),
+        showlegend=True,
+        legend=dict(
+            bgcolor="rgba(0,0,0,0)", font=dict(size=11),
+            orientation="h", x=1, xanchor="right", y=1.04,
+        ),
+        xaxis_rangeslider_visible=False,
+    )
+    if has_volume:
+        layout_kwargs["yaxis2"] = dict(
+            showgrid=False, color="#334155",
+            domain=[0.0, 0.18],
+            tickformat=".2s",
+        )
+
+    fig.update_layout(**layout_kwargs)
     return fig
 
 
@@ -1439,6 +1555,71 @@ st.markdown(f"""
   </table>
 </div>
 """, unsafe_allow_html=True)
+
+# ─── ROW 3b: 1-Year Asset Chart ───────────────────────────────────────────────
+st.markdown("")
+st.markdown('<div class="section-title">📊 Graphique historique — Cliquez sur un actif</div>', unsafe_allow_html=True)
+
+# Build selector list from currently displayed rows
+_chart_opts = [
+    (f"{row['Actif']}  ({row['Ticker']})", row["Ticker"], row["Actif"])
+    for _, row in df.iterrows()
+    if row.get("Prix") is not None
+]
+
+if _chart_opts:
+    # ── Selector + quick stats ───────────────────────────────────────────────
+    _csel_col, _cinfo_col = st.columns([2, 3])
+
+    with _csel_col:
+        _chart_sel_label = st.selectbox(
+            "Actif à afficher :",
+            [o[0] for o in _chart_opts],
+            key="chart_asset_sel",
+        )
+
+    _sel_map    = {o[0]: (o[1], o[2]) for o in _chart_opts}
+    _sel_ticker, _sel_name = _sel_map.get(_chart_sel_label, (_chart_opts[0][1], _chart_opts[0][2]))
+    _td_sel  = market_data.get(_sel_ticker, {})
+    _pp_sel  = period_perf.get(_sel_ticker, {})
+    _pr_sel  = _td_sel.get("price")
+    _pct_sel = _td_sel.get("change_pct")
+    _ytd_sel = _pp_sel.get("ytd")
+    _mtd_sel = _pp_sel.get("mtd")
+    _c_day   = "#22c55e" if (_pct_sel or 0) > 0 else "#ef4444" if (_pct_sel or 0) < 0 else "#94a3b8"
+    _c_mtd   = "#22c55e" if (_mtd_sel or 0) > 0 else "#ef4444" if (_mtd_sel or 0) < 0 else "#94a3b8"
+    _c_ytd   = "#22c55e" if (_ytd_sel or 0) > 0 else "#ef4444" if (_ytd_sel or 0) < 0 else "#94a3b8"
+
+    with _cinfo_col:
+        st.markdown(
+            f'<div style="display:flex;gap:24px;align-items:flex-end;padding:6px 0 4px">'
+            f'<div><div style="font-size:0.62rem;color:#64748b;margin-bottom:2px">Prix</div>'
+            f'<div style="font-size:1.15rem;font-weight:800;font-family:monospace;color:#e2e8f0">'
+            f'{fmt_price(_pr_sel) if _pr_sel else "—"}</div></div>'
+            f'<div><div style="font-size:0.62rem;color:#64748b;margin-bottom:2px">Jour</div>'
+            f'<div style="font-size:1rem;font-weight:700;font-family:monospace;color:{_c_day}">'
+            f'{fmt_pct(_pct_sel)}</div></div>'
+            f'<div><div style="font-size:0.62rem;color:#64748b;margin-bottom:2px">MTD</div>'
+            f'<div style="font-size:1rem;font-weight:700;font-family:monospace;color:{_c_mtd}">'
+            f'{fmt_val(_mtd_sel)}</div></div>'
+            f'<div><div style="font-size:0.62rem;color:#64748b;margin-bottom:2px">YTD</div>'
+            f'<div style="font-size:1rem;font-weight:700;font-family:monospace;color:{_c_ytd}">'
+            f'{fmt_val(_ytd_sel)}</div></div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+
+    # ── Chart ────────────────────────────────────────────────────────────────
+    _fig_asset = make_asset_chart(_sel_ticker, _sel_name)
+    if _fig_asset.data:
+        st.plotly_chart(
+            _fig_asset, use_container_width=True,
+            config={"displayModeBar": True, "modeBarButtonsToRemove": ["lasso2d", "select2d"]},
+        )
+    else:
+        st.info(f"Données historiques non disponibles pour {_sel_name} ({_sel_ticker})", icon="⚠️")
+else:
+    st.caption("Aucun actif disponible dans le groupe sélectionné.")
 
 # ─── ROW 4: Calendar + Geopolitical ──────────────────────────────────────────
 st.markdown("")
