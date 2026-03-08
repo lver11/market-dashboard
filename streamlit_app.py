@@ -316,13 +316,37 @@ BOC_SERIES = {
 YIELD_TICKERS = {"^IRX", "^FVX", "^TNX", "^TYX",
                  "CA2YT=RR", "CA5YT=RR", "CA10YT=RR", "CA30YT=RR"}
 
-CENTRAL_BANK_RATES = [
-    {"flag": "🇺🇸", "name": "États-Unis",  "bank": "Fed",  "rate": "3.75–4.00%", "bias": "dovish",   "change": "↓",  "next_meeting": "6-7 mai"},
-    {"flag": "🇪🇺", "name": "Zone Euro",   "bank": "BCE",  "rate": "2.65%",      "bias": "dovish",   "change": "↓",  "next_meeting": "17 avr."},
-    {"flag": "🇨🇦", "name": "Canada",      "bank": "BdC",  "rate": "3.00%",      "bias": "dovish",   "change": "↓",  "next_meeting": "16 avr."},
-    {"flag": "🇬🇧", "name": "Royaume-Uni", "bank": "BOE",  "rate": "4.50%",      "bias": "neutral",  "change": "↓",  "next_meeting": "8 mai"},
-    {"flag": "🇯🇵", "name": "Japon",       "bank": "BOJ",  "rate": "0.50%",      "bias": "hawkish",  "change": "↑",  "next_meeting": "19 mars"},
-    {"flag": "🇨🇭", "name": "Suisse",      "bank": "BNS",  "rate": "0.25%",      "bias": "neutral",  "change": "↓",  "next_meeting": "20 mars"},
+CENTRAL_BANK_CONFIG = [
+    {
+        "flag": "🇺🇸", "name": "États-Unis",  "bank": "Fed",  "bank_key": "fed",
+        "bias": "dovish",  "next_meeting": "6-7 mai",
+        "fallback_rate": "3.75–4.00%", "fallback_change": "↓",
+    },
+    {
+        "flag": "🇪🇺", "name": "Zone Euro",   "bank": "BCE",  "bank_key": "ecb",
+        "bias": "dovish",  "next_meeting": "17 avr.",
+        "fallback_rate": "2.65%",      "fallback_change": "↓",
+    },
+    {
+        "flag": "🇨🇦", "name": "Canada",      "bank": "BdC",  "bank_key": "boc",
+        "bias": "dovish",  "next_meeting": "16 avr.",
+        "fallback_rate": "3.00%",      "fallback_change": "↓",
+    },
+    {
+        "flag": "🇬🇧", "name": "Royaume-Uni", "bank": "BOE",  "bank_key": "boe",
+        "bias": "neutral", "next_meeting": "8 mai",
+        "fallback_rate": "4.50%",      "fallback_change": "↓",
+    },
+    {
+        "flag": "🇯🇵", "name": "Japon",       "bank": "BOJ",  "bank_key": "boj",
+        "bias": "hawkish", "next_meeting": "30 avr.",
+        "fallback_rate": "0.50%",      "fallback_change": "↑",
+    },
+    {
+        "flag": "🇨🇭", "name": "Suisse",      "bank": "BNS",  "bank_key": "snb",
+        "bias": "neutral", "next_meeting": "19 juin",
+        "fallback_rate": "0.25%",      "fallback_change": "↓",
+    },
 ]
 
 # ─── Data Fetching (cached 60s) ───────────────────────────────────────────────
@@ -466,6 +490,157 @@ def fetch_futures_data() -> dict:
             except Exception:
                 pass
     return result
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def fetch_cb_rates() -> dict:
+    """Fetch central bank policy rates from free public APIs (1-hour cache).
+
+    Returns dict keyed by bank_key →
+        {"rate_str": "X.XX%", "change": "↑/↓/=", "live": True}
+    Falls back gracefully – missing keys trigger static fallback in _build_cb_display().
+    APIs used (all free, no authentication required except FRED):
+        ECB  – data-api.ecb.europa.eu (Deposit Facility Rate)
+        BOC  – bankofcanada.ca/valet   (Overnight Rate Target V122530)
+        FRED – api.stlouisfed.org      (Fed, BOE, BOJ, SNB) – needs FRED_API_KEY env var
+    """
+    import os
+    import urllib.request
+    import json as _json
+
+    results: dict = {}
+
+    def _get_json(url: str, timeout: int = 8):
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                return _json.loads(r.read().decode())
+        except Exception as exc:
+            logger.warning(f"CB API error [{url}]: {exc}")
+            return None
+
+    def _chg(curr: float, prev) -> str:
+        if prev is None or curr is None:
+            return "="
+        diff = curr - prev
+        if diff > 0.01:
+            return "↑"
+        if diff < -0.01:
+            return "↓"
+        return "="
+
+    def _fmt(rate: float) -> str:
+        return f"{rate:.2f}%"
+
+    # ── ECB Deposit Facility Rate ──────────────────────────────────────────────
+    try:
+        url = (
+            "https://data-api.ecb.europa.eu/service/data/FM/"
+            "B.U2.EUR.4F.KR.DFR.LEV"
+            "?format=jsondata&detail=dataonly&lastNObservations=2"
+        )
+        data = _get_json(url)
+        if data:
+            obs = data["dataSets"][0]["series"]["0:0:0:0:0:0"]["observations"]
+            sorted_keys = sorted(obs.keys(), key=int)
+            curr_v = float(obs[sorted_keys[-1]][0])
+            prev_v = float(obs[sorted_keys[-2]][0]) if len(sorted_keys) >= 2 else None
+            results["ecb"] = {"rate_str": _fmt(curr_v), "change": _chg(curr_v, prev_v), "live": True}
+    except Exception as exc:
+        logger.warning(f"ECB parse error: {exc}")
+
+    # ── Bank of Canada overnight rate target (V122530) ─────────────────────────
+    try:
+        url = (
+            "https://www.bankofcanada.ca/valet/observations/"
+            "V122530/json?order_dir=desc&limit=2"
+        )
+        data = _get_json(url)
+        if data:
+            obs = data.get("observations", [])
+            if obs:
+                curr_v = float(obs[0]["V122530"]["v"])
+                prev_v = float(obs[1]["V122530"]["v"]) if len(obs) >= 2 else None
+                results["boc"] = {"rate_str": _fmt(curr_v), "change": _chg(curr_v, prev_v), "live": True}
+    except Exception as exc:
+        logger.warning(f"BOC parse error: {exc}")
+
+    # ── FRED – Fed, BOE, BOJ, SNB ──────────────────────────────────────────────
+    fred_key = os.environ.get("FRED_API_KEY", "")
+    if fred_key:
+        def _fred(series_id: str):
+            url = (
+                f"https://api.stlouisfed.org/fred/series/observations"
+                f"?series_id={series_id}&api_key={fred_key}"
+                f"&sort_order=desc&limit=2&file_type=json"
+            )
+            d = _get_json(url)
+            if d and d.get("observations"):
+                def _v(o): return float(o["value"]) if o.get("value") not in (".", None) else None
+                obs = d["observations"]
+                return _v(obs[0]), (_v(obs[1]) if len(obs) >= 2 else None)
+            return None, None
+
+        # Fed – mid-point of upper (DFEDTARU) and lower (DFEDTARL) bounds
+        try:
+            cu, pu = _fred("DFEDTARU")
+            cl, pl = _fred("DFEDTARL")
+            if cu is not None and cl is not None:
+                curr_v = (cu + cl) / 2
+                prev_v = ((pu + pl) / 2) if (pu is not None and pl is not None) else None
+                lo, hi = min(cl, cu), max(cl, cu)
+                results["fed"] = {
+                    "rate_str": f"{lo:.2f}–{hi:.2f}%",
+                    "change": _chg(curr_v, prev_v),
+                    "live": True,
+                }
+        except Exception as exc:
+            logger.warning(f"FRED Fed error: {exc}")
+
+        # BOE (Bank Rate Monthly – BOERUKM)
+        try:
+            curr_v, prev_v = _fred("BOERUKM")
+            if curr_v is not None:
+                results["boe"] = {"rate_str": _fmt(curr_v), "change": _chg(curr_v, prev_v), "live": True}
+        except Exception as exc:
+            logger.warning(f"FRED BOE error: {exc}")
+
+        # BOJ (IRSTJPN)
+        try:
+            curr_v, prev_v = _fred("IRSTJPN")
+            if curr_v is not None:
+                results["boj"] = {"rate_str": _fmt(curr_v), "change": _chg(curr_v, prev_v), "live": True}
+        except Exception as exc:
+            logger.warning(f"FRED BOJ error: {exc}")
+
+        # SNB (IRSTSNB)
+        try:
+            curr_v, prev_v = _fred("IRSTSNB")
+            if curr_v is not None:
+                results["snb"] = {"rate_str": _fmt(curr_v), "change": _chg(curr_v, prev_v), "live": True}
+        except Exception as exc:
+            logger.warning(f"FRED SNB error: {exc}")
+
+    return results
+
+
+def _build_cb_display(live: dict) -> list[dict]:
+    """Merge CENTRAL_BANK_CONFIG with live API data; fall back to static values."""
+    display = []
+    for cfg in CENTRAL_BANK_CONFIG:
+        key = cfg["bank_key"]
+        entry = dict(cfg)
+        live_data = live.get(key)
+        if live_data:
+            entry["rate"]    = live_data["rate_str"]
+            entry["change"]  = live_data["change"]
+            entry["is_live"] = True
+        else:
+            entry["rate"]    = cfg["fallback_rate"]
+            entry["change"]  = cfg["fallback_change"]
+            entry["is_live"] = False
+        display.append(entry)
+    return display
 
 
 @st.cache_data(ttl=600, show_spinner=False)
@@ -1075,6 +1250,7 @@ with st.spinner("Chargement des données de marché..."):
     news_items   = fetch_news()
     miso         = fetch_miso()
     futures_data = fetch_futures_data()
+    cb_live_rates = fetch_cb_rates()
     period_perf  = fetch_period_performance()
     # Inject CA MTD/YTD into period_perf
     for _tk, _d in ca_yields.items():
@@ -1437,14 +1613,20 @@ with col_cb:
     arrow_color = {"↑": "#ef4444", "↓": "#22c55e", "=": "#94a3b8"}
 
     cb_html = ""
-    for cb in CENTRAL_BANK_RATES:
+    cb_display = _build_cb_display(cb_live_rates)
+    for cb in cb_display:
         bc = bias_color[cb["bias"]]
         bl = bias_label[cb["bias"]]
         cc = arrow_color[cb["change"]]
+        live_badge = (
+            '<span style="font-size:0.58rem;color:#22c55e;font-weight:700;margin-left:5px">● LIVE</span>'
+            if cb.get("is_live")
+            else '<span style="font-size:0.58rem;color:#475569;margin-left:5px">📌</span>'
+        )
         cb_html += f"""
         <div class="signal-card" style="margin-bottom:0.3rem">
           <div class="signal-row">
-            <span class="sig-name">{cb['flag']} {cb['name']} <span style="color:#64748b;font-weight:400">({cb['bank']})</span></span>
+            <span class="sig-name">{cb['flag']} {cb['name']} <span style="color:#64748b;font-weight:400">({cb['bank']})</span>{live_badge}</span>
             <span style="font-size:1rem;font-family:monospace;font-weight:800;color:#e2e8f0">{cb['rate']}
               <span style="color:{cc};font-size:0.85rem">{cb['change']}</span>
             </span>
