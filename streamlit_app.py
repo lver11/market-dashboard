@@ -317,7 +317,7 @@ YIELD_TICKERS = {"^IRX", "^FVX", "^TNX", "^TYX",
                  "CA2YT=RR", "CA5YT=RR", "CA10YT=RR", "CA30YT=RR"}
 
 CENTRAL_BANK_RATES = [
-    {"flag": "🇺🇸", "name": "États-Unis",  "bank": "Fed",  "rate": "4.25–4.50%", "bias": "neutral",  "change": "=",  "next_meeting": "18-19 mars"},
+    {"flag": "🇺🇸", "name": "États-Unis",  "bank": "Fed",  "rate": "3.75–4.00%", "bias": "dovish",   "change": "↓",  "next_meeting": "6-7 mai"},
     {"flag": "🇪🇺", "name": "Zone Euro",   "bank": "BCE",  "rate": "2.65%",      "bias": "dovish",   "change": "↓",  "next_meeting": "17 avr."},
     {"flag": "🇨🇦", "name": "Canada",      "bank": "BdC",  "rate": "3.00%",      "bias": "dovish",   "change": "↓",  "next_meeting": "16 avr."},
     {"flag": "🇬🇧", "name": "Royaume-Uni", "bank": "BOE",  "rate": "4.50%",      "bias": "neutral",  "change": "↓",  "next_meeting": "8 mai"},
