@@ -969,25 +969,62 @@ def fmt_val(val):
         return f"{val:+.2f}%" if abs(val) < 100 else f"{val:.4f}"
     return str(val)
 
-display_df = df.copy()
-display_df["Prix"]   = display_df["Prix"].apply(lambda v: fmt_price(v, 2) if v else "—")
-display_df["Jour"]   = display_df["Jour"].apply(fmt_val)
-display_df["MTD"]    = display_df["MTD"].apply(fmt_val)
-display_df["YTD"]    = display_df["YTD"].apply(fmt_val)
+def _num_style(v) -> str:
+    """Return inline CSS color+font for a numeric cell."""
+    if v is None or not isinstance(v, (int, float)) or v != v:
+        return "color:#94a3b8;font-family:monospace"
+    if v > 0:
+        return "color:#22c55e;font-weight:700;font-family:monospace"
+    if v < 0:
+        return "color:#ef4444;font-weight:700;font-family:monospace"
+    return "color:#94a3b8;font-family:monospace"
 
-st.dataframe(
-    display_df[["Actif", "Groupe", "Ticker", "Prix", "Jour", "MTD", "YTD", "Signal"]],
-    use_container_width=True,
-    hide_index=True,
-    column_config={
-        "Actif":  st.column_config.TextColumn("Actif",        width="medium"),
-        "Prix":   st.column_config.TextColumn("Prix",         width="small"),
-        "Jour":   st.column_config.TextColumn("Jour %",       width="small"),
-        "MTD":    st.column_config.TextColumn("MTD (% / pp)", width="small"),
-        "YTD":    st.column_config.TextColumn("YTD (% / pp)", width="small"),
-        "Signal": st.column_config.TextColumn("Signal",       width="small"),
-    },
-)
+def _sig_style(sig: str) -> str:
+    if "▲" in sig: return "color:#22c55e;font-weight:600"
+    if "▼" in sig: return "color:#ef4444;font-weight:600"
+    return "color:#94a3b8"
+
+tbl_rows = ""
+for _, row in df.iterrows():
+    prix_str = fmt_price(row["Prix"], 2) if row["Prix"] else "—"
+    tbl_rows += (
+        f'<tr>'
+        f'<td style="font-weight:600;color:#e2e8f0">{row["Actif"]}</td>'
+        f'<td><span style="font-size:0.6rem;background:#0f172a;border:1px solid #334155;'
+        f'padding:1px 6px;border-radius:4px;color:#64748b">{row["Groupe"]}</span></td>'
+        f'<td style="font-family:monospace;color:#475569;font-size:0.72rem">{row["Ticker"]}</td>'
+        f'<td style="font-family:monospace;color:#cbd5e1">{prix_str}</td>'
+        f'<td style="{_num_style(row["Jour"])}">{fmt_val(row["Jour"])}</td>'
+        f'<td style="{_num_style(row["MTD"])}">{fmt_val(row["MTD"])}</td>'
+        f'<td style="{_num_style(row["YTD"])}">{fmt_val(row["YTD"])}</td>'
+        f'<td style="{_sig_style(str(row["Signal"]))}">{row["Signal"]}</td>'
+        f'</tr>'
+    )
+
+st.markdown(f"""
+<style>
+  .mkt-tbl {{ width:100%; border-collapse:collapse; font-size:0.78rem; }}
+  .mkt-tbl th {{
+    background:#1e293b; color:#64748b; font-weight:700; text-align:left;
+    padding:8px 10px; border-bottom:2px solid #334155;
+    font-size:0.64rem; text-transform:uppercase; letter-spacing:0.07em;
+    position:sticky; top:0; z-index:1;
+  }}
+  .mkt-tbl td {{ padding:5px 10px; border-bottom:1px solid #1e293b; }}
+  .mkt-tbl tr:hover td {{ background:rgba(255,255,255,0.04); }}
+</style>
+<div style="overflow-x:auto;max-height:540px;overflow-y:auto;
+            border:1px solid #334155;border-radius:8px;background:#0f172a">
+  <table class="mkt-tbl">
+    <thead><tr>
+      <th>Actif</th><th>Groupe</th><th>Ticker</th>
+      <th>Prix</th><th>Jour %</th><th>MTD&nbsp;(%&nbsp;/&nbsp;pp)</th>
+      <th>YTD&nbsp;(%&nbsp;/&nbsp;pp)</th><th>Signal</th>
+    </tr></thead>
+    <tbody>{tbl_rows}</tbody>
+  </table>
+</div>
+""", unsafe_allow_html=True)
 
 # ─── ROW 4: Calendar + Geopolitical ──────────────────────────────────────────
 st.markdown("")
