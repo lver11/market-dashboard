@@ -196,8 +196,8 @@ MARKET_ASSETS = [
     {"group": "S&P Secteurs", "name": "Technologie",          "ticker": "XLK",  },
     {"group": "S&P Secteurs", "name": "Finance",              "ticker": "XLF",  },
     {"group": "S&P Secteurs", "name": "Santé",                "ticker": "XLV",  },
-    {"group": "S&P Secteurs", "name": "Consomm. discr.",      "ticker": "XLY",  },
-    {"group": "S&P Secteurs", "name": "Consomm. de base",     "ticker": "XLP",  },
+    {"group": "S&P Secteurs", "name": "Consomm. discr.",      "ticker": "XLY",  "short": "Conso.Disc."},
+    {"group": "S&P Secteurs", "name": "Consomm. de base",     "ticker": "XLP",  "short": "Conso.Base"},
     {"group": "S&P Secteurs", "name": "Énergie",              "ticker": "XLE",  },
     {"group": "S&P Secteurs", "name": "Industrie",            "ticker": "XLI",  },
     {"group": "S&P Secteurs", "name": "Matériaux",            "ticker": "XLB",  },
@@ -1246,6 +1246,49 @@ def heat_bg(pct):
         return f"rgba(239,68,68,{0.1 + t*0.4})"
 
 
+def _heat_label(asset: dict) -> str:
+    """Return a short, distinct label for a heatmap tile.
+
+    Priority rules (first match wins):
+    1. Explicit ``short`` field on the asset dict
+    2. Ticker inside parentheses  – "MSCI EM (EEM)"  → "EEM"
+    3. Last word is all-caps 2-4 char ticker (≥3-word name)
+                                  – "Long Treasury TLT" → "TLT"
+                                  – "High Yield HYG"    → "HYG"
+                                  – "IG Credit LQD"     → "LQD"
+    4. Short country/index prefix + maturity (next token starts with alnum)
+                                  – "US 10Y Yield"  → "US 10Y"
+                                  – "CA 2Y Yield"   → "CA 2Y"
+                                  – "WTI Oil"        → "WTI Oil"
+    5. First word (default)
+    """
+    if "short" in asset:
+        return asset["short"]
+
+    name  = asset["name"]
+    words = name.split()
+
+    # Rule 2 – ticker in parentheses
+    if "(" in name and ")" in name:
+        inner = name[name.index("(") + 1 : name.index(")")]
+        if " " not in inner and len(inner) <= 5:
+            return inner
+
+    # Rule 3 – last word all-caps short ticker
+    if len(words) >= 3 and words[-1].isupper() and 2 <= len(words[-1]) <= 4:
+        return words[-1]
+
+    # Rule 4 – country/index prefix  (≤3-char all-caps) + next maturity/word
+    if (len(words) >= 2
+            and len(words[0]) <= 3
+            and words[0].isupper()
+            and words[1][0].isalnum()):
+        return f"{words[0]} {words[1]}"
+
+    # Rule 5 – default: first word
+    return words[0]
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # MAIN APP
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -1508,7 +1551,7 @@ with col_heat:
             pct = td.get("change_pct")
             bg  = heat_bg(pct)
             txt_color = "#22c55e" if (pct or 0) > 0 else "#ef4444" if (pct or 0) < 0 else "#94a3b8"
-            short_name = asset["name"].split(" ")[0]
+            short_name = _heat_label(asset)
             with col:
                 st.markdown(
                     f'<div style="background:{bg};border-radius:6px;padding:6px 4px;text-align:center;margin-bottom:4px">'
