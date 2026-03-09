@@ -366,51 +366,70 @@ CENTRAL_BANK_CONFIG = [
 def _fetch_one(ticker: str) -> tuple[str, dict]:
     """Fetch current price and daily change for a single ticker.
 
-    Primary: fast_info – uses Yahoo Finance's own last_price / previous_close,
-    which avoids forex session-boundary ambiguity (5 PM ET cut vs UTC day).
-    Fallback: history()-based calendar-day comparison for tickers where
-    fast_info is incomplete (some indices, bond proxies).
+    Primary: fast_info – uses Yahoo Finance's own last_price / previous_close.
+    This matches the official Yahoo Finance quote page for all asset types.
+
+    Note: getattr() only suppresses AttributeError; for futures/forex, fast_info
+    properties can raise TypeError or KeyError internally.  Each access is
+    therefore wrapped in its own try/except to guarantee a safe fallback.
+
+    Fallback: history iloc[-2] as previous session close.
+    For forex/futures, yfinance timestamps daily bars with the SESSION-START
+    datetime (e.g. Friday 17:00 ET), so the current Monday bar carries a
+    Friday UTC date.  Calendar-day normalisation would therefore mis-identify
+    "today" as Friday and compare to Thursday's close (2-day gap → ~0.71 %).
+    Using iloc[-2] directly avoids timestamp parsing and always returns the
+    last *completed* session close, regardless of timezone conventions.
     """
     try:
-        t  = yf.Ticker(ticker)
-        fi = t.fast_info
+        t = yf.Ticker(ticker)
 
-        # ── Primary: fast_info (most reliable for forex daily change) ─────────
-        current    = getattr(fi, "last_price",     None)
-        prev_close = getattr(fi, "previous_close", None)
+        # ── Primary: fast_info (Yahoo Finance's official values) ──────────────
+        current: float | None = None
+        prev_close: float | None = None
 
-        if current and prev_close and current > 0 and prev_close > 0:
+        try:
+            val = t.fast_info.last_price
+            if val is not None and float(val) > 0:
+                current = float(val)
+        except Exception:
+            pass
+
+        try:
+            val = t.fast_info.previous_close
+            if val is not None and float(val) > 0:
+                prev_close = float(val)
+        except Exception:
+            pass
+
+        if current and prev_close:
             change  = current - prev_close
             chg_pct = round((change / prev_close) * 100, 2)
             return ticker, {"price": round(current, 4),
                             "change": round(change, 4),
                             "change_pct": chg_pct}
 
-        # ── Fallback: history, comparing by calendar day (UTC) ────────────────
-        hist = t.history(period="5d", auto_adjust=True)
-        hist = hist.dropna(subset=["Close"])
+        # ── Fallback: history – iloc[-2] = last completed session close ───────
+        # Do NOT use calendar-day normalisation: for forex/futures the bar
+        # timestamp equals the session-start date (not the trading date), so
+        # UTC-normalised dates are wrong for these instruments.
+        hist = t.history(period="5d", auto_adjust=True).dropna(subset=["Close"])
         hist = hist[hist["Close"] > 0]
+
         if len(hist) < 1:
             return ticker, {"price": None, "change": None, "change_pct": None}
 
-        if hist.index.tz is not None:
-            day_dates = pd.DatetimeIndex(hist.index).tz_convert("UTC").normalize()
-        else:
-            day_dates = pd.DatetimeIndex(hist.index).normalize()
+        current = current or float(hist["Close"].iloc[-1])
 
-        current    = float(hist["Close"].iloc[-1])
-        latest_day = day_dates[-1]
-        prev_rows  = hist[day_dates < latest_day]
-
-        if len(prev_rows) > 0:
-            previous = float(prev_rows["Close"].iloc[-1])
+        if len(hist) >= 2:
+            previous = float(hist["Close"].iloc[-2])
             change   = current - previous
             chg_pct  = round((change / previous) * 100, 2)
             return ticker, {"price": round(current, 4),
                             "change": round(change, 4),
                             "change_pct": chg_pct}
-        else:
-            return ticker, {"price": round(current, 4), "change": None, "change_pct": None}
+
+        return ticker, {"price": round(current, 4), "change": None, "change_pct": None}
 
     except Exception as e:
         logger.warning(f"Error fetching {ticker}: {e}")
