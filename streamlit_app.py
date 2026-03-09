@@ -364,35 +364,54 @@ CENTRAL_BANK_CONFIG = [
 
 # ─── Data Fetching (cached 60s) ───────────────────────────────────────────────
 def _fetch_one(ticker: str) -> tuple[str, dict]:
+    """Fetch current price and daily change for a single ticker.
+
+    Primary: fast_info – uses Yahoo Finance's own last_price / previous_close,
+    which avoids forex session-boundary ambiguity (5 PM ET cut vs UTC day).
+    Fallback: history()-based calendar-day comparison for tickers where
+    fast_info is incomplete (some indices, bond proxies).
+    """
     try:
-        t = yf.Ticker(ticker)
+        t  = yf.Ticker(ticker)
+        fi = t.fast_info
+
+        # ── Primary: fast_info (most reliable for forex daily change) ─────────
+        current    = getattr(fi, "last_price",     None)
+        prev_close = getattr(fi, "previous_close", None)
+
+        if current and prev_close and current > 0 and prev_close > 0:
+            change  = current - prev_close
+            chg_pct = round((change / prev_close) * 100, 2)
+            return ticker, {"price": round(current, 4),
+                            "change": round(change, 4),
+                            "change_pct": chg_pct}
+
+        # ── Fallback: history, comparing by calendar day (UTC) ────────────────
         hist = t.history(period="5d", auto_adjust=True)
         hist = hist.dropna(subset=["Close"])
-        hist = hist[hist["Close"] > 0]   # drop zero / incomplete bars
+        hist = hist[hist["Close"] > 0]
         if len(hist) < 1:
             return ticker, {"price": None, "change": None, "change_pct": None}
 
-        # Normalise index to UTC dates so we compare by *calendar day*, not by row.
-        # This is critical for forex pairs (USDCAD=X, etc.) where yfinance may include
-        # Saturday/Sunday rows with stale prices.  Using iloc[-2] would give Sun as
-        # "previous" on a Monday, producing a wrong daily change.
         if hist.index.tz is not None:
             day_dates = pd.DatetimeIndex(hist.index).tz_convert("UTC").normalize()
         else:
             day_dates = pd.DatetimeIndex(hist.index).normalize()
 
-        current     = float(hist["Close"].iloc[-1])
-        latest_day  = day_dates[-1]
+        current    = float(hist["Close"].iloc[-1])
+        latest_day = day_dates[-1]
+        prev_rows  = hist[day_dates < latest_day]
 
-        # Previous close = last available close from an EARLIER calendar day
-        prev_rows = hist[day_dates < latest_day]
         if len(prev_rows) > 0:
             previous = float(prev_rows["Close"].iloc[-1])
             change   = current - previous
             chg_pct  = round((change / previous) * 100, 2)
-            return ticker, {"price": round(current, 4), "change": round(change, 4), "change_pct": chg_pct}
+            return ticker, {"price": round(current, 4),
+                            "change": round(change, 4),
+                            "change_pct": chg_pct}
         else:
             return ticker, {"price": round(current, 4), "change": None, "change_pct": None}
+
     except Exception as e:
         logger.warning(f"Error fetching {ticker}: {e}")
     return ticker, {"price": None, "change": None, "change_pct": None}
