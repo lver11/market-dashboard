@@ -417,14 +417,26 @@ def _fetch_one(ticker: str) -> tuple[str, dict]:
         # Current price: prefer live fast_info, fall back to latest hist bar
         current = current or float(hist["Close"].iloc[-1])
 
-        # Previous close: prefer fast_info (already avoids timestamp issues);
-        # only use iloc[-2] when fast_info gave nothing at all.
+        # Previous close: prefer fast_info (already avoids timestamp issues).
+        # When fast_info gave nothing, search backwards through history for
+        # the last *weekday* bar — this skips Sunday partial sessions that
+        # CME futures (ES=F, NQ=F, ZN=F, 6E=F, GC=F …) produce because they
+        # reopen Sunday 17:00–18:00 ET.  A naive iloc[-2] would land on that
+        # Sunday bar instead of Friday's official settlement.
         if prev_close is None:
-            if len(hist) >= 2:
-                prev_close = float(hist["Close"].iloc[-2])
-            else:
-                return ticker, {"price": round(current, 4),
-                                "change": None, "change_pct": None}
+            for i in range(len(hist) - 2, -1, -1):
+                ts = hist.index[i]
+                bar_date = (ts.date() if ts.tzinfo is None
+                            else ts.tz_convert("UTC").date())
+                if bar_date.weekday() < 5:        # 0=Mon … 4=Fri; skip Sat/Sun
+                    prev_close = float(hist["Close"].iloc[i])
+                    break
+            if prev_close is None:                # absolute last resort
+                if len(hist) >= 2:
+                    prev_close = float(hist["Close"].iloc[-2])
+                else:
+                    return ticker, {"price": round(current, 4),
+                                    "change": None, "change_pct": None}
 
         change  = current - prev_close
         chg_pct = round((change / prev_close) * 100, 2)
