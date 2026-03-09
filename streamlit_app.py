@@ -393,7 +393,7 @@ def _fetch_one(ticker: str) -> tuple[str, dict]:
             except Exception:
                 return None
 
-        # ── Step 1: Live price + official previous close from Yahoo Finance ───
+        # ── Step 1: fast_info – Yahoo Finance chart API (fastest) ────────────
         current    = _safe("last_price")
         prev_close = (_safe("previous_close")
                       or _safe("regular_market_previous_close"))
@@ -405,7 +405,40 @@ def _fetch_one(ticker: str) -> tuple[str, dict]:
                             "change": round(change, 4),
                             "change_pct": chg_pct}
 
-        # ── Step 2: History fallback ───────────────────────────────────────────
+        # ── Step 2: t.info – Yahoo Finance v10/quoteSummary (more complete) ──
+        # fast_info uses the chart endpoint which lacks chartPreviousClose for
+        # some futures (NKD=F, RTY=F, 6J=F …).  t.info uses a separate API
+        # that reliably exposes regularMarketPreviousClose for all instruments.
+        if current is None or prev_close is None:
+            try:
+                info = t.info  # one API call; reused for both fields below
+                def _info_float(key: str) -> float | None:
+                    v = info.get(key)
+                    if v is None:
+                        return None
+                    try:
+                        f = float(v)
+                        return f if (f > 0 and pd.notna(f)) else None
+                    except (ValueError, TypeError):
+                        return None
+
+                if current is None:
+                    current = (_info_float("regularMarketPrice")
+                               or _info_float("currentPrice"))
+                if prev_close is None:
+                    prev_close = (_info_float("regularMarketPreviousClose")
+                                  or _info_float("previousClose"))
+            except Exception:
+                pass
+
+        if current and prev_close:
+            change  = current - prev_close
+            chg_pct = round((change / prev_close) * 100, 2)
+            return ticker, {"price": round(current, 4),
+                            "change": round(change, 4),
+                            "change_pct": chg_pct}
+
+        # ── Step 3: History fallback ───────────────────────────────────────────
         # Crucially: if fast_info already gave us ONE of the two values, keep it
         # (avoids session-timestamp bugs in history for forex / futures).
         hist = t.history(period="5d", auto_adjust=True).dropna(subset=["Close"])
