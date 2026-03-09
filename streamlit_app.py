@@ -368,6 +368,7 @@ def _fetch_one(ticker: str) -> tuple[str, dict]:
         t = yf.Ticker(ticker)
         hist = t.history(period="5d", auto_adjust=True)
         hist = hist.dropna(subset=["Close"])
+        hist = hist[hist["Close"] > 0]   # guard against incomplete/zero bars
         if len(hist) >= 2:
             current  = float(hist["Close"].iloc[-1])
             previous = float(hist["Close"].iloc[-2])
@@ -451,28 +452,52 @@ def fetch_ca_bond_yields() -> dict:
 
 @st.cache_data(ttl=300, show_spinner=False)
 def fetch_period_performance() -> dict:
-    """Fetch MTD and YTD % for all tickers (cached 5 min)."""
+    """Fetch MTD and YTD % for all tickers (cached 5 min).
+
+    Standard financial convention (close-to-close):
+      YTD base  = last close BEFORE Jan 1   (i.e. Dec 31 of prior year)
+      MTD base  = last close BEFORE the 1st of the current month (e.g. Feb 28)
+    Using period="1y" ensures pre-year data is always available.
+    """
     tickers = list({a["ticker"] for a in MARKET_ASSETS})
+    now_utc = datetime.now(timezone.utc)
+    # Boundaries (midnight UTC of the first day of each period)
+    _z = dict(hour=0, minute=0, second=0, microsecond=0)
+    year_boundary  = now_utc.replace(month=1, day=1,  **_z)
+    month_boundary = now_utc.replace(day=1,           **_z)
 
     def _fetch_perf(ticker: str) -> tuple[str, dict]:
         try:
-            hist = yf.Ticker(ticker).history(period="ytd", auto_adjust=True).dropna(subset=["Close"])
+            hist = (yf.Ticker(ticker)
+                    .history(period="1y", auto_adjust=True)
+                    .dropna(subset=["Close"]))
+            hist = hist[hist["Close"] > 0]          # drop zero/erroneous prices
             if len(hist) < 2:
                 return ticker, {"mtd": None, "ytd": None}
-            latest = float(hist["Close"].iloc[-1])
-            ytd_start = float(hist["Close"].iloc[0])
-            # Yield tickers: absolute change in percentage points (e.g. 4.70 - 4.50 = +0.20)
-            # All other assets: price return in %
+
+            latest   = float(hist["Close"].iloc[-1])
             is_yield = ticker in YIELD_TICKERS
-            ytd = round(latest - ytd_start, 2) if is_yield else round((latest - ytd_start) / ytd_start * 100, 2)
-            # MTD: first available price on or after the 1st of the current month
-            month_start = datetime.now(timezone.utc).replace(day=1).date()
-            month_hist = hist[[d.date() >= month_start for d in hist.index]]
-            if len(month_hist) >= 1:
-                mtd_start = float(month_hist["Close"].iloc[0])
-                mtd = round(latest - mtd_start, 2) if is_yield else round((latest - mtd_start) / mtd_start * 100, 2)
-            else:
-                mtd = ytd  # fallback: month started same as year start
+
+            # Convert index to UTC for reliable date comparisons (handles tz-aware/naive)
+            idx_utc = (hist.index.tz_convert("UTC") if hist.index.tz is not None
+                       else hist.index.tz_localize("UTC"))
+
+            def _last_close_before(boundary: datetime) -> Optional[float]:
+                ts  = pd.Timestamp(boundary)
+                pre = hist[idx_utc < ts]
+                return float(pre["Close"].iloc[-1]) if len(pre) > 0 else None
+
+            def _perf(start: float) -> float:
+                return round(latest - start, 2) if is_yield else round((latest - start) / start * 100, 2)
+
+            # YTD: Dec 31 close (last close before Jan 1)
+            ytd_start = _last_close_before(year_boundary) or float(hist["Close"].iloc[0])
+            ytd = _perf(ytd_start)
+
+            # MTD: last close before the 1st of the month (e.g. Feb 28 for March)
+            mtd_start = _last_close_before(month_boundary)
+            mtd = _perf(mtd_start) if mtd_start is not None else ytd
+
             return ticker, {"mtd": mtd, "ytd": ytd}
         except Exception as e:
             logger.warning(f"Perf fetch error {ticker}: {e}")
