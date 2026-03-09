@@ -366,41 +366,37 @@ CENTRAL_BANK_CONFIG = [
 def _fetch_one(ticker: str) -> tuple[str, dict]:
     """Fetch current price and daily change for a single ticker.
 
-    Primary: fast_info – uses Yahoo Finance's own last_price / previous_close.
-    This matches the official Yahoo Finance quote page for all asset types.
+    Priority chain:
+    1. fast_info.last_price  +  fast_info.previous_close
+    2. fast_info.last_price  +  fast_info.regular_market_previous_close
+    3. history fallback — but keep any fast_info value already obtained so that
+       session-timestamp ambiguity (forex / futures 5 PM ET session cut) is
+       avoided wherever possible.
 
-    Note: getattr() only suppresses AttributeError; for futures/forex, fast_info
-    properties can raise TypeError or KeyError internally.  Each access is
-    therefore wrapped in its own try/except to guarantee a safe fallback.
-
-    Fallback: history iloc[-2] as previous session close.
-    For forex/futures, yfinance timestamps daily bars with the SESSION-START
-    datetime (e.g. Friday 17:00 ET), so the current Monday bar carries a
-    Friday UTC date.  Calendar-day normalisation would therefore mis-identify
-    "today" as Friday and compare to Thursday's close (2-day gap → ~0.71 %).
-    Using iloc[-2] directly avoids timestamp parsing and always returns the
-    last *completed* session close, regardless of timezone conventions.
+    Why not calendar-day normalisation?
+    For forex / futures, yfinance timestamps daily bars with the SESSION-START
+    datetime (e.g. a Monday bar may carry a Friday UTC date), so normalising to
+    calendar day would compare today's price against Thursday's close.
+    Using iloc[-2] as the fallback for *previous close* is simpler and more
+    robust — it is only reached when both fast_info.previous_close and
+    fast_info.regular_market_previous_close are unavailable.
     """
     try:
         t = yf.Ticker(ticker)
 
-        # ── Primary: fast_info (Yahoo Finance's official values) ──────────────
-        current: float | None = None
-        prev_close: float | None = None
+        def _safe(attr: str) -> float | None:
+            """Return a positive, finite float from fast_info, or None."""
+            try:
+                v = getattr(t.fast_info, attr)
+                f = float(v)
+                return f if (f > 0 and pd.notna(f)) else None
+            except Exception:
+                return None
 
-        try:
-            val = t.fast_info.last_price
-            if val is not None and float(val) > 0:
-                current = float(val)
-        except Exception:
-            pass
-
-        try:
-            val = t.fast_info.previous_close
-            if val is not None and float(val) > 0:
-                prev_close = float(val)
-        except Exception:
-            pass
+        # ── Step 1: Live price + official previous close from Yahoo Finance ───
+        current    = _safe("last_price")
+        prev_close = (_safe("previous_close")
+                      or _safe("regular_market_previous_close"))
 
         if current and prev_close:
             change  = current - prev_close
@@ -409,27 +405,32 @@ def _fetch_one(ticker: str) -> tuple[str, dict]:
                             "change": round(change, 4),
                             "change_pct": chg_pct}
 
-        # ── Fallback: history – iloc[-2] = last completed session close ───────
-        # Do NOT use calendar-day normalisation: for forex/futures the bar
-        # timestamp equals the session-start date (not the trading date), so
-        # UTC-normalised dates are wrong for these instruments.
+        # ── Step 2: History fallback ───────────────────────────────────────────
+        # Crucially: if fast_info already gave us ONE of the two values, keep it
+        # (avoids session-timestamp bugs in history for forex / futures).
         hist = t.history(period="5d", auto_adjust=True).dropna(subset=["Close"])
         hist = hist[hist["Close"] > 0]
 
         if len(hist) < 1:
             return ticker, {"price": None, "change": None, "change_pct": None}
 
+        # Current price: prefer live fast_info, fall back to latest hist bar
         current = current or float(hist["Close"].iloc[-1])
 
-        if len(hist) >= 2:
-            previous = float(hist["Close"].iloc[-2])
-            change   = current - previous
-            chg_pct  = round((change / previous) * 100, 2)
-            return ticker, {"price": round(current, 4),
-                            "change": round(change, 4),
-                            "change_pct": chg_pct}
+        # Previous close: prefer fast_info (already avoids timestamp issues);
+        # only use iloc[-2] when fast_info gave nothing at all.
+        if prev_close is None:
+            if len(hist) >= 2:
+                prev_close = float(hist["Close"].iloc[-2])
+            else:
+                return ticker, {"price": round(current, 4),
+                                "change": None, "change_pct": None}
 
-        return ticker, {"price": round(current, 4), "change": None, "change_pct": None}
+        change  = current - prev_close
+        chg_pct = round((change / prev_close) * 100, 2)
+        return ticker, {"price": round(current, 4),
+                        "change": round(change, 4),
+                        "change_pct": chg_pct}
 
     except Exception as e:
         logger.warning(f"Error fetching {ticker}: {e}")
