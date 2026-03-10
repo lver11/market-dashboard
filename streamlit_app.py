@@ -1941,7 +1941,7 @@ if miso.get("composite") is not None:
         unsafe_allow_html=True,
     )
 else:
-    st.caption("⚠️ MISO — données insuffisantes (^NYAD ou ^VIX3M non disponibles via Yahoo Finance)")
+    st.caption("⚠️ MISO — données insuffisantes (^NYAD ou ^VIX3M non disponibles via TradingView ni Yahoo Finance)")
 
 # ─── ROW 1c: Futures ──────────────────────────────────────────────────────────
 st.markdown("")
@@ -2031,7 +2031,7 @@ st.markdown(
     '<p style="font-size:0.61rem;color:#475569;margin-top:4px">'
     '⏰ Futures CME/CBOT actifs dim. 18:00 ET — ven. 17:00 ET · Pause quotidienne 17:00–18:00 ET · '
     'Pré-marché NYSE: 04:00–09:30 ET · Après-bourse: 16:00–20:00 ET · '
-    'Données: Yahoo Finance (contrats continus)</p>',
+    'Données: TradingView (contrats continus) · Fallback: Yahoo Finance</p>',
     unsafe_allow_html=True,
 )
 
@@ -2462,7 +2462,7 @@ for i, item in enumerate(filtered_news[:24]):
 st.markdown("---")
 st.markdown(
     '<p style="font-size:0.65rem;color:#475569;text-align:center">'
-    'Données: Yahoo Finance · Actualités: Reuters, AP, CNBC, Bloomberg/GN · '
+    'Données: TradingView (primaire) · Yahoo Finance (fallback) · Actualités: Reuters, AP, CNBC, Bloomberg/GN · '
     'Reddit (r/investing, r/wallstreetbets, r/economics, r/geopolitics, r/stocks, r/worldnews, r/CanadianInvestor) · '
     'Substack (Apricitas, Chartbook, Noahpinion, No Mercy/No Malice) · Calculated Risk · X via Nitter · '
     'Actualisation automatique toutes les 60 secondes · '
