@@ -366,26 +366,24 @@ CENTRAL_BANK_CONFIG = [
 def _fetch_one(ticker: str) -> tuple[str, dict]:
     """Fetch current price and daily change for a single ticker.
 
-    Priority chain:
-    1. fast_info.last_price  +  fast_info.previous_close
-    2. fast_info.last_price  +  fast_info.regular_market_previous_close
-    3. history fallback — but keep any fast_info value already obtained so that
-       session-timestamp ambiguity (forex / futures 5 PM ET session cut) is
-       avoided wherever possible.
+    Priority chain (highest → lowest):
+    0. fast_info._data  regularMarketPrice + regularMarketChange   (Yahoo's own value)
+    1. fast_info.last_price + fast_info.previous_close / regular_market_previous_close
+    2. t.info  regularMarketPrice + regularMarketPreviousClose      (v10 quoteSummary)
+    3. history weekday-search fallback                              (last resort)
 
-    Why not calendar-day normalisation?
-    For forex / futures, yfinance timestamps daily bars with the SESSION-START
-    datetime (e.g. a Monday bar may carry a Friday UTC date), so normalising to
-    calendar day would compare today's price against Thursday's close.
-    Using iloc[-2] as the fallback for *previous close* is simpler and more
-    robust — it is only reached when both fast_info.previous_close and
-    fast_info.regular_market_previous_close are unavailable.
+    Tier 0 rationale:
+    The chart API (v8/finance/chart) meta section always contains regularMarketChange
+    — the exact absolute daily change Yahoo Finance displays on its quote pages.
+    It is pre-computed server-side and is immune to ALL session-boundary and
+    timezone issues that plague self-computed (current − prev_close) approaches
+    for CME futures, forex, and exotic instruments.
     """
     try:
         t = yf.Ticker(ticker)
 
         def _safe(attr: str) -> float | None:
-            """Return a positive, finite float from fast_info, or None."""
+            """Return a positive, finite float from a fast_info property, or None."""
             try:
                 v = getattr(t.fast_info, attr)
                 f = float(v)
@@ -393,7 +391,33 @@ def _fetch_one(ticker: str) -> tuple[str, dict]:
             except Exception:
                 return None
 
-        # ── Step 1: fast_info – Yahoo Finance chart API (fastest) ────────────
+        def _meta(key: str) -> float | None:
+            """Return a finite float from fast_info._data (allows negatives), or None."""
+            try:
+                v = t.fast_info._data.get(key)
+                if v is None:
+                    return None
+                f = float(v)
+                return f if pd.notna(f) else None
+            except Exception:
+                return None
+
+        # ── Tier 0: fast_info._data — Yahoo Finance's own pre-computed change ─
+        # _data is the raw dict from the chart API meta section.  regularMarket-
+        # Change is a signed absolute value (negative when price fell); using it
+        # directly sidesteps every session-cut / timestamp-normalisation issue.
+        current_0  = _meta("regularMarketPrice")
+        change_abs = _meta("regularMarketChange")   # signed; None when absent
+
+        if current_0 and current_0 > 0 and change_abs is not None:
+            prev_implied = current_0 - change_abs
+            if prev_implied > 0:
+                chg_pct = round((change_abs / prev_implied) * 100, 2)
+                return ticker, {"price":       round(current_0, 4),
+                                "change":      round(change_abs, 4),
+                                "change_pct":  chg_pct}
+
+        # ── Tier 1: fast_info properties — previous_close ────────────────────
         current    = _safe("last_price")
         prev_close = (_safe("previous_close")
                       or _safe("regular_market_previous_close"))
@@ -405,13 +429,10 @@ def _fetch_one(ticker: str) -> tuple[str, dict]:
                             "change": round(change, 4),
                             "change_pct": chg_pct}
 
-        # ── Step 2: t.info – Yahoo Finance v10/quoteSummary (more complete) ──
-        # fast_info uses the chart endpoint which lacks chartPreviousClose for
-        # some futures (NKD=F, RTY=F, 6J=F …).  t.info uses a separate API
-        # that reliably exposes regularMarketPreviousClose for all instruments.
+        # ── Tier 2: t.info — Yahoo Finance v10/quoteSummary ──────────────────
         if current is None or prev_close is None:
             try:
-                info = t.info  # one API call; reused for both fields below
+                info = t.info
                 def _info_float(key: str) -> float | None:
                     v = info.get(key)
                     if v is None:
@@ -438,33 +459,26 @@ def _fetch_one(ticker: str) -> tuple[str, dict]:
                             "change": round(change, 4),
                             "change_pct": chg_pct}
 
-        # ── Step 3: History fallback ───────────────────────────────────────────
-        # Crucially: if fast_info already gave us ONE of the two values, keep it
-        # (avoids session-timestamp bugs in history for forex / futures).
+        # ── Tier 3: History fallback ──────────────────────────────────────────
         hist = t.history(period="5d", auto_adjust=True).dropna(subset=["Close"])
         hist = hist[hist["Close"] > 0]
 
         if len(hist) < 1:
             return ticker, {"price": None, "change": None, "change_pct": None}
 
-        # Current price: prefer live fast_info, fall back to latest hist bar
         current = current or float(hist["Close"].iloc[-1])
 
-        # Previous close: prefer fast_info (already avoids timestamp issues).
-        # When fast_info gave nothing, search backwards through history for
-        # the last *weekday* bar — this skips Sunday partial sessions that
-        # CME futures (ES=F, NQ=F, ZN=F, 6E=F, GC=F …) produce because they
-        # reopen Sunday 17:00–18:00 ET.  A naive iloc[-2] would land on that
-        # Sunday bar instead of Friday's official settlement.
         if prev_close is None:
+            # Search backwards for the last weekday bar, skipping Sunday CME
+            # partial sessions (CME reopens Sun 17:00–18:00 ET).
             for i in range(len(hist) - 2, -1, -1):
                 ts = hist.index[i]
                 bar_date = (ts.date() if ts.tzinfo is None
                             else ts.tz_convert("UTC").date())
-                if bar_date.weekday() < 5:        # 0=Mon … 4=Fri; skip Sat/Sun
+                if bar_date.weekday() < 5:        # 0=Mon … 4=Fri
                     prev_close = float(hist["Close"].iloc[i])
                     break
-            if prev_close is None:                # absolute last resort
+            if prev_close is None:
                 if len(hist) >= 2:
                     prev_close = float(hist["Close"].iloc[-2])
                 else:
