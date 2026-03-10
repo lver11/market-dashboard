@@ -402,20 +402,49 @@ def _fetch_one(ticker: str) -> tuple[str, dict]:
             except Exception:
                 return None
 
-        # ── Tier 0: fast_info._data — Yahoo Finance's own pre-computed change ─
-        # _data is the raw dict from the chart API meta section.  regularMarket-
-        # Change is a signed absolute value (negative when price fell); using it
-        # directly sidesteps every session-cut / timestamp-normalisation issue.
-        current_0  = _meta("regularMarketPrice")
-        change_abs = _meta("regularMarketChange")   # signed; None when absent
+        def _meta_ts(key: str) -> int:
+            """Return a Unix timestamp int from fast_info._data, or 0."""
+            try:
+                v = t.fast_info._data.get(key)
+                return int(v) if v is not None else 0
+            except Exception:
+                return 0
 
-        if current_0 and current_0 > 0 and change_abs is not None:
-            prev_implied = current_0 - change_abs
-            if prev_implied > 0:
-                chg_pct = round((change_abs / prev_implied) * 100, 2)
-                return ticker, {"price":       round(current_0, 4),
-                                "change":      round(change_abs, 4),
-                                "change_pct":  chg_pct}
+        # ── Tier 0: fast_info._data — session-aware, timestamp-ranked ────────
+        # Yahoo Finance's chart API populates three session buckets in meta:
+        #   regularMarket*  – last regular-session price (stale in pre-market)
+        #   preMarket*      – pre-market quote (4am–9:30am ET for equities)
+        #   postMarket*     – after-hours quote (4pm–8pm ET for equities)
+        # Each bucket has its own *Time Unix timestamp.  We pick the bucket
+        # with the MOST RECENT timestamp, so:
+        #   • Equities pre-market  → preMarket bucket   (vs yesterday's close)
+        #   • Equities regular hrs → regularMarket       (vs yesterday's close)
+        #   • Equities after hours → postMarket          (vs today's close)
+        #   • 24h futures          → regularMarket wins  (always freshest)
+        # The *Change field in each bucket is already relative to the correct
+        # "16:00 previous session close" for that session type.
+        _sessions = [
+            ("regularMarketPrice",  "regularMarketChange",  "regularMarketTime"),
+            ("preMarketPrice",      "preMarketChange",      "preMarketTime"),
+            ("postMarketPrice",     "postMarketChange",     "postMarketTime"),
+        ]
+        candidates = []
+        for price_key, change_key, ts_key in _sessions:
+            price  = _meta(price_key)
+            change = _meta(change_key)
+            ts     = _meta_ts(ts_key)
+            if price and price > 0 and change is not None and ts > 0:
+                prev_impl = price - change
+                if prev_impl > 0:
+                    candidates.append((ts, price, change, prev_impl))
+
+        if candidates:
+            _, best_price, best_change, best_prev = max(candidates,
+                                                        key=lambda x: x[0])
+            chg_pct = round((best_change / best_prev) * 100, 2)
+            return ticker, {"price":      round(best_price, 4),
+                            "change":     round(best_change, 4),
+                            "change_pct": chg_pct}
 
         # ── Tier 1: fast_info properties — previous_close ────────────────────
         current    = _safe("last_price")
