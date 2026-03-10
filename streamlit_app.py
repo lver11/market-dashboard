@@ -362,6 +362,168 @@ CENTRAL_BANK_CONFIG = [
     },
 ]
 
+# ─── TradingView Ticker Map ────────────────────────────────────────────────────
+# Maps Yahoo Finance ticker  →  TradingView "EXCHANGE:SYMBOL" notation.
+# Screener (america / forex / crypto) is inferred from the exchange prefix.
+# Tickers absent from this map fall through to the Yahoo Finance path.
+TV_TICKER_MAP: dict[str, str] = {
+    # ── Equity-index E-mini futures (CME) ────────────────────────────────────
+    "ES=F":  "CME_MINI:ES1!",
+    "NQ=F":  "CME_MINI:NQ1!",
+    "YM=F":  "CBOT:YM1!",
+    "RTY=F": "CME_MINI:RTY1!",
+    "NKD=F": "CME:NKD1!",
+    # ── Treasury futures (CBOT) ───────────────────────────────────────────────
+    "ZN=F":  "CBOT:ZN1!",
+    "ZB=F":  "CBOT:ZB1!",
+    # ── Commodity futures ─────────────────────────────────────────────────────
+    "GC=F":  "COMEX:GC1!",
+    "CL=F":  "NYMEX:CL1!",
+    "NG=F":  "NYMEX:NG1!",
+    "BZ=F":  "NYMEX:BB1!",   # Brent crude
+    "SI=F":  "COMEX:SI1!",
+    "HG=F":  "COMEX:HG1!",
+    "PL=F":  "NYMEX:PL1!",
+    "ZC=F":  "CBOT:ZC1!",
+    "ZW=F":  "CBOT:ZW1!",
+    # ── Currency futures (CME) ────────────────────────────────────────────────
+    "6E=F":  "CME:6E1!",
+    "6J=F":  "CME:6J1!",
+    # ── US Indices ────────────────────────────────────────────────────────────
+    "^GSPC":     "TVC:SPX",
+    "^NDX":      "NASDAQ:NDX",
+    "^DJI":      "TVC:DJI",
+    "^RUT":      "TVC:RUT",
+    "^STOXX50E": "TVC:STOXX50E",
+    "^N225":     "TVC:NI225",
+    "^VIX":      "TVC:VIX",
+    "^MOVE":     "TVC:MOVE",
+    # ── US Treasury yields ────────────────────────────────────────────────────
+    "^IRX": "TVC:IRX",
+    "^FVX": "TVC:FVX",
+    "^TNX": "TVC:TNX",
+    "^TYX": "TVC:TYX",
+    # ── DXY & Forex ───────────────────────────────────────────────────────────
+    "DX-Y.NYB": "TVC:DXY",
+    "EURUSD=X": "FX:EURUSD",
+    "GBPUSD=X": "FX:GBPUSD",
+    "JPY=X":    "FX:USDJPY",
+    "CHF=X":    "FX:USDCHF",
+    "USDCAD=X": "FX:USDCAD",
+    "AUDUSD=X": "FX:AUDUSD",
+    "NZDUSD=X": "FX:NZDUSD",
+    "CNY=X":    "FX_IDC:USDCNY",
+    "MXN=X":    "FX:USDMXN",
+    "BRL=X":    "FX:USDBRL",
+    # ── Crypto ────────────────────────────────────────────────────────────────
+    "BTC-USD": "COINBASE:BTCUSD",
+    "ETH-USD": "COINBASE:ETHUSD",
+    # ── US ETFs & Risk proxy ──────────────────────────────────────────────────
+    "EEM":  "AMEX:EEM",
+    "TLT":  "AMEX:TLT",
+    "HYG":  "AMEX:HYG",
+    "LQD":  "AMEX:LQD",
+    "SPY":  "AMEX:SPY",
+    "XLK":  "AMEX:XLK",
+    "XLF":  "AMEX:XLF",
+    "XLV":  "AMEX:XLV",
+    "XLY":  "AMEX:XLY",
+    "XLP":  "AMEX:XLP",
+    "XLE":  "AMEX:XLE",
+    "XLI":  "AMEX:XLI",
+    "XLB":  "AMEX:XLB",
+    "XLRE": "AMEX:XLRE",
+    "XLU":  "AMEX:XLU",
+    "XLC":  "AMEX:XLC",
+}
+
+_TV_FOREX_EXCHANGES  = {"FX", "FX_IDC", "OANDA", "FOREXCOM", "PEPPERSTONE"}
+_TV_CRYPTO_EXCHANGES = {"COINBASE", "BINANCE", "KRAKEN", "BYBIT", "BITFINEX"}
+
+
+def _tv_screener(full_sym: str) -> str:
+    """Infer TradingView screener from 'EXCHANGE:SYMBOL' notation."""
+    exchange = full_sym.split(":")[0].upper()
+    if exchange in _TV_FOREX_EXCHANGES:
+        return "forex"
+    if exchange in _TV_CRYPTO_EXCHANGES:
+        return "crypto"
+    return "america"
+
+
+def _fetch_tv_batch(yf_tickers: list[str]) -> dict[str, dict]:
+    """Batch-fetch prices + daily changes from TradingView scanner API.
+
+    Groups tickers by screener and issues one POST per screener (typically
+    2 calls: "america" + "forex"), returning a dict keyed by Yahoo Finance
+    ticker.  Tickers with no mapping, null values, or HTTP errors are omitted
+    so the caller can fall back to Yahoo Finance.
+
+    TradingView `change` = daily % change (e.g. 1.5 → +1.5 %).
+    TradingView `change_abs` = absolute daily change (signed).
+    Both fields already reference the correct previous session close
+    regardless of pre-market / regular / after-hours state.
+    """
+    mapped = [(yf, TV_TICKER_MAP[yf]) for yf in yf_tickers if yf in TV_TICKER_MAP]
+    if not mapped:
+        return {}
+
+    # Group by screener
+    by_screener: dict[str, list[tuple[str, str]]] = {}
+    for yf_ticker, tv_sym in mapped:
+        by_screener.setdefault(_tv_screener(tv_sym), []).append((yf_ticker, tv_sym))
+
+    result: dict[str, dict] = {}
+    headers = {
+        "Content-Type": "application/json",
+        "User-Agent":   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Origin":       "https://www.tradingview.com",
+        "Referer":      "https://www.tradingview.com/",
+    }
+
+    for screener, items in by_screener.items():
+        tv_syms = [tv for _, tv in items]
+        yf_by_tv = {tv: yf for yf, tv in items}
+
+        payload = _json.dumps({
+            "symbols": {"tickers": tv_syms, "query": {"types": []}},
+            "columns": ["close", "change_abs", "change"],
+        }).encode("utf-8")
+
+        try:
+            req = urllib.request.Request(
+                f"https://scanner.tradingview.com/{screener}/scan",
+                data=payload,
+                headers=headers,
+            )
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                data = _json.loads(resp.read().decode("utf-8"))
+
+            for row in data.get("data", []):
+                tv_sym   = row.get("s", "")
+                yf_tick  = yf_by_tv.get(tv_sym)
+                if yf_tick is None:
+                    continue
+                d = row.get("d", [None, None, None])
+                try:
+                    price      = float(d[0]) if d[0] is not None else None
+                    change_abs = float(d[1]) if d[1] is not None else None
+                    change_pct = float(d[2]) if d[2] is not None else None
+                    if price and price > 0:
+                        result[yf_tick] = {
+                            "price":      round(price, 4),
+                            "change":     round(change_abs, 4) if change_abs is not None else None,
+                            "change_pct": round(change_pct, 2) if change_pct is not None else None,
+                        }
+                except (TypeError, ValueError, IndexError):
+                    pass
+
+        except Exception as e:
+            logger.warning(f"TradingView fetch failed (screener={screener}): {e}")
+
+    return result
+
+
 # ─── Data Fetching (cached 60s) ───────────────────────────────────────────────
 def _fetch_one(ticker: str) -> tuple[str, dict]:
     """Fetch current price and daily change for a single ticker.
@@ -528,14 +690,22 @@ def _fetch_one(ticker: str) -> tuple[str, dict]:
 @st.cache_data(ttl=60, show_spinner=False)
 def fetch_market_data() -> dict:
     tickers = list({a["ticker"] for a in MARKET_ASSETS})
-    result = {}
-    with ThreadPoolExecutor(max_workers=10) as ex:
-        for future in as_completed({ex.submit(_fetch_one, t): t for t in tickers}, timeout=25):
-            try:
-                ticker, data = future.result()
-                result[ticker] = data
-            except Exception:
-                pass
+
+    # Step 1 – TradingView batch (1-2 HTTP calls, best data quality)
+    result = _fetch_tv_batch(tickers)
+
+    # Step 2 – Yahoo Finance fallback for tickers TV missed
+    missing = [t for t in tickers if t not in result]
+    if missing:
+        with ThreadPoolExecutor(max_workers=10) as ex:
+            for future in as_completed(
+                {ex.submit(_fetch_one, t): t for t in missing}, timeout=25
+            ):
+                try:
+                    ticker, data = future.result()
+                    result[ticker] = data
+                except Exception:
+                    pass
     return result
 
 
@@ -659,16 +829,23 @@ def fetch_period_performance() -> dict:
 @st.cache_data(ttl=60, show_spinner=False)
 def fetch_futures_data() -> dict:
     """Fetch futures contract prices (60 s TTL — same as market data)."""
-    # Some tickers already in market_data (GC=F, CL=F, NG=F); fetch all for simplicity
     tickers = list({a["ticker"] for a in FUTURES_ASSETS})
-    result: dict = {}
-    with ThreadPoolExecutor(max_workers=8) as ex:
-        for fut in as_completed({ex.submit(_fetch_one, t): t for t in tickers}, timeout=20):
-            try:
-                ticker, data = fut.result()
-                result[ticker] = data
-            except Exception:
-                pass
+
+    # Step 1 – TradingView batch (all futures have TV mapping)
+    result = _fetch_tv_batch(tickers)
+
+    # Step 2 – Yahoo Finance fallback for any TV misses
+    missing = [t for t in tickers if t not in result]
+    if missing:
+        with ThreadPoolExecutor(max_workers=8) as ex:
+            for fut in as_completed(
+                {ex.submit(_fetch_one, t): t for t in missing}, timeout=20
+            ):
+                try:
+                    ticker, data = fut.result()
+                    result[ticker] = data
+                except Exception:
+                    pass
     return result
 
 
