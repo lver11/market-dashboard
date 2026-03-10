@@ -435,6 +435,10 @@ TV_TICKER_MAP: dict[str, str] = {
     "XLRE": "AMEX:XLRE",
     "XLU":  "AMEX:XLU",
     "XLC":  "AMEX:XLC",
+    # ── MISO indicator series ─────────────────────────────────────────────────
+    "^NYAD":  "NYSE:NYAD",
+    "^VIX3M": "CBOE:VIX3M",
+    "^VXMT":  "CBOE:VXMT",
 }
 
 _TV_FOREX_EXCHANGES  = {"FX", "FX_IDC", "OANDA", "FOREXCOM", "PEPPERSTONE"}
@@ -520,6 +524,151 @@ def _fetch_tv_batch(yf_tickers: list[str]) -> dict[str, dict]:
 
         except Exception as e:
             logger.warning(f"TradingView fetch failed (screener={screener}): {e}")
+
+    return result
+
+
+# ─── TradingView historical data (tvDatafeed) ─────────────────────────────────
+# tvDatafeed uses TradingView's WebSocket API with an anonymous session.
+# Delayed data (≈15 min) is available without login; sufficient for charts.
+
+_tvdf_instance: Any = None   # lazy-initialized singleton
+
+
+def _get_tvdf() -> Any:
+    """Return a lazy-initialized TvDatafeed instance, or None on failure."""
+    global _tvdf_instance
+    if _tvdf_instance is None:
+        try:
+            from tvDatafeed import TvDatafeed  # type: ignore[import]
+            _tvdf_instance = TvDatafeed()       # anonymous session
+        except Exception as e:
+            logger.warning(f"tvDatafeed init failed: {e}")
+    return _tvdf_instance
+
+
+def _fetch_tv_hist_df(tv_full_sym: str, n_bars: int) -> pd.DataFrame:
+    """Fetch daily OHLCV from TradingView via tvDatafeed.
+
+    Returns a DataFrame with yfinance-style column names (Open/High/Low/Close/Volume)
+    and a DatetimeIndex, or an empty DataFrame on any failure.
+    """
+    if not tv_full_sym or ":" not in tv_full_sym:
+        return pd.DataFrame()
+    try:
+        from tvDatafeed import Interval as TvInterval  # type: ignore[import]
+        exchange, symbol = tv_full_sym.split(":", 1)
+        tvdf = _get_tvdf()
+        if tvdf is None:
+            return pd.DataFrame()
+        df = tvdf.get_hist(
+            symbol=symbol,
+            exchange=exchange,
+            interval=TvInterval.in_daily,
+            n_bars=n_bars,
+        )
+        if df is None or df.empty:
+            return pd.DataFrame()
+        # tvDatafeed returns lowercase columns; normalize to yfinance-style
+        rename = {c: c.capitalize()
+                  for c in df.columns
+                  if c.lower() in {"open", "high", "low", "close", "volume"}}
+        return df.rename(columns=rename)
+    except Exception as e:
+        logger.warning(f"tvDatafeed history failed for {tv_full_sym}: {e}")
+        return pd.DataFrame()
+
+
+def _yf_hist_close(yf_ticker: str, period: str) -> pd.Series:
+    """Yahoo Finance fallback: return Close series for a ticker."""
+    try:
+        return yf.Ticker(yf_ticker).history(period=period)["Close"].dropna()
+    except Exception:
+        return pd.Series(dtype=float)
+
+
+def _tv_or_yf_close(yf_ticker: str, period: str, n_bars: int) -> pd.Series:
+    """TV-first, Yahoo-fallback Close series helper for historical computations."""
+    tv_sym = TV_TICKER_MAP.get(yf_ticker, "")
+    df = _fetch_tv_hist_df(tv_sym, n_bars) if tv_sym else pd.DataFrame()
+    if not df.empty and "Close" in df.columns:
+        return df["Close"].dropna()
+    return _yf_hist_close(yf_ticker, period)
+
+
+# ─── TradingView period-performance (scanner Perf columns) ────────────────────
+def _fetch_tv_perf_batch(yf_tickers: list[str]) -> dict[str, dict]:
+    """Fetch YTD and 1M performance directly from TradingView scanner.
+
+    TV `Perf.YTD` = % change since Jan 1 (already in %).
+    TV `Perf.1M`  = rolling-30-day % change (≈ MTD).
+
+    For YIELD_TICKERS the absolute pp-change is back-computed:
+        pp = close − close / (1 + perf/100)
+    so that "+0.45 pp" is returned instead of "+11.25 %".
+    """
+    mapped = [(yf, TV_TICKER_MAP[yf]) for yf in yf_tickers if yf in TV_TICKER_MAP]
+    if not mapped:
+        return {}
+
+    by_screener: dict[str, list[tuple[str, str]]] = {}
+    for yf_ticker, tv_sym in mapped:
+        by_screener.setdefault(_tv_screener(tv_sym), []).append((yf_ticker, tv_sym))
+
+    result: dict[str, dict] = {}
+    headers = {
+        "Content-Type": "application/json",
+        "User-Agent":   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Origin":       "https://www.tradingview.com",
+        "Referer":      "https://www.tradingview.com/",
+    }
+
+    for screener, items in by_screener.items():
+        tv_syms  = [tv for _, tv in items]
+        yf_by_tv = {tv: yf for yf, tv in items}
+
+        payload = _json.dumps({
+            "symbols": {"tickers": tv_syms, "query": {"types": []}},
+            "columns": ["close", "Perf.YTD", "Perf.1M"],
+        }).encode("utf-8")
+
+        try:
+            req = urllib.request.Request(
+                f"https://scanner.tradingview.com/{screener}/scan",
+                data=payload,
+                headers=headers,
+            )
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                data = _json.loads(resp.read().decode("utf-8"))
+
+            for row in data.get("data", []):
+                tv_sym  = row.get("s", "")
+                yf_tick = yf_by_tv.get(tv_sym)
+                if yf_tick is None:
+                    continue
+                d = row.get("d", [None, None, None])
+                try:
+                    close    = float(d[0]) if d[0] is not None else None
+                    perf_ytd = float(d[1]) if d[1] is not None else None
+                    perf_1m  = float(d[2]) if d[2] is not None else None
+                    if close is None or perf_ytd is None:
+                        continue
+                    if yf_tick in YIELD_TICKERS:
+                        # Back-compute absolute pp change from % change + current level
+                        ytd_pp = round(close - close / (1 + perf_ytd / 100), 2)
+                        mtd_pp = (round(close - close / (1 + perf_1m / 100), 2)
+                                  if perf_1m is not None else ytd_pp)
+                        result[yf_tick] = {"ytd": ytd_pp, "mtd": mtd_pp}
+                    else:
+                        result[yf_tick] = {
+                            "ytd": round(perf_ytd, 2),
+                            "mtd": round(perf_1m, 2) if perf_1m is not None else round(perf_ytd, 2),
+                        }
+                except (TypeError, ValueError, IndexError):
+                    pass
+
+        except Exception as e:
+            logger.warning(f"TradingView perf fetch failed (screener={screener}): {e}")
 
     return result
 
@@ -712,8 +861,10 @@ def fetch_market_data() -> dict:
 @st.cache_data(ttl=300, show_spinner=False)
 def get_vix_history() -> list[dict]:
     try:
-        hist = yf.Ticker("^VIX").history(period="30d").dropna(subset=["Close"])
-        return [{"date": str(idx.date()), "value": round(float(r["Close"]), 2)} for idx, r in hist.iterrows()]
+        # TradingView first (tvDatafeed), Yahoo Finance fallback
+        closes = _tv_or_yf_close("^VIX", "30d", 35)
+        return [{"date": str(idx.date()), "value": round(float(v), 2)}
+                for idx, v in closes.items()]
     except Exception:
         return []
 
@@ -766,63 +917,67 @@ def fetch_ca_bond_yields() -> dict:
 def fetch_period_performance() -> dict:
     """Fetch MTD and YTD % for all tickers (cached 5 min).
 
-    Standard financial convention (close-to-close):
-      YTD base  = last close BEFORE Jan 1   (i.e. Dec 31 of prior year)
-      MTD base  = last close BEFORE the 1st of the current month (e.g. Feb 28)
-    Using period="1y" ensures pre-year data is always available.
+    Primary source: TradingView scanner Perf.YTD + Perf.1M columns.
+      YTD  = Perf.YTD  (from Jan 1, in %)
+      MTD  = Perf.1M   (rolling 30 days ≈ calendar MTD, in %)
+      For YIELD_TICKERS the scanner percentage is back-computed to pp-change.
+
+    Fallback (tickers with no TV mapping, e.g. CA yields): Yahoo Finance
+    1-year history with strict calendar-boundary close-to-close convention.
     """
     tickers = list({a["ticker"] for a in MARKET_ASSETS})
-    now_utc = datetime.now(timezone.utc)
-    # Boundaries (midnight UTC of the first day of each period)
-    _z = dict(hour=0, minute=0, second=0, microsecond=0)
-    year_boundary  = now_utc.replace(month=1, day=1,  **_z)
-    month_boundary = now_utc.replace(day=1,           **_z)
 
-    def _fetch_perf(ticker: str) -> tuple[str, dict]:
-        try:
-            hist = (yf.Ticker(ticker)
-                    .history(period="1y", auto_adjust=True)
-                    .dropna(subset=["Close"]))
-            hist = hist[hist["Close"] > 0]          # drop zero/erroneous prices
-            if len(hist) < 2:
+    # ── Step 1: TradingView scanner (Perf.YTD + Perf.1M) ─────────────────────
+    result = _fetch_tv_perf_batch(tickers)
+
+    # ── Step 2: Yahoo Finance fallback for TV misses ───────────────────────────
+    missing = [t for t in tickers if t not in result]
+    if missing:
+        now_utc = datetime.now(timezone.utc)
+        _z = dict(hour=0, minute=0, second=0, microsecond=0)
+        year_boundary  = now_utc.replace(month=1, day=1, **_z)
+        month_boundary = now_utc.replace(day=1,          **_z)
+
+        def _fetch_perf_yf(ticker: str) -> tuple[str, dict]:
+            try:
+                hist = (yf.Ticker(ticker)
+                        .history(period="1y", auto_adjust=True)
+                        .dropna(subset=["Close"]))
+                hist = hist[hist["Close"] > 0]
+                if len(hist) < 2:
+                    return ticker, {"mtd": None, "ytd": None}
+                latest   = float(hist["Close"].iloc[-1])
+                is_yield = ticker in YIELD_TICKERS
+                idx_utc = (hist.index.tz_convert("UTC") if hist.index.tz is not None
+                           else hist.index.tz_localize("UTC"))
+
+                def _last_close_before(boundary: datetime) -> Optional[float]:
+                    pre = hist[idx_utc < pd.Timestamp(boundary)]
+                    return float(pre["Close"].iloc[-1]) if len(pre) > 0 else None
+
+                def _perf(start: float) -> float:
+                    return round(latest - start, 2) if is_yield \
+                        else round((latest - start) / start * 100, 2)
+
+                ytd_start = _last_close_before(year_boundary) or float(hist["Close"].iloc[0])
+                mtd_start = _last_close_before(month_boundary)
+                return ticker, {
+                    "ytd": _perf(ytd_start),
+                    "mtd": _perf(mtd_start) if mtd_start is not None else _perf(ytd_start),
+                }
+            except Exception as e:
+                logger.warning(f"Perf fetch error {ticker}: {e}")
                 return ticker, {"mtd": None, "ytd": None}
 
-            latest   = float(hist["Close"].iloc[-1])
-            is_yield = ticker in YIELD_TICKERS
-
-            # Convert index to UTC for reliable date comparisons (handles tz-aware/naive)
-            idx_utc = (hist.index.tz_convert("UTC") if hist.index.tz is not None
-                       else hist.index.tz_localize("UTC"))
-
-            def _last_close_before(boundary: datetime) -> Optional[float]:
-                ts  = pd.Timestamp(boundary)
-                pre = hist[idx_utc < ts]
-                return float(pre["Close"].iloc[-1]) if len(pre) > 0 else None
-
-            def _perf(start: float) -> float:
-                return round(latest - start, 2) if is_yield else round((latest - start) / start * 100, 2)
-
-            # YTD: Dec 31 close (last close before Jan 1)
-            ytd_start = _last_close_before(year_boundary) or float(hist["Close"].iloc[0])
-            ytd = _perf(ytd_start)
-
-            # MTD: last close before the 1st of the month (e.g. Feb 28 for March)
-            mtd_start = _last_close_before(month_boundary)
-            mtd = _perf(mtd_start) if mtd_start is not None else ytd
-
-            return ticker, {"mtd": mtd, "ytd": ytd}
-        except Exception as e:
-            logger.warning(f"Perf fetch error {ticker}: {e}")
-            return ticker, {"mtd": None, "ytd": None}
-
-    result: dict = {}
-    with ThreadPoolExecutor(max_workers=10) as ex:
-        for future in as_completed({ex.submit(_fetch_perf, t): t for t in tickers}, timeout=35):
-            try:
-                tk, data = future.result()
-                result[tk] = data
-            except Exception:
-                pass
+        with ThreadPoolExecutor(max_workers=10) as ex:
+            for future in as_completed(
+                {ex.submit(_fetch_perf_yf, t): t for t in missing}, timeout=35
+            ):
+                try:
+                    tk, data = future.result()
+                    result[tk] = data
+                except Exception:
+                    pass
     return result
 
 
@@ -1004,8 +1159,12 @@ def _build_cb_display(live: dict) -> list[dict]:
 def fetch_asset_history_1y(ticker: str) -> pd.DataFrame:
     """Fetch 1-year OHLC + volume history for a single ticker (10-min cache)."""
     try:
-        hist = yf.Ticker(ticker).history(period="1y", auto_adjust=True)
-        return hist.dropna(subset=["Close"])
+        # TradingView first (tvDatafeed), Yahoo Finance fallback
+        tv_sym = TV_TICKER_MAP.get(ticker, "")
+        df = _fetch_tv_hist_df(tv_sym, 365) if tv_sym else pd.DataFrame()
+        if df.empty:
+            df = yf.Ticker(ticker).history(period="1y", auto_adjust=True)
+        return df.dropna(subset=["Close"]) if not df.empty else pd.DataFrame()
     except Exception:
         return pd.DataFrame()
 
@@ -1249,12 +1408,13 @@ def fetch_miso() -> dict:
         "signal": "Données insuffisantes", "emoji": "⚪", "components": [],
     }
     try:
-        spx   = yf.Ticker("^GSPC").history(period="3mo")["Close"].dropna()
-        vix   = yf.Ticker("^VIX").history(period="3mo")["Close"].dropna()
-        nyad  = yf.Ticker("^NYAD").history(period="3mo")["Close"].dropna()
-        vix3m = yf.Ticker("^VIX3M").history(period="3mo")["Close"].dropna()
-        if len(vix3m) < 2:                           # fallback symbol
-            vix3m = yf.Ticker("^VXMT").history(period="3mo")["Close"].dropna()
+        # TradingView first (tvDatafeed), Yahoo Finance fallback for each series
+        spx   = _tv_or_yf_close("^GSPC",  "3mo", 70)
+        vix   = _tv_or_yf_close("^VIX",   "3mo", 70)
+        nyad  = _tv_or_yf_close("^NYAD",  "3mo", 70)
+        vix3m = _tv_or_yf_close("^VIX3M", "3mo", 70)
+        if len(vix3m) < 2:
+            vix3m = _tv_or_yf_close("^VXMT", "3mo", 70)
     except Exception:
         return _empty
 
