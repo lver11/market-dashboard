@@ -206,25 +206,6 @@ MARKET_ASSETS = [
     {"group": "S&P Secteurs", "name": "Communication",        "ticker": "XLC",  },
 ]
 
-# ─── Futures Config ───────────────────────────────────────────────────────────
-FUTURES_ASSETS = [
-    # Equity index E-mini futures (CME)
-    {"group": "Indices",  "name": "S&P 500 E-mini",   "ticker": "ES=F",  "flag": "🇺🇸"},
-    {"group": "Indices",  "name": "Nasdaq 100 E-mini", "ticker": "NQ=F",  "flag": "🇺🇸"},
-    {"group": "Indices",  "name": "Dow Jones E-mini",  "ticker": "YM=F",  "flag": "🇺🇸"},
-    {"group": "Indices",  "name": "Russell 2000",      "ticker": "RTY=F", "flag": "🇺🇸"},
-    {"group": "Indices",  "name": "Nikkei 225 ($)",    "ticker": "NKD=F", "flag": "🇯🇵"},
-    # Treasury futures (CBOT)
-    {"group": "Taux",     "name": "T-Note 10 ans",     "ticker": "ZN=F",  "flag": "🇺🇸"},
-    {"group": "Taux",     "name": "T-Bond 30 ans",     "ticker": "ZB=F",  "flag": "🇺🇸"},
-    # Commodity futures (already in market_data — reused for price)
-    {"group": "Matières", "name": "Or",                "ticker": "GC=F",  "flag": "🥇"},
-    {"group": "Matières", "name": "Pétrole WTI",       "ticker": "CL=F",  "flag": "🛢️"},
-    {"group": "Matières", "name": "Gaz Naturel",       "ticker": "NG=F",  "flag": "⛽"},
-    # Currency futures (CME)
-    {"group": "Devises",  "name": "Euro FX",           "ticker": "6E=F",  "flag": "🇪🇺"},
-    {"group": "Devises",  "name": "Yen Japonais",      "ticker": "6J=F",  "flag": "🇯🇵"},
-]
 
 NEWS_FEEDS = [
     # ── Wire services ──────────────────────────────────────────────────────
@@ -367,15 +348,6 @@ CENTRAL_BANK_CONFIG = [
 # Screener (america / forex / crypto) is inferred from the exchange prefix.
 # Tickers absent from this map fall through to the Yahoo Finance path.
 TV_TICKER_MAP: dict[str, str] = {
-    # ── Equity-index E-mini futures (CME) ────────────────────────────────────
-    "ES=F":  "CME_MINI:ES1!",
-    "NQ=F":  "CME_MINI:NQ1!",
-    "YM=F":  "CBOT:YM1!",
-    "RTY=F": "CME_MINI:RTY1!",
-    "NKD=F": "CME:NKD1!",
-    # ── Treasury futures (CBOT) ───────────────────────────────────────────────
-    "ZN=F":  "CBOT:ZN1!",
-    "ZB=F":  "CBOT:ZB1!",
     # ── Commodity futures ─────────────────────────────────────────────────────
     "GC=F":  "COMEX:GC1!",
     "CL=F":  "NYMEX:CL1!",
@@ -386,9 +358,6 @@ TV_TICKER_MAP: dict[str, str] = {
     "PL=F":  "NYMEX:PL1!",
     "ZC=F":  "CBOT:ZC1!",
     "ZW=F":  "CBOT:ZW1!",
-    # ── Currency futures (CME) ────────────────────────────────────────────────
-    "6E=F":  "CME:6E1!",
-    "6J=F":  "CME:6J1!",
     # ── US Indices ────────────────────────────────────────────────────────────
     "^GSPC":     "TVC:SPX",
     "^NDX":      "NASDAQ:NDX",
@@ -980,28 +949,6 @@ def fetch_period_performance() -> dict:
                     pass
     return result
 
-
-@st.cache_data(ttl=60, show_spinner=False)
-def fetch_futures_data() -> dict:
-    """Fetch futures contract prices (60 s TTL — same as market data)."""
-    tickers = list({a["ticker"] for a in FUTURES_ASSETS})
-
-    # Step 1 – TradingView batch (all futures have TV mapping)
-    result = _fetch_tv_batch(tickers)
-
-    # Step 2 – Yahoo Finance fallback for any TV misses
-    missing = [t for t in tickers if t not in result]
-    if missing:
-        with ThreadPoolExecutor(max_workers=8) as ex:
-            for fut in as_completed(
-                {ex.submit(_fetch_one, t): t for t in missing}, timeout=20
-            ):
-                try:
-                    ticker, data = fut.result()
-                    result[ticker] = data
-                except Exception:
-                    pass
-    return result
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
@@ -1697,36 +1644,6 @@ def make_asset_chart(ticker: str, name: str) -> go.Figure:
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
-def get_market_status(now_et) -> tuple[str, str, str, str]:
-    """Return (key, label, color, note) based on Eastern Time (Montreal = ET).
-
-    keys: open | premarket | afterhours | maintenance | futures | closed
-    """
-    wd  = now_et.weekday()   # 0 = Monday … 6 = Sunday
-    dec = now_et.hour + now_et.minute / 60.0
-
-    if wd == 5:  # Saturday — futures closed
-        return "closed", "FERMÉ — Samedi", "#64748b", "Futures rouvrent dimanche 18:00 ET"
-    if wd == 6:  # Sunday
-        if dec >= 18.0:
-            return "futures", "FUTURES ACTIFS (nuit)", "#3b82f6", "Pré-marché dès 04:00 ET lundi"
-        return "closed", "FERMÉ — Dimanche", "#64748b", f"Futures ouvrent à 18:00 ET"
-
-    # Weekday
-    if 9.5 <= dec < 16.0:
-        mins = int((16.0 - dec) * 60)
-        return "open", "NYSE OUVERT", "#22c55e", f"Ferme dans {mins} min (16:00 ET)"
-    if 4.0 <= dec < 9.5:
-        mins = int((9.5 - dec) * 60)
-        return "premarket", "PRÉ-MARCHÉ ACTIF", "#f59e0b", f"NYSE ouvre dans {mins} min (09:30 ET)"
-    if 16.0 <= dec < 17.0:
-        return "afterhours", "APRÈS-BOURSE", "#f59e0b", "Futures ferment à 17:00 ET (pause maintenance)"
-    if 17.0 <= dec < 18.0:
-        return "maintenance", "PAUSE MAINTENANCE", "#64748b", "Futures rouvrent à 18:00 ET"
-    # 18:00–04:00 (nuit)
-    return "futures", "FUTURES ACTIFS (nuit)", "#3b82f6", "Pré-marché dès 04:00 ET"
-
-
 def fmt_price(v, decimals=2):
     if v is None: return "—"
     if isinstance(v, float) and v != v: return "—"  # NaN guard
@@ -1809,7 +1726,6 @@ with st.spinner("Chargement des données de marché..."):
     vix_history  = get_vix_history()
     news_items   = fetch_news()
     miso         = fetch_miso()
-    futures_data = fetch_futures_data()
     cb_live_rates = fetch_cb_rates()
     period_perf  = fetch_period_performance()
     # Inject CA MTD/YTD into period_perf
@@ -1942,98 +1858,6 @@ if miso.get("composite") is not None:
     )
 else:
     st.caption("⚠️ MISO — données insuffisantes (^NYAD ou ^VIX3M non disponibles via TradingView ni Yahoo Finance)")
-
-# ─── ROW 1c: Futures ──────────────────────────────────────────────────────────
-st.markdown("")
-st.markdown('<div class="section-title">📊 Contrats à terme — Marchés quasi-24h</div>', unsafe_allow_html=True)
-
-# ── Market status banner ──────────────────────────────────────────────────────
-_mkt_key, _mkt_lbl, _mkt_clr, _mkt_note = get_market_status(now)
-_mkt_rgb_map = {
-    "#22c55e": "34,197,94", "#f59e0b": "245,158,11",
-    "#3b82f6": "59,130,246", "#64748b": "100,116,139",
-}
-_mkt_rgb = _mkt_rgb_map.get(_mkt_clr, "100,116,139")
-_dot = "●" if _mkt_key == "open" else "◉"
-st.markdown(
-    f'<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:0.8rem">'
-    f'<span style="background:rgba({_mkt_rgb},0.15);border:1px solid rgba({_mkt_rgb},0.4);'
-    f'color:{_mkt_clr};font-size:0.72rem;font-weight:800;padding:4px 14px;'
-    f'border-radius:20px;letter-spacing:0.1em;white-space:nowrap">'
-    f'{_dot} {_mkt_lbl}</span>'
-    f'<span style="font-size:0.72rem;color:#64748b">'
-    f'{now.strftime("%H:%M")} {now.strftime("%Z")} &nbsp;·&nbsp; {_mkt_note}</span>'
-    f'</div>',
-    unsafe_allow_html=True,
-)
-
-# ── Futures by group ──────────────────────────────────────────────────────────
-def _fmt_fut_price(price: float) -> str:
-    """Format futures price based on magnitude."""
-    if price >= 10_000:  return f"{price:,.0f}"
-    if price >= 1_000:   return f"{price:,.1f}"
-    if price >= 10:      return f"{price:,.2f}"
-    if price >= 0.01:    return f"{price:.4f}"
-    return f"{price:.6f}"
-
-_fut_groups: dict[str, list] = {}
-for _fa in FUTURES_ASSETS:
-    _fut_groups.setdefault(_fa["group"], []).append(_fa)
-
-_grp_icons  = {"Indices": "📈", "Taux": "🏛️", "Matières": "⚡", "Devises": "💱"}
-_fut_gcols  = st.columns(len(_fut_groups))
-
-for _gc, (_grp, _assets) in zip(_fut_gcols, _fut_groups.items()):
-    with _gc:
-        st.markdown(
-            f'<div style="font-size:0.63rem;font-weight:700;color:#64748b;'
-            f'text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">'
-            f'{_grp_icons.get(_grp,"")}&nbsp;{_grp}</div>',
-            unsafe_allow_html=True,
-        )
-        for _fa in _assets:
-            _td    = futures_data.get(_fa["ticker"], {})
-            _price = _td.get("price")
-            _pct   = _td.get("change_pct")
-            _chg   = _td.get("change")
-
-            if _price is None:
-                _price_str = "—";  _pct_str = "—";  _clr = "#475569"
-            else:
-                _price_str = _fmt_fut_price(_price)
-                _pct_str   = (f"{'+' if (_pct or 0) > 0 else ''}{_pct:.2f}%"
-                              if _pct is not None else "—")
-                _clr = "#22c55e" if (_pct or 0) > 0 else "#ef4444" if (_pct or 0) < 0 else "#94a3b8"
-                _chg_str = (f" ({'+' if (_chg or 0) > 0 else ''}{_chg:.1f})"
-                            if _chg is not None else "")
-
-            st.markdown(
-                f'<div style="background:#1e293b;border:1px solid #334155;border-radius:7px;'
-                f'padding:7px 10px;margin-bottom:5px;'
-                f'display:flex;justify-content:space-between;align-items:center">'
-                f'<div>'
-                f'<div style="font-size:0.72rem;font-weight:600;color:#e2e8f0">'
-                f'{_fa["flag"]}&nbsp;{_fa["name"]}</div>'
-                f'<div style="font-size:0.59rem;color:#475569;font-family:monospace">'
-                f'{_fa["ticker"]}</div>'
-                f'</div>'
-                f'<div style="text-align:right">'
-                f'<div style="font-size:0.82rem;font-weight:700;font-family:monospace;'
-                f'color:#cbd5e1">{_price_str}</div>'
-                f'<div style="font-size:0.72rem;font-weight:700;font-family:monospace;'
-                f'color:{_clr}">{_pct_str}</div>'
-                f'</div>'
-                f'</div>',
-                unsafe_allow_html=True,
-            )
-
-st.markdown(
-    '<p style="font-size:0.61rem;color:#475569;margin-top:4px">'
-    '⏰ Futures CME/CBOT actifs dim. 18:00 ET — ven. 17:00 ET · Pause quotidienne 17:00–18:00 ET · '
-    'Pré-marché NYSE: 04:00–09:30 ET · Après-bourse: 16:00–20:00 ET · '
-    'Données: TradingView (contrats continus) · Fallback: Yahoo Finance</p>',
-    unsafe_allow_html=True,
-)
 
 # ─── ROW 2: VIX Chart + Heatmap ──────────────────────────────────────────────
 st.markdown("")
