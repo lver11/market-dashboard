@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tableau de Bord Fondaction — Snapshot</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --green: #10B981;
+      --yellow: #F59E0B;
+      --red: #EF4444;
+      --bg: #0B1120;
+      --card: #111827;
+      --card2: #1F2937;
+      --border: #374151;
+      --text: #F9FAFB;
+      --muted: #9CA3AF;
+    }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', 'Segoe UI', sans-serif; }
+    .signal-vert  { color: var(--green); }
+    .signal-jaune { color: var(--yellow); }
+    .signal-rouge { color: var(--red); }
+    .bg-vert  { background: rgba(16,185,129,0.12); border-left: 3px solid var(--green); }
+    .bg-jaune { background: rgba(245,158,11,0.12); border-left: 3px solid var(--yellow); }
+    .bg-rouge { background: rgba(239,68,68,0.12);  border-left: 3px solid var(--red); }
+    .badge-vert  { background: rgba(16,185,129,0.2);  color: var(--green);  border: 1px solid rgba(16,185,129,0.4); }
+    .badge-jaune { background: rgba(245,158,11,0.2);  color: var(--yellow); border: 1px solid rgba(245,158,11,0.4); }
+    .badge-rouge { background: rgba(239,68,68,0.2);   color: var(--red);    border: 1px solid rgba(239,68,68,0.4); }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; }
+    .card2 { background: var(--card2); border: 1px solid var(--border); border-radius: 8px; }
+    .section-title {
+      font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--muted); font-weight: 600; padding: 6px 12px;
+      background: rgba(55,65,81,0.5); border-radius: 4px; display: inline-block;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: rgba(55,65,81,0.6); color: var(--muted); font-size: 0.7rem;
+         letter-spacing: 0.08em; text-transform: uppercase; padding: 8px 12px; text-align: left; }
+    td { padding: 7px 12px; font-size: 0.82rem; border-bottom: 1px solid rgba(55,65,81,0.4); }
+    tr:hover td { background: rgba(55,65,81,0.25); }
+    tr:last-child td { border-bottom: none; }
+    .cat-cell { font-weight: 600; color: #93C5FD; font-size: 0.75rem; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; flex-shrink: 0; }
+    .dot-vert  { background: var(--green); }
+    .dot-jaune { background: var(--yellow); }
+    .dot-rouge { background: var(--red); }
+    .gauge-wrap { position: relative; width: 120px; height: 120px; margin: 0 auto; }
+    .gauge-wrap canvas { width: 120px !important; height: 120px !important; }
+    .gauge-label { position: absolute; inset: 0; display: flex; flex-direction: column;
+                   align-items: center; justify-content: center; }
+    .score-num { font-size: 1.75rem; font-weight: 700; line-height: 1; }
+    .score-max { font-size: 0.7rem; color: var(--muted); }
+    .trend-arrow { font-size: 1.1rem; font-weight: bold; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    .pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px;
+            border-radius: 9999px; font-size: 0.72rem; font-weight: 600; }
+    .note-text { font-size: 0.72rem; color: var(--muted); max-width: 320px; line-height: 1.4; }
+    .val-cell { font-weight: 700; font-variant-numeric: tabular-nums; }
+    .seuil-cell { color: var(--muted); font-size: 0.75rem; }
+  </style>
+</head>
+<body class="min-h-screen">
+
+  <!-- ══ HEADER ══ -->
+  <div class="sticky top-0 z-50" style="background:rgba(11,17,32,0.95); backdrop-filter:blur(12px); border-bottom:1px solid #1F2937;">
+    <div class="max-w-screen-2xl mx-auto px-6 py-3 flex items-center justify-between gap-4 flex-wrap">
+      <div class="flex items-center gap-4">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:linear-gradient(135deg,#1D4ED8,#7C3AED);">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        </div>
+        <div>
+          <h1 class="text-base font-bold tracking-wide" style="color:#F9FAFB;">TABLEAU DE BORD FONDACTION</h1>
+          <p class="text-xs" style="color:#6B7280;">Snapshot — Veille Marchés Bloomberg</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-6 text-xs">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full animate-pulse" style="background:var(--green);"></span>
+          <span style="color:#6B7280;">Dernière mise à jour:</span>
+          <span class="font-semibold" style="color:#F9FAFB;">12 mars 2026</span>
+        </div>
+        <div class="hidden sm:flex items-center gap-4" style="color:#6B7280;">
+          <span>Source: Bloomberg Terminal</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 py-6 space-y-8">
+
+    <!-- ══ SOMMAIRE EXÉCUTIF ══ -->
+    <section>
+      <div class="mb-4"><span class="section-title">Sommaire Exécutif</span></div>
+      <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <!-- Cycle HOPE -->
+        <div class="card p-5 flex flex-col items-center gap-2">
+          <div class="gauge-wrap"><canvas id="gaugeHOPE"></canvas>
+            <div class="gauge-label">
+              <span class="score-num" style="color:#60A5FA;">63</span>
+              <span class="score-max">/100</span>
+            </div>
+          </div>
+          <p class="text-sm font-semibold text-center mt-1" style="color:#F9FAFB;">Cycle HOPE</p>
+          <div class="flex gap-2 text-xs">
+            <span class="signal-vert font-bold">9V</span>
+            <span class="signal-jaune font-bold">4J</span>
+            <span class="signal-rouge font-bold">6R</span>
+          </div>
+          <span class="trend-arrow text-gray-400">→</span>
+        </div>
+        <!-- Signaux Tactiques -->
+        <div class="card p-5 flex flex-col items-center gap-2">
+          <div class="gauge-wrap"><canvas id="gaugeTact"></canvas>
+            <div class="gauge-label">
+              <span class="score-num" style="color:#F59E0B;">50</span>
+              <span class="score-max">/100</span>
+            </div>
+          </div>
+          <p class="text-sm font-semibold text-center mt-1" style="color:#F9FAFB;">Signaux Tactiques</p>
+          <div class="flex gap-2 text-xs">
+            <span class="signal-vert font-bold">7V</span>
+            <span class="signal-jaune font-bold">4J</span>
+            <span class="signal-rouge font-bold">7R</span>
+          </div>
+          <span class="trend-arrow text-gray-400">→</span>
+        </div>
+        <!-- Thèses Clés -->
+        <div class="card p-5 flex flex-col items-center gap-2">
+          <div class="gauge-wrap"><canvas id="gaugeTheses"></canvas>
+            <div class="gauge-label">
+              <span class="score-num" style="color:#10B981;">71</span>
+              <span class="score-max">/100</span>
+            </div>
+          </div>
+          <p class="text-sm font-semibold text-center mt-1" style="color:#F9FAFB;">Thèses Clés</p>
+          <div class="flex gap-2 text-xs">
+            <span class="signal-vert font-bold">10V</span>
+            <span class="signal-jaune font-bold">8J</span>
+            <span class="signal-rouge font-bold">3R</span>
+          </div>
+          <span class="trend-arrow signal-vert font-bold">↑</span>
+        </div>
+        <!-- Alertes Risques -->
+        <div class="card p-5 flex flex-col items-center gap-2">
+          <div class="gauge-wrap"><canvas id="gaugeRisques"></canvas>
+            <div class="gauge-label">
+              <span class="score-num" style="color:#10B981;">79</span>
+              <span class="score-max">/100</span>
+            </div>
+          </div>
+          <p class="text-sm font-semibold text-center mt-1" style="color:#F9FAFB;">Alertes Risques</p>
+          <div class="flex gap-2 text-xs">
+            <span class="signal-vert font-bold">11V</span>
+            <span class="signal-jaune font-bold">6J</span>
+            <span class="signal-rouge font-bold">1R</span>
+          </div>
+          <span class="trend-arrow signal-vert font-bold">↑</span>
+        </div>
+        <!-- Score Global -->
+        <div class="card p-5 flex flex-col items-center gap-2 col-span-2 lg:col-span-1" style="border-color:#374151; background:linear-gradient(135deg,#111827,#1a2540);">
+          <div class="gauge-wrap"><canvas id="gaugeGlobal"></canvas>
+            <div class="gauge-label">
+              <span class="score-num" style="color:#FBBF24; font-size:2rem;">66</span>
+              <span class="score-max">/100</span>
+            </div>
+          </div>
+          <p class="text-base font-bold text-center mt-1" style="color:#FBBF24;">SCORE GLOBAL</p>
+          <p class="text-xs text-center" style="color:#6B7280;">Maintenir les positions,<br>surveiller les évolutions</p>
+          <span class="trend-arrow text-gray-400">→</span>
+        </div>
+      </div>
+
+      <!-- Signal global bar -->
+      <div class="card mt-4 p-4">
+        <p class="text-xs font-semibold mb-3" style="color:#9CA3AF; letter-spacing:0.1em; text-transform:uppercase;">Répartition globale des signaux</p>
+        <div class="flex items-center gap-2">
+          <div class="flex-1 flex rounded-full overflow-hidden h-4" style="background:#1F2937;">
+            <div class="h-full" style="width:47%; background:var(--green); transition: width 0.5s;"></div>
+            <div class="h-full" style="width:26%; background:var(--yellow);"></div>
+            <div class="h-full" style="width:27%; background:var(--red);"></div>
+          </div>
+          <div class="flex items-center gap-4 text-xs font-semibold flex-shrink-0">
+            <span class="signal-vert">47% Vert</span>
+            <span class="signal-jaune">26% Jaune</span>
+            <span class="signal-rouge">27% Rouge</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ INDICATEURS HOPE ══ -->
+    <section>
+      <div class="mb-4"><span class="section-title">Indicateurs de Cycle HOPE</span></div>
+      <div class="card overflow-hidden">
+        <div class="overflow-x-auto">
+          <table>
+            <thead><tr>
+              <th>Catégorie</th>
+              <th>Indicateur</th>
+              <th>Valeur</th>
+              <th>Seuil</th>
+              <th>Signal</th>
+              <th>Tend.</th>
+              <th>Notes</th>
+            </tr></thead>
+            <tbody id="hope-tbody">
+              <!-- H - Housing -->
+              <tr class="bg-vert">
+                <td class="cat-cell">H — Housing</td>
+                <td>Mises en chantier US (SAAR)</td>
+                <td class="val-cell signal-vert">1 487k</td>
+                <td class="seuil-cell">&gt;1.4M</td>
+                <td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td>
+                <td class="signal-vert font-bold">↑</td>
+                <td class="note-text">Census Bureau, mensuel</td>
+              </tr>
+              <tr class="bg-jaune">
+                <td></td>
+                <td>Permis de construire US</td>
+                <td class="val-cell signal-jaune">1 376k</td>
+                <td class="seuil-cell">&gt;1.5M</td>
+                <td><span class="pill badge-jaune"><span class="dot dot-jaune"></span>Jaune</span></td>
+                <td class="signal-rouge font-bold">↓</td>
+                <td class="note-text">Census Bureau, mensuel</td>
+              </tr>
+              <tr class="bg-rouge">
+                <td></td>
+                <td>Indice NAHB confiance constructeurs</td>
+                <td class="val-cell signal-rouge">36</td>
+                <td class="seuil-cell">&gt;50</td>
+                <td><span class="pill badge-rouge"><span class="dot dot-rouge"></span>Rouge</span></td>
+                <td class="signal-rouge font-bold">↓</td>
+                <td class="note-text">NAHB, mensuel</td>
+              </tr>
+              <tr class="bg-jaune">
+                <td></td>
+                <td>Ventes maisons existantes (YoY%)</td>
+                <td class="val-cell signal-jaune">+4.09%</td>
+                <td class="seuil-cell">&gt;0%</td>
+                <td><span class="pill badge-jaune"><span class="dot dot-jaune"></span>Jaune</span></td>
+                <td class="signal-vert font-bold">↑</td>
+                <td class="note-text">NAR, mensuel</td>
+              </tr>
+              <tr class="bg-jaune">
+                <td></td>
+                <td>Indice Case-Shiller 20 villes (YoY%)</td>
+                <td class="val-cell signal-jaune">+1.38%</td>
+                <td class="seuil-cell">—</td>
+                <td><span class="pill badge-jaune"><span class="dot dot-jaune"></span>Jaune</span></td>
+                <td class="signal-rouge font-bold">↓</td>
+                <td class="note-text">S&amp;P, mensuel avec délai</td>
+              </tr>
+              <!-- O - Orders -->
+              <tr class="bg-vert">
+                <td class="cat-cell">O — Orders</td>
+                <td>ISM Manufacturing PMI</td>
+                <td class="val-cell signal-vert">52.4</td>
+                <td class="seuil-cell">&gt;50</td>
+                <td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td>
+                <td class="signal-rouge font-bold">↓</td>
+                <td class="note-text">ISM, 1er jour ouvrable du mois</td>
+              </tr>
+              <tr class="bg-rouge">
+                <td></td>
+                <td>ISM New Orders</td>
+                <td class="val-cell signal-rouge">8</td>
+                <td class="seuil-cell">&gt;50</td>
+                <td><span class="pill badge-rouge"><span class="dot dot-rouge"></span>Rouge</span></td>
+                <td class="signal-vert font-bold">↑</td>
+                <td class="note-text">ISM, composante clé</td>
+              </tr>
+              <tr class="bg-vert">
+                <td></td>
+                <td>Ratio New Orders / Inventories</td>
+                <td class="val-cell signal-vert">—</td>
+                <td class="seuil-cell">&gt;1.0</td>
+                <td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td>
+                <td class="signal-vert font-bold">↑</td>
+                <td class="note-text">NAPMNOI/NAPMII (calculé)</td>
+              </tr>
+              <tr class="bg-vert">
+                <td></td>
+                <td>PMI Manufacturier Global</td>
+                <td class="val-cell signal-vert">51.9</td>
+                <td class="seuil-cell">&gt;50</td>
+                <td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td>
+                <td class="signal-vert font-bold">↑</td>
+                <td class="note-text">S&amp;P Global / JPM</td>
+              </tr>
+              <tr class="bg-jaune">
+                <td></td>
+                <td>Commandes biens durables (MoM%)</td>
+                <td class="val-cell signal-rouge">-1.4%</td>
+                <td class="seuil-cell">&gt;0%</td>
+                <td><span class="pill badge-jaune"><span class="dot dot-jaune"></span>Jaune</span></td>
+                <td class="signal-rouge font-bold">↓</td>
+                <td class="note-text">Census Bureau</td>
+              </tr>
+              <!-- P - Profits -->
+              <tr class="bg-vert">
+                <td class="cat-cell">P — Profits</td>
+                <td>Croissance BPA S&amp;P 500 (YoY%)</td>
+                <td class="val-cell signal-vert">+13.64%</td>
+                <td class="seuil-cell">&gt;10%</td>
+                <td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td>
+                <td class="signal-vert font-bold">↑</td>
+                <td class="note-text">Bloomberg consensus</td>
+              </tr>
+              <tr class="bg-rouge">
+                <td></td>
+                <td>Marge nette S&amp;P 500</td>
+                <td class="val-cell signal-rouge">3.78%</td>
+                <td class="seuil-cell">&gt;11%</td>
+                <td><span class="pill badge-rouge"><span class="dot dot-rouge"></span>Rouge</span></td>
+                <td class="signal-rouge font-bold">↓</td>
+                <td class="note-text">Proxy: Earnings Yield (EARN_YLD)</td>
+              </tr>
+              <tr class="bg-vert">
+                <td></td>
+                <td>Révisions BPA (3 mois)</td>
+                <td class="val-cell signal-vert">+29.4</td>
+                <td class="seuil-cell">&gt;0</td>
+                <td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td>
+                <td class="signal-vert font-bold">↑</td>
+                <td class="note-text">Bloomberg, net révisions</td>
+              </tr>
+              <tr class="bg-rouge">
+                <td></td>
+                <td>Croissance revenus S&amp;P 500 (YoY%)</td>
+                <td class="val-cell signal-rouge">-1.02%</td>
+                <td class="seuil-cell">&gt;5%</td>
+                <td><span class="pill badge-rouge"><span class="dot dot-rouge"></span>Rouge</span></td>
+                <td class="signal-vert font-bold">↑</td>
+                <td class="note-text">Proxy: SPX YTD%</td>
+              </tr>
+              <!-- E - Employment -->
+              <tr class="bg-rouge">
+                <td class="cat-cell">E — Employment</td>
+                <td>Emplois non-agricoles (variation)</td>
+                <td class="val-cell signal-rouge">-92k</td>
+                <td class="seuil-cell">—</td>
+                <td><span class="pill badge-rouge"><span class="dot dot-rouge"></span>Rouge</span></td>
+                <td class="signal-rouge font-bold">↓</td>
+                <td class="note-text">BLS, 1er vendredi du mois</td>
+              </tr>
+              <tr class="bg-vert">
+                <td></td>
+                <td>Taux de chômage U3</td>
+                <td class="val-cell signal-vert">4.4%</td>
+                <td class="seuil-cell">&lt;4.5%</td>
+                <td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td>
+                <td class="signal-vert font-bold">↑</td>
+                <td class="note-text">BLS</td>
+              </tr>
+              <tr class="bg-vert">
+                <td></td>
+                <td>Taux de chômage U6</td>
+                <td class="val-cell signal-vert">7.9%</td>
+                <td class="seuil-cell">—</td>
+                <td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td>
+                <td class="signal-rouge font-bold">↓</td>
+                <td class="note-text">BLS, mesure élargie</td>
+              </tr>
+              <tr class="bg-vert">
+                <td></td>
+                <td>Initial Jobless Claims (4wk avg)</td>
+                <td class="val-cell signal-vert">212k</td>
+                <td class="seuil-cell">&lt;250K</td>
+                <td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td>
+                <td class="signal-vert font-bold">↑</td>
+                <td class="note-text">DOL, hebdomadaire</td>
+              </tr>
+              <tr class="bg-vert">
+                <td></td>
+                <td>JOLTS Job Openings</td>
+                <td class="val-cell signal-vert">6 542k</td>
+                <td class="seuil-cell">—</td>
+                <td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td>
+                <td class="signal-rouge font-bold">↓</td>
+                <td class="note-text">BLS, avec délai</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ SIGNAUX TACTIQUES ══ -->
+    <section>
+      <div class="mb-4"><span class="section-title">Signaux Tactiques</span></div>
+      <div class="card overflow-hidden">
+        <div class="overflow-x-auto">
+          <table>
+            <thead><tr>
+              <th>Thématique</th>
+              <th>Indicateur</th>
+              <th>Valeur</th>
+              <th>Comparatif</th>
+              <th>Cible</th>
+              <th>Signal</th>
+              <th>Implication</th>
+            </tr></thead>
+            <tbody>
+              <!-- VALORISATIONS -->
+              <tr class="bg-jaune">
+                <td class="cat-cell">Valorisations</td>
+                <td>P/E Forward S&amp;P 500</td>
+                <td class="val-cell signal-jaune">21.5x</td>
+                <td class="seuil-cell">26.5x trailing</td>
+                <td class="seuil-cell">&lt;18x</td>
+                <td><span class="pill badge-jaune"><span class="dot dot-jaune"></span>Jaune</span></td>
+                <td class="note-text">Croissance pricée, marge de sécurité faible</td>
+              </tr>
+              <tr class="bg-rouge">
+                <td></td>
+                <td>P/E Forward Russell 2000</td>
+                <td class="val-cell signal-rouge">25.7x</td>
+                <td class="seuil-cell">48.7x trailing</td>
+                <td class="seuil-cell">&lt;15x</td>
+                <td><span class="pill badge-rouge"><span class="dot dot-rouge"></span>Rouge</span></td>
+                <td class="note-text">Vulnérable si BPA déçoit</td>
+              </tr>
+              <tr class="bg-vert">
+                <td></td>
+                <td>Écart P/E (SPX - RTY)</td>
+                <td class="val-cell signal-vert">-4.2x</td>
+                <td class="seuil-cell">-22.2x trailing</td>
+                <td class="seuil-cell">&lt;3x</td>
+                <td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td>
+                <td class="note-text">SPX moins cher que RTY — rare, favorise large caps</td>
+              </tr>
+              <tr class="bg-jaune">
+                <td></td>
+                <td>P/E MSCI EAFE</td>
+                <td class="val-cell signal-jaune">16.2x</td>
+                <td class="seuil-cell">18.2x trailing</td>
+                <td class="seuil-cell">&lt;14x</td>
+                <td><span class="pill badge-jaune"><span class="dot dot-jaune"></span>Jaune</span></td>
+                <td class="note-text">Décote ~25% vs SPX — opportunité relative ex-US</td>
+              </tr>
+              <tr class="bg-rouge">
+                <td></td>
+                <td>P/E MSCI EM</td>
+                <td class="val-cell signal-rouge">17.3x</td>
+                <td class="seuil-cell">18.4x trailing</td>
+                <td class="seuil-cell">&lt;12x</td>
+                <td><span class="pill badge-rouge"><span class="dot dot-rouge"></span>Rouge</span></td>
+                <td class="note-text">Plus cher qu'historique EM — sélectivité requise</td>
+              </tr>
+              <tr class="bg-rouge">
+                <td></td>
+                <td>Equity Risk Premium (ERP)</td>
+                <td class="val-cell signal-rouge">0.42%</td>
+                <td class="seuil-cell">Moy. 4.5%</td>
+                <td class="seuil-cell">&gt;4%</td>
+                <td><span class="pill badge-rouge"><span class="dot dot-rouge"></span>Rouge</span></td>
+                <td class="note-text">Actions non rémunérées vs obligataire</td>
+              </tr>
+              <!-- MOMENTUM ETF -->
+              <tr class="bg-rouge">
+                <td class="cat-cell">Momentum ETF</td>
+                <td>Momentum Small Cap (IWM) 1M%</td>
+                <td class="val-cell signal-rouge">-4.12%</td>
+                <td class="seuil-cell">YTD: +2.72%</td>
+                <td class="seuil-cell">&gt;+2%</td>
+                <td><span class="pill badge-rouge"><span class="dot dot-rouge"></span>Rouge</span></td>
+                <td class="note-text">Prise de profit CT, tendance YTD intacte</td>
+              </tr>
+              <tr class="bg-rouge">
+                <td></td>
+                <td>Momentum Value (IVE) 1M%</td>
+                <td class="val-cell signal-rouge">-2.74%</td>
+                <td class="seuil-cell">YTD: +0.43%</td>
+                <td class="seuil-cell">&gt;+2%</td>
+                <td><span class="pill badge-rouge"><span class="dot dot-rouge"></span>Rouge</span></td>
+                <td class="note-text">Rotation value en pause, pas de conviction</td>
+              </tr>
+              <tr class="bg-rouge">
+                <td></td>
+                <td>Momentum EM (EEM) 1M%</td>
+                <td class="val-cell signal-rouge">-4.85%</td>
+                <td class="seuil-cell">YTD: +5.85%</td>
+                <td class="seuil-cell">&gt;+2%</td>
+                <td><span class="pill badge-rouge"><span class="dot dot-rouge"></span>Rouge</span></td>
+                <td class="note-text">Correction CT, flux YTD encore positifs</td>
+              </tr>
+              <tr class="bg-vert">
+                <td></td>
+                <td>Momentum Commodities (DBC) 1M%</td>
+                <td class="val-cell signal-vert">+20.38%</td>
+                <td class="seuil-cell">YTD: +28.18%</td>
+                <td class="seuil-cell">&gt;+2%</td>
+                <td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td>
+                <td class="note-text">Forte accélération commodités — thèse rareté validée</td>
+              </tr>
+              <!-- CRÉDIT -->
+              <tr class="bg-vert">
+                <td class="cat-cell">Crédit</td>
+                <td>Spread HY US (OAS)</td>
+                <td class="val-cell signal-vert">294 bps</td>
+                <td class="seuil-cell">Moy. 5Y: 400</td>
+                <td class="seuil-cell">&lt;350 bps</td>
+                <td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td>
+                <td class="note-text">Écartement récent mais sous moyenne — crédit sain</td>
+              </tr>
+              <tr class="bg-vert">
+                <td></td>
+                <td>Spread IG US (OAS)</td>
+                <td class="val-cell signal-vert">86 bps</td>
+                <td class="seuil-cell">Moy. 5Y: 120</td>
+                <td class="seuil-cell">&lt;100 bps</td>
+                <td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td>
+                <td class="note-text">Stress modéré, pas d'alerte</td>
+              </tr>
+              <tr class="bg-rouge">
+                <td></td>
+                <td>Spread EM Souverain (EMB YTD%)</td>
+                <td class="val-cell signal-rouge">-0.66%</td>
+                <td class="seuil-cell">1Y: +5.06%</td>
+                <td class="seuil-cell">&gt;0% YTD</td>
+                <td><span class="pill badge-rouge"><span class="dot dot-rouge"></span>Rouge</span></td>
+                <td class="note-text">Dette EM sous pression court terme</td>
+              </tr>
+              <tr class="bg-vert">
+                <td></td>
+                <td>Ratio BB/CCC dans HY</td>
+                <td class="val-cell signal-vert">0.13x</td>
+                <td class="seuil-cell">Moy: 0.97x</td>
+                <td class="seuil-cell">&lt;2.5x</td>
+                <td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td>
+                <td class="note-text">Forte compression qualité, marché ne différencie pas BB/CCC</td>
+              </tr>
+              <!-- MOMENTUM -->
+              <tr class="bg-vert">
+                <td class="cat-cell">Momentum</td>
+                <td>RSI S&amp;P 500 (14 jours)</td>
+                <td class="val-cell signal-vert">42.4</td>
+                <td class="seuil-cell">30j: 46.6</td>
+                <td class="seuil-cell">30–70</td>
+                <td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td>
+                <td class="note-text">Zone neutre-basse, pas de signal extrême</td>
+              </tr>
+              <tr class="bg-vert">
+                <td></td>
+                <td>S&amp;P 500 vs MA 200 jours</td>
+                <td class="val-cell signal-vert">+2.72%</td>
+                <td class="seuil-cell">vs MA50: -1.72%</td>
+                <td class="seuil-cell">&gt;0%</td>
+                <td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td>
+                <td class="note-text">Tendance LT haussière, CT fragile</td>
+              </tr>
+              <tr class="bg-jaune">
+                <td></td>
+                <td>VIX</td>
+                <td class="val-cell signal-rouge">26.09</td>
+                <td class="seuil-cell">Moy. 1M: 23.5</td>
+                <td class="seuil-cell">&lt;20</td>
+                <td><span class="pill badge-jaune"><span class="dot dot-jaune"></span>Jaune</span></td>
+                <td class="note-text">Stress élevé vs moy. 19 — couverture recommandée</td>
+              </tr>
+              <tr class="bg-jaune">
+                <td></td>
+                <td>Breadth: % actions &gt; MA50</td>
+                <td class="val-cell signal-jaune">53.4%</td>
+                <td class="seuil-cell">1M: -1.27</td>
+                <td class="seuil-cell">&gt;60%</td>
+                <td><span class="pill badge-jaune"><span class="dot dot-jaune"></span>Jaune</span></td>
+                <td class="note-text">Participation se rétrécit — surveiller &lt;47%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ THÈSES CLÉS ══ -->
+    <section>
+      <div class="mb-4"><span class="section-title">Suivi des Thèses Clés 2026</span></div>
+      <div class="card overflow-hidden">
+        <div class="overflow-x-auto">
+          <table>
+            <thead><tr>
+              <th>Thèse</th>
+              <th>Indicateur</th>
+              <th>Valeur</th>
+              <th>Cible</th>
+              <th>Statut</th>
+              <th>Développements récents</th>
+            </tr></thead>
+            <tbody>
+              <tr class="bg-jaune"><td class="cat-cell" rowspan="3">IA — Couche 1: Énergie</td><td>Capex utilities US (YoY%)</td><td class="val-cell signal-jaune">+8.15%</td><td class="seuil-cell">&gt;10%</td><td><span class="pill badge-jaune"><span class="dot dot-jaune"></span>Jaune</span></td><td class="note-text">En-dessous de la cible</td></tr>
+              <tr class="bg-vert"><td>Prix uranium spot ($/lb)</td><td class="val-cell signal-vert">$85.70</td><td class="seuil-cell">&gt;$80/lb</td><td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td><td class="note-text">Proxy: URA ETF ou Cameco</td></tr>
+              <tr class="bg-jaune"><td>Prix gaz naturel Henry Hub</td><td class="val-cell signal-jaune">$3.21</td><td class="seuil-cell">&gt;$3.50/MMBtu</td><td><span class="pill badge-jaune"><span class="dot dot-jaune"></span>Jaune</span></td><td class="note-text">Coût énergie data centers</td></tr>
+              <tr class="bg-vert"><td class="cat-cell" rowspan="2">IA — Couche 2: Puces</td><td>Revenus NVIDIA (YoY%)</td><td class="val-cell signal-vert">+65.5%</td><td class="seuil-cell">&gt;20%</td><td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td><td class="note-text">Earnings trimestriels</td></tr>
+              <tr class="bg-vert"><td>Ratio book-to-bill semiconducteurs</td><td class="val-cell signal-vert">9.57</td><td class="seuil-cell">&gt;1.0</td><td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td><td class="note-text">SIA data</td></tr>
+              <tr class="bg-rouge"><td class="cat-cell" rowspan="2">IA — Couche 3: Infra</td><td>Capex hyperscalers (AMZN+GOOG+MSFT+META)</td><td class="val-cell signal-rouge">-6.67%</td><td class="seuil-cell">&gt;+30% YTD</td><td><span class="pill badge-rouge"><span class="dot dot-rouge"></span>Rouge</span></td><td class="note-text">Guidance trimestrielle</td></tr>
+              <tr class="bg-vert"><td>Performance Vertiv/Quanta/EQIX</td><td class="val-cell signal-vert">+42.4%</td><td class="seuil-cell">&gt;+10% YTD</td><td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td><td class="note-text">Bénéficiaires directs</td></tr>
+              <tr class="bg-rouge"><td class="cat-cell">IA — Couche 5: Apps</td><td>Croissance revenus cloud (AWS+Azure+GCP)</td><td class="val-cell signal-rouge">-17.6%</td><td class="seuil-cell">&gt;25%</td><td><span class="pill badge-rouge"><span class="dot dot-rouge"></span>Rouge</span></td><td class="note-text">Adoption entreprise</td></tr>
+              <tr class="bg-vert"><td class="cat-cell" rowspan="3">Great Broadening</td><td>Performance relative RTY vs SPX (YTD)</td><td class="val-cell signal-vert">+3.48%</td><td class="seuil-cell">&gt;0%</td><td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td><td class="note-text">Rotation small caps</td></tr>
+              <tr class="bg-vert"><td>Breadth: % secteurs S&amp;P en hausse</td><td class="val-cell signal-vert">53.4%</td><td class="seuil-cell">&gt;53%</td><td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td><td class="note-text">&gt;53 = participation large</td></tr>
+              <tr class="bg-vert"><td>Performance S&amp;P Equal Weight vs Cap Weight</td><td class="val-cell signal-vert">+3.44%</td><td class="seuil-cell">&gt;0%</td><td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td><td class="note-text">RSP vs SPY</td></tr>
+              <tr class="bg-vert"><td class="cat-cell" rowspan="4">Commodités — Rareté</td><td>Prix cuivre ($/tonne LME)</td><td class="val-cell signal-vert">$13 042</td><td class="seuil-cell">&gt;$9 500/t</td><td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td><td class="note-text">LMCADS03 — demande IA et énergie verte</td></tr>
+              <tr class="bg-vert"><td>Prix argent ($/oz)</td><td class="val-cell signal-vert">$86.54</td><td class="seuil-cell">&gt;$28/oz</td><td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td><td class="note-text">Demande industrielle</td></tr>
+              <tr class="bg-jaune"><td>Inventaires cuivre LME (tonnes)</td><td class="val-cell signal-jaune">12 940</td><td class="seuil-cell">Déclin</td><td><span class="pill badge-jaune"><span class="dot dot-jaune"></span>Jaune</span></td><td class="note-text">Niveau stocks critiques</td></tr>
+              <tr class="bg-vert"><td>Capex minières (majors)</td><td class="val-cell signal-vert">+14.5%</td><td class="seuil-cell">&gt;+10% YTD</td><td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td><td class="note-text">Sous-investissement chronique</td></tr>
+              <tr class="bg-jaune"><td class="cat-cell" rowspan="4">Stimulus Fiscal US</td><td>Performance small caps US (IWM YTD)</td><td class="val-cell signal-jaune">+2.72%</td><td class="seuil-cell">&gt;+10% YTD</td><td><span class="pill badge-jaune"><span class="dot dot-jaune"></span>Jaune</span></td><td class="note-text">1ers bénéficiaires domestiques</td></tr>
+              <tr class="bg-jaune"><td>Performance industrielles US (XLI YTD)</td><td class="val-cell signal-jaune">+9.26%</td><td class="seuil-cell">&gt;+10% YTD</td><td><span class="pill badge-jaune"><span class="dot dot-jaune"></span>Jaune</span></td><td class="note-text">Exposition infra / dépenses gouvernementales</td></tr>
+              <tr class="bg-jaune"><td>Consumer Confidence (Conference Board)</td><td class="val-cell signal-jaune">91.2</td><td class="seuil-cell">&gt;100</td><td><span class="pill badge-jaune"><span class="dot dot-jaune"></span>Jaune</span></td><td class="note-text">Effet richesse stimulus sur ménages</td></tr>
+              <tr class="bg-vert"><td>Rendement 10Y US (coût du stimulus)</td><td class="val-cell signal-vert">4.24%</td><td class="seuil-cell">&lt;4.50%</td><td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td><td class="note-text">Risque crowding out si &gt;5%</td></tr>
+              <tr class="bg-jaune"><td class="cat-cell" rowspan="2">Santé / Biotech</td><td>Performance XBI (Biotech ETF)</td><td class="val-cell signal-jaune">+3.65%</td><td class="seuil-cell">&gt;+10% YTD</td><td><span class="pill badge-jaune"><span class="dot dot-jaune"></span>Jaune</span></td><td class="note-text">Thèse IA + Drug discovery</td></tr>
+              <tr class="bg-jaune"><td>Approbations FDA (rolling 12m)</td><td class="val-cell signal-jaune">+1.24%</td><td class="seuil-cell">&gt;+5% YTD</td><td><span class="pill badge-jaune"><span class="dot dot-jaune"></span>Jaune</span></td><td class="note-text">Proxy: IBB ETF YTD%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ ALERTES RISQUES ══ -->
+    <section>
+      <div class="mb-4"><span class="section-title">Alertes Risques</span></div>
+      <div class="card overflow-hidden">
+        <div class="overflow-x-auto">
+          <table>
+            <thead><tr>
+              <th>Catégorie</th>
+              <th>Indicateur</th>
+              <th>Valeur</th>
+              <th>Seuil alerte</th>
+              <th>Signal</th>
+              <th>Commentaire</th>
+            </tr></thead>
+            <tbody>
+              <tr class="bg-jaune"><td class="cat-cell" rowspan="4">Inflation</td><td>CPI Core US (YoY%)</td><td class="val-cell signal-jaune">2.50%</td><td class="seuil-cell">&gt;3.0%</td><td><span class="pill badge-jaune"><span class="dot dot-jaune"></span>Jaune</span></td><td class="note-text">Fed target 2%</td></tr>
+              <tr class="bg-jaune"><td>PCE Core (YoY%)</td><td class="val-cell signal-jaune">2.997%</td><td class="seuil-cell">&gt;3.0%</td><td><span class="pill badge-jaune"><span class="dot dot-jaune"></span>Jaune</span></td><td class="note-text">Mesure préférée Fed</td></tr>
+              <tr class="bg-vert"><td>Inflation anticipée 5Y5Y</td><td class="val-cell signal-vert">2.18%</td><td class="seuil-cell">&gt;2.5%</td><td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td><td class="note-text">Anticipations long terme</td></tr>
+              <tr class="bg-jaune"><td>Salaires horaires (YoY%)</td><td class="val-cell signal-jaune">3.8%</td><td class="seuil-cell">&gt;4.0%</td><td><span class="pill badge-jaune"><span class="dot dot-jaune"></span>Jaune</span></td><td class="note-text">Pression salariale</td></tr>
+              <tr class="bg-vert"><td class="cat-cell" rowspan="5">Taux / Yields</td><td>Rendement 10 ans US</td><td class="val-cell signal-vert">4.24%</td><td class="seuil-cell">&gt;5.0%</td><td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td><td class="note-text">Bond vigilantes</td></tr>
+              <tr class="bg-vert"><td>Rendement 2 ans US</td><td class="val-cell signal-vert">3.67%</td><td class="seuil-cell">&gt;5.0%</td><td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td><td class="note-text">Attentes Fed</td></tr>
+              <tr class="bg-vert"><td>Spread 10Y-2Y (courbe)</td><td class="val-cell signal-vert">+56.6 bps</td><td class="seuil-cell">&lt;-50bps</td><td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td><td class="note-text">Inversion = risque récession</td></tr>
+              <tr class="bg-vert"><td>Rendement réel 10Y TIPS</td><td class="val-cell signal-vert">1.84%</td><td class="seuil-cell">&gt;2.5%</td><td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td><td class="note-text">Coût réel du capital</td></tr>
+              <tr class="bg-vert"><td>Fed Funds futures (déc 2026)</td><td class="val-cell signal-vert">96.37</td><td class="seuil-cell">&lt;95.50</td><td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td><td class="note-text">Trajectoire anticipée</td></tr>
+              <tr class="bg-vert"><td class="cat-cell" rowspan="3">Crédit / Liquidité</td><td>Spread TED</td><td class="val-cell signal-vert">1.17 bps</td><td class="seuil-cell">&gt;50bps</td><td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td><td class="note-text">Stress interbancaire</td></tr>
+              <tr class="bg-vert"><td>Réserves bancaires Fed</td><td class="val-cell signal-vert">$6 629B</td><td class="seuil-cell">&lt;$6 000B</td><td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td><td class="note-text">Liquidité système</td></tr>
+              <tr class="bg-vert"><td>Taux défaut HY (12m trailing)</td><td class="val-cell signal-vert">2.94%</td><td class="seuil-cell">&gt;500 bps</td><td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td><td class="note-text">Stress crédit</td></tr>
+              <tr class="bg-rouge"><td class="cat-cell" rowspan="4">Géopolitique</td><td>Indice incertitude politique US</td><td class="val-cell signal-rouge">269.1</td><td class="seuil-cell">&gt;200</td><td><span class="pill badge-rouge"><span class="dot dot-rouge"></span>Rouge</span></td><td class="note-text">Baker-Bloom-Davis — niveau élevé</td></tr>
+              <tr class="bg-jaune"><td>Prix pétrole Brent</td><td class="val-cell signal-jaune">$98.9</td><td class="seuil-cell">&gt;$100</td><td><span class="pill badge-jaune"><span class="dot dot-jaune"></span>Jaune</span></td><td class="note-text">Proche du seuil d'alerte</td></tr>
+              <tr class="bg-vert"><td>USD Index (DXY)</td><td class="val-cell signal-vert">99.5</td><td class="seuil-cell">&gt;110</td><td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td><td class="note-text">Force dollar</td></tr>
+              <tr class="bg-vert"><td>USD/CNY</td><td class="val-cell signal-vert">6.87</td><td class="seuil-cell">&gt;7.5</td><td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td><td class="note-text">Tensions Chine</td></tr>
+              <tr class="bg-jaune"><td class="cat-cell" rowspan="4">Canada</td><td>Écart taux 10Y CA-US</td><td class="val-cell signal-jaune">-0.75%</td><td class="seuil-cell">&lt;-1.0%</td><td><span class="pill badge-jaune"><span class="dot dot-jaune"></span>Jaune</span></td><td class="note-text">Divergence politique monétaire</td></tr>
+              <tr class="bg-jaune"><td>CAD/USD</td><td class="val-cell signal-jaune">0.7349</td><td class="seuil-cell">&lt;0.70</td><td><span class="pill badge-jaune"><span class="dot dot-jaune"></span>Jaune</span></td><td class="note-text">Faiblesse dollar canadien</td></tr>
+              <tr><td>Renouvellements hypothécaires 2026</td><td class="val-cell" style="color:#6B7280;">Qualitatif</td><td class="seuil-cell">—</td><td><span class="pill" style="background:rgba(107,114,128,0.2); color:#9CA3AF; border:1px solid rgba(107,114,128,0.3);">Surveiller</span></td><td class="note-text">Mur hypothécaire</td></tr>
+              <tr class="bg-vert"><td>Indice TSX vs S&amp;P 500 (rel. perf.)</td><td class="val-cell signal-vert">+5.46%</td><td class="seuil-cell">&lt;-10%</td><td><span class="pill badge-vert"><span class="dot dot-vert"></span>Vert</span></td><td class="note-text">Sous-performance Canada contenue</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ MATRICE RISQUES ══ -->
+    <section>
+      <div class="mb-4"><span class="section-title">Matrice Probabilité / Impact</span></div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <!-- Risk matrix visual -->
+        <div class="card p-5">
+          <p class="text-xs font-semibold mb-4" style="color:#9CA3AF; letter-spacing:0.1em; text-transform:uppercase;">Scénarios de risque — À compléter</p>
+          <div class="space-y-3">
+            <div class="card2 p-3 flex items-center justify-between gap-3">
+              <div>
+                <p class="text-sm font-semibold" style="color:#F9FAFB;">Inflation collante (&gt;3%)</p>
+                <p class="text-xs mt-1" style="color:#6B7280;">CPI Core à 2.5% — PCE à 2.997% — proche seuil</p>
+              </div>
+              <div class="text-center flex-shrink-0">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold" style="background:rgba(245,158,11,0.2); color:var(--yellow);">?</div>
+                <p class="text-xs mt-1" style="color:#6B7280;">Score</p>
+              </div>
+            </div>
+            <div class="card2 p-3 flex items-center justify-between gap-3">
+              <div>
+                <p class="text-sm font-semibold" style="color:#F9FAFB;">Hausse yields obligataires (&gt;5%)</p>
+                <p class="text-xs mt-1" style="color:#6B7280;">10Y à 4.24% — 200 pbs de marge</p>
+              </div>
+              <div class="text-center flex-shrink-0">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold" style="background:rgba(16,185,129,0.2); color:var(--green);">?</div>
+                <p class="text-xs mt-1" style="color:#6B7280;">Score</p>
+              </div>
+            </div>
+            <div class="card2 p-3 flex items-center justify-between gap-3">
+              <div>
+                <p class="text-sm font-semibold" style="color:#F9FAFB;">Retard productivité IA</p>
+                <p class="text-xs mt-1" style="color:#6B7280;">Capex hyperscalers -6.7% — signal d'alerte</p>
+              </div>
+              <div class="text-center flex-shrink-0">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold" style="background:rgba(239,68,68,0.2); color:var(--red);">?</div>
+                <p class="text-xs mt-1" style="color:#6B7280;">Score</p>
+              </div>
+            </div>
+            <div class="card2 p-3 flex items-center justify-between gap-3">
+              <div>
+                <p class="text-sm font-semibold" style="color:#F9FAFB;">Escalade guerre commerciale</p>
+                <p class="text-xs mt-1" style="color:#6B7280;">Incertitude politique US à 269 — &gt;200 = Rouge</p>
+              </div>
+              <div class="text-center flex-shrink-0">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold" style="background:rgba(239,68,68,0.2); color:var(--red);">?</div>
+                <p class="text-xs mt-1" style="color:#6B7280;">Score</p>
+              </div>
+            </div>
+            <div class="card2 p-3 flex items-center justify-between gap-3">
+              <div>
+                <p class="text-sm font-semibold" style="color:#F9FAFB;">Récession Canada (mur hypothécaire)</p>
+                <p class="text-xs mt-1" style="color:#6B7280;">CAD/USD 0.735 — CAD-US spread -0.75%</p>
+              </div>
+              <div class="text-center flex-shrink-0">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold" style="background:rgba(245,158,11,0.2); color:var(--yellow);">?</div>
+                <p class="text-xs mt-1" style="color:#6B7280;">Score</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Key metrics snapshot -->
+        <div class="card p-5 space-y-4">
+          <p class="text-xs font-semibold" style="color:#9CA3AF; letter-spacing:0.1em; text-transform:uppercase;">Indicateurs clés — Marchés</p>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="card2 p-3 text-center">
+              <p class="text-xs mb-1" style="color:#6B7280;">VIX</p>
+              <p class="text-2xl font-bold signal-jaune">26.1</p>
+              <p class="text-xs mt-1 signal-jaune">Stress élevé</p>
+            </div>
+            <div class="card2 p-3 text-center">
+              <p class="text-xs mb-1" style="color:#6B7280;">Spread HY (OAS)</p>
+              <p class="text-2xl font-bold signal-vert">294 bps</p>
+              <p class="text-xs mt-1 signal-vert">Sain</p>
+            </div>
+            <div class="card2 p-3 text-center">
+              <p class="text-xs mb-1" style="color:#6B7280;">ISM Manufacturing</p>
+              <p class="text-2xl font-bold signal-vert">52.4</p>
+              <p class="text-xs mt-1 signal-vert">Expansion</p>
+            </div>
+            <div class="card2 p-3 text-center">
+              <p class="text-xs mb-1" style="color:#6B7280;">10Y US Yield</p>
+              <p class="text-2xl font-bold signal-vert">4.24%</p>
+              <p class="text-xs mt-1 signal-vert">Sous seuil</p>
+            </div>
+            <div class="card2 p-3 text-center">
+              <p class="text-xs mb-1" style="color:#6B7280;">Cuivre ($/t)</p>
+              <p class="text-2xl font-bold signal-vert">$13 042</p>
+              <p class="text-xs mt-1 signal-vert">Rareté</p>
+            </div>
+            <div class="card2 p-3 text-center">
+              <p class="text-xs mb-1" style="color:#6B7280;">NVIDIA Rev. YoY</p>
+              <p class="text-2xl font-bold signal-vert">+65.5%</p>
+              <p class="text-xs mt-1 signal-vert">IA en force</p>
+            </div>
+            <div class="card2 p-3 text-center">
+              <p class="text-xs mb-1" style="color:#6B7280;">Incert. politique US</p>
+              <p class="text-2xl font-bold signal-rouge">269</p>
+              <p class="text-xs mt-1 signal-rouge">Alerte</p>
+            </div>
+            <div class="card2 p-3 text-center">
+              <p class="text-xs mb-1" style="color:#6B7280;">DBC Commodities YTD</p>
+              <p class="text-2xl font-bold signal-vert">+28.2%</p>
+              <p class="text-xs mt-1 signal-vert">Momentum</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ RÈGLES DE DÉCISION ══ -->
+    <section>
+      <div class="mb-4"><span class="section-title">Règles de Décision</span></div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="card p-4 flex gap-3 items-start" style="border-color:rgba(16,185,129,0.3);">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style="background:rgba(16,185,129,0.15);">
+            <svg class="w-5 h-5" style="color:var(--green);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          </div>
+          <div>
+            <p class="text-sm font-bold signal-vert">Score &gt; 70%</p>
+            <p class="text-xs mt-1" style="color:#9CA3AF;">Maintenir / Augmenter les positions tactiques</p>
+          </div>
+        </div>
+        <div class="card p-4 flex gap-3 items-start" style="border-color:rgba(245,158,11,0.3); background:rgba(245,158,11,0.05);">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style="background:rgba(245,158,11,0.15);">
+            <svg class="w-5 h-5" style="color:var(--yellow);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+          </div>
+          <div>
+            <p class="text-sm font-bold signal-jaune">Score 50–70% ← ACTUEL (66)</p>
+            <p class="text-xs mt-1" style="color:#9CA3AF;">Maintenir les positions, surveiller les évolutions</p>
+          </div>
+        </div>
+        <div class="card p-4 flex gap-3 items-start" style="border-color:rgba(239,68,68,0.3);">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style="background:rgba(239,68,68,0.15);">
+            <svg class="w-5 h-5" style="color:var(--red);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </div>
+          <div>
+            <p class="text-sm font-bold signal-rouge">Score &lt; 50%</p>
+            <p class="text-xs mt-1" style="color:#9CA3AF;">Réduire positions tactiques, augmenter la prudence</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="pb-6 text-center text-xs" style="color:#374151;">
+      <p>FONDACTION — Tableau de Bord Veille Marchés Bloomberg · Snapshot 12 mars 2026</p>
+      <p class="mt-1">Sources: Bloomberg Terminal, FRED, ISM, BLS, Census Bureau, NAR</p>
+    </footer>
+
+  </div><!-- end max-w -->
+
+  <script>
+    // ── Gauge helper ──
+    function makeGauge(id, score, color) {
+      const ctx = document.getElementById(id).getContext('2d');
+      const rem = 100 - score;
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          datasets: [{
+            data: [score, rem],
+            backgroundColor: [color, 'rgba(55,65,81,0.4)'],
+            borderWidth: 0,
+            circumference: 270,
+            rotation: 225
+          }]
+        },
+        options: {
+          responsive: false,
+          cutout: '78%',
+          plugins: { legend: { display: false }, tooltip: { enabled: false } },
+          animation: { duration: 900, easing: 'easeInOutQuart' }
+        }
+      });
+    }
+
+    makeGauge('gaugeHOPE',    63, '#60A5FA');  // blue
+    makeGauge('gaugeTact',    50, '#F59E0B');  // amber
+    makeGauge('gaugeTheses',  71, '#10B981');  // green
+    makeGauge('gaugeRisques', 79, '#10B981');  // green
+    makeGauge('gaugeGlobal',  66, '#FBBF24');  // gold
+  </script>
+</body>
+</html>

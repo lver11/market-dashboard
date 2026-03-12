@@ -595,6 +595,12 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/snapshot")
+def snapshot():
+    """Fondaction Bloomberg Snapshot Dashboard."""
+    return render_template("fondaction_snapshot.html")
+
+
 @app.route("/api/data")
 def api_data():
     """Main API: returns risk score, market data, calendar, news."""
