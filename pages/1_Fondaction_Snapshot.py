@@ -7,6 +7,7 @@ import io
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+import streamlit.components.v1 as components
 
 st.set_page_config(
     page_title="Fondaction — Snapshot Marchés",
@@ -562,27 +563,48 @@ else:
     data_src = "Tableau_Bord_Fondaction_Bloomberg-3.xlsx"
 
 # ── Header ────────────────────────────────────────────────────────────────────
-st.html(f"""
-<div style="display:flex;align-items:center;justify-content:space-between;
-            border-bottom:1px solid #1F2937;padding-bottom:12px;margin-bottom:16px;">
-  <div>
-    <div class="snap-title">📊 TABLEAU DE BORD FONDACTION</div>
-    <div class="snap-sub">Snapshot Veille Marchés Bloomberg &nbsp;·&nbsp;
-      <span style="color:#10B981;">●</span>&nbsp;Dernière mise à jour:
-      <strong style="color:#F9FAFB;">{date_str}</strong>
+col_hdr, col_btn = st.columns([9, 1])
+with col_hdr:
+    st.html(f"""
+    <div style="border-bottom:1px solid #1F2937;padding-bottom:12px;margin-bottom:4px;">
+      <div class="snap-title">📊 TABLEAU DE BORD FONDACTION</div>
+      <div class="snap-sub">Snapshot Veille Marchés Bloomberg &nbsp;·&nbsp;
+        <span style="color:#10B981;">●</span>&nbsp;Dernière mise à jour:
+        <strong style="color:#F9FAFB;">{date_str}</strong>
+        &nbsp;·&nbsp;
+        <span style="color:#4B5563;">Source: {data_src}</span>
+      </div>
     </div>
-  </div>
-  <div style="display:flex;align-items:center;gap:16px;">
-    <div style="font-size:0.7rem;color:#6B7280;text-align:right;">
-      Source: {data_src}<br>
-      <span style="color:#374151;">← Sidebar pour mettre à jour</span>
-    </div>
-    <button class="print-btn" onclick="window.parent.print()">
-      🖨️ Imprimer
-    </button>
-  </div>
-</div>
-""")
+    """)
+with col_btn:
+    st.markdown("<div style='padding-top:6px;'></div>", unsafe_allow_html=True)
+    if st.button("🖨️ Imprimer", use_container_width=True, key="print_btn"):
+        st.session_state["_do_print"] = True
+
+# Inject parent-level print CSS + trigger print when button clicked
+_print_js = "window.parent.print();" if st.session_state.pop("_do_print", False) else ""
+components.html(f"""
+<script>
+(function() {{
+  var id = 'fp-print-css';
+  var old = window.parent.document.getElementById(id);
+  if (old) old.remove();
+  var s = window.parent.document.createElement('style');
+  s.id = id;
+  s.textContent = '@media print {{' +
+    'body,html,[data-testid="stAppViewContainer"],[data-testid="stMain"]{{background:#fff!important;color:#111!important}}' +
+    '[data-testid="stHeader"],[data-testid="stToolbar"],[data-testid="stDecoration"],section[data-testid="stSidebar"],[data-testid="stStatusWidget"],iframe{{display:none!important}}' +
+    '[data-testid="stMain"] iframe{{display:block!important}}' +
+    '[role="tabpanel"]{{display:block!important;visibility:visible!important}}' +
+    '[data-baseweb="tab-list"]{{display:none!important}}' +
+    '[data-testid="stPlotlyChart"]{{display:none!important}}' +
+    '.block-container{{padding:0!important;max-width:100%!important}}' +
+  '}}';
+  window.parent.document.head.appendChild(s);
+  {_print_js}
+}})();
+</script>
+""", height=0)
 
 # ── Scorecard Global ──────────────────────────────────────────────────────────
 total_ind = (sum(len(v) for v in HOPE_DATA.values()) +
