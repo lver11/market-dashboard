@@ -76,6 +76,71 @@ st.html("""
   .mat-score-hi { color:#F87171; font-weight:700; }
   .mat-score-med { color:#FBBF24; font-weight:700; }
   .mat-score-lo { color:#34D399; font-weight:700; }
+
+  .print-btn {
+    background: #1F2937; color: #9CA3AF; border: 1px solid #374151;
+    border-radius: 6px; padding: 6px 14px; font-size: 0.75rem;
+    cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+    transition: all 0.15s;
+  }
+  .print-btn:hover { background: #374151; color: #F9FAFB; }
+
+  /* ── PRINT STYLES ─────────────────────────────────────── */
+  @media print {
+    /* Light background */
+    [data-testid="stAppViewContainer"],
+    [data-testid="stMain"],
+    body, html { background: #ffffff !important; }
+
+    /* Hide Streamlit chrome */
+    [data-testid="stHeader"],
+    [data-testid="stToolbar"],
+    [data-testid="stDecoration"],
+    section[data-testid="stSidebar"],
+    [data-testid="stStatusWidget"],
+    button[kind="header"],
+    .print-btn { display: none !important; }
+
+    /* Show ALL tab panels */
+    [role="tabpanel"]         { display: block !important; visibility: visible !important; }
+    [data-baseweb="tab-list"] { display: none !important; }
+
+    /* Light cards */
+    .ind-row {
+      background: #F9FAFB !important;
+      border: 1px solid #E5E7EB !important;
+      break-inside: avoid;
+    }
+    .ind-name  { color: #111827 !important; }
+    .ind-val   { color: #111827 !important; }
+    .ind-seuil { color: #6B7280 !important; }
+    .ind-note  { color: #6B7280 !important; }
+    .subsec-hdr { color: #374151 !important; border-color: #D1D5DB !important; }
+    .section-hdr { color: #374151 !important; background: #F3F4F6 !important; }
+    .snap-title { color: #111827 !important; }
+    .snap-sub   { color: #6B7280 !important; }
+
+    /* Signal badges */
+    .sig-vert  { background: #ECFDF5 !important; color: #065F46 !important;
+                 border-color: #6EE7B7 !important; }
+    .sig-jaune { background: #FFFBEB !important; color: #92400E !important;
+                 border-color: #FCD34D !important; }
+    .sig-rouge { background: #FEF2F2 !important; color: #991B1B !important;
+                 border-color: #FCA5A5 !important; }
+    .sig-neut  { background: #F9FAFB !important; color: #374151 !important;
+                 border-color: #D1D5DB !important; }
+
+    /* Page breaks between tabs */
+    [role="tabpanel"] { page-break-before: always; }
+    [role="tabpanel"]:first-of-type { page-break-before: avoid; }
+
+    /* Hide gauges (heavy ink) */
+    [data-testid="stPlotlyChart"] { display: none !important; }
+
+    /* Compact layout */
+    .block-container { padding: 0 !important; max-width: 100% !important; }
+    hr { border-color: #E5E7EB !important; }
+  }
 </style>
 """)
 
@@ -507,9 +572,14 @@ st.html(f"""
       <strong style="color:#F9FAFB;">{date_str}</strong>
     </div>
   </div>
-  <div style="font-size:0.7rem;color:#6B7280;text-align:right;">
-    Source: {data_src}<br>
-    <span style="color:#374151;">← Sidebar pour mettre à jour</span>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <div style="font-size:0.7rem;color:#6B7280;text-align:right;">
+      Source: {data_src}<br>
+      <span style="color:#374151;">← Sidebar pour mettre à jour</span>
+    </div>
+    <button class="print-btn" onclick="window.print()">
+      🖨️ Imprimer
+    </button>
   </div>
 </div>
 """)
