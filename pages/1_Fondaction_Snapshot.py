@@ -577,7 +577,7 @@ st.html(f"""
       Source: {data_src}<br>
       <span style="color:#374151;">← Sidebar pour mettre à jour</span>
     </div>
-    <button class="print-btn" onclick="window.print()">
+    <button class="print-btn" onclick="window.parent.print()">
       🖨️ Imprimer
     </button>
   </div>
