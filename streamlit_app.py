@@ -30,7 +30,7 @@ st.set_page_config(
 )
 
 # ─── Custom CSS ───────────────────────────────────────────────────────────────
-st.markdown("""
+st.html("""
 <style>
   /* Hide Streamlit branding */
   #MainMenu, footer, header { visibility: hidden; }
@@ -138,7 +138,7 @@ st.markdown("""
   /* Stale override */
   div[data-stale="true"] { opacity: 1 !important; }
 </style>
-""", unsafe_allow_html=True)
+""")
 
 # ─── Logging ───────────────────────────────────────────────────────────────────
 logging.basicConfig(level=logging.WARNING)

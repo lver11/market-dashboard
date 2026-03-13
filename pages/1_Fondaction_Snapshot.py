@@ -14,7 +14,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-st.markdown("""
+st.html("""
 <style>
   [data-testid="stAppViewContainer"] { background: #0B1120; }
   [data-testid="stHeader"] { background: transparent; }
@@ -32,7 +32,7 @@ st.markdown("""
   }
   .rule-box { border-radius:10px; padding:14px 18px; margin:4px 0; }
 </style>
-""", unsafe_allow_html=True)
+""")
 
 # ── Data ──────────────────────────────────────────────────────────────────────
 SCORES = {
