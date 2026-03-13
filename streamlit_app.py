@@ -19,7 +19,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 import yfinance as yf
-from streamlit_autorefresh import st_autorefresh
+# streamlit_autorefresh replaced with native meta-refresh (JS module load error on Render)
 
 # ─── Page config ──────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -1719,7 +1719,7 @@ def _heat_label(asset: dict) -> str:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 # Auto-refresh every 60 seconds
-st_autorefresh(interval=60_000, key="auto_refresh")
+st.markdown('<meta http-equiv="refresh" content="60">', unsafe_allow_html=True)
 
 # ─── Fetch data ───────────────────────────────────────────────────────────────
 with st.spinner("Chargement des données de marché..."):
