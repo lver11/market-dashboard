@@ -6,6 +6,7 @@
   <title>Tableau de Bord Fondaction — Snapshot</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
   <style>
     :root {
       --green: #10B981;
@@ -61,6 +62,14 @@
     .note-text { font-size: 0.72rem; color: var(--muted); max-width: 320px; line-height: 1.4; }
     .val-cell { font-weight: 700; font-variant-numeric: tabular-nums; }
     .seuil-cell { color: var(--muted); font-size: 0.75rem; }
+    .btn-excel {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 14px; border-radius: 6px; font-size: 0.75rem; font-weight: 600;
+      background: rgba(16,185,129,0.15); color: var(--green);
+      border: 1px solid rgba(16,185,129,0.4); cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-excel:hover { background: rgba(16,185,129,0.28); }
   </style>
 </head>
 <body class="min-h-screen">
@@ -86,6 +95,13 @@
         <div class="hidden sm:flex items-center gap-4" style="color:#6B7280;">
           <span>Source: Bloomberg Terminal</span>
         </div>
+        <button class="btn-excel" onclick="exportToExcel()">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+          </svg>
+          Télécharger Excel
+        </button>
       </div>
     </div>
   </div>
@@ -842,6 +858,53 @@
     makeGauge('gaugeTheses',  71, '#10B981');  // green
     makeGauge('gaugeRisques', 79, '#10B981');  // green
     makeGauge('gaugeGlobal',  66, '#FBBF24');  // gold
+
+    // ── Excel Export ──
+    function tableToAoa(tableId) {
+      const table = document.getElementById(tableId);
+      const rows = [];
+      const ths = table.querySelectorAll('thead th');
+      rows.push(Array.from(ths).map(th => th.textContent.trim()));
+      table.querySelectorAll('tbody tr').forEach(tr => {
+        const cells = tr.querySelectorAll('td');
+        rows.push(Array.from(cells).map(td => td.textContent.trim().replace(/\s+/g,' ')));
+      });
+      return rows;
+    }
+
+    function exportToExcel() {
+      const wb = XLSX.utils.book_new();
+      const tables = [
+        { id: 'table-hope',      name: 'Cycle HOPE' },
+        { id: 'table-tactiques', name: 'Signaux Tactiques' },
+        { id: 'table-theses',    name: 'Thèses Clés 2026' },
+        { id: 'table-risques',   name: 'Alertes Risques' },
+      ];
+      tables.forEach(({ id, name }) => {
+        const aoa = tableToAoa(id);
+        const ws = XLSX.utils.aoa_to_sheet(aoa);
+        ws['!cols'] = aoa[0].map((_, i) => ({ wch: Math.min(40, Math.max(12,
+          Math.max(...aoa.map(r => (r[i]||'').length))
+        ))}));
+        XLSX.utils.book_append_sheet(wb, ws, name);
+      });
+      const summary = [
+        ['FONDACTION — Snapshot Bloomberg', '12 mars 2026'],
+        [''],
+        ['Section', 'Score', 'Vert', 'Jaune', 'Rouge'],
+        ['Cycle HOPE',       '63/100', '9', '4', '6'],
+        ['Signaux Tactiques','50/100', '7', '4', '7'],
+        ['Thèses Clés',      '71/100','10', '8', '3'],
+        ['Alertes Risques',  '79/100','11', '6', '1'],
+        ['SCORE GLOBAL',     '66/100','47%','26%','27%'],
+        [''],
+        ['Sources: Bloomberg Terminal, FRED, ISM, BLS, Census Bureau, NAR'],
+      ];
+      const wsSummary = XLSX.utils.aoa_to_sheet(summary);
+      wsSummary['!cols'] = [{ wch: 22 }, { wch: 12 }, { wch: 8 }, { wch: 8 }, { wch: 8 }];
+      XLSX.utils.book_append_sheet(wb, wsSummary, 'Sommaire');
+      XLSX.writeFile(wb, 'Fondaction_Snapshot_12mars2026.xlsx');
+    }
   </script>
 </body>
 </html>
