@@ -396,6 +396,15 @@
       </div>
     </div>
 
+    <!-- ─── ROW 3.5: Central Bank Rates ─────────────────────────────── -->
+    <div class="card">
+      <div class="section-title">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+        Taux directeurs — Banques centrales
+      </div>
+      <div id="central-bank-rates" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5"><!-- JS --></div>
+    </div>
+
     <!-- ─── ROW 4: Economic Calendar + Geopolitical ───────────────────── -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
@@ -702,6 +711,20 @@ function renderCalendar(events) {
   }).join('');
 }
 
+function renderCentralBanks(rates) {
+  const biasColor = { hawkish: '#ef4444', neutral: '#f59e0b', dovish: '#22c55e' };
+  const biasLabel = { hawkish: 'Restrictif', neutral: 'Neutre', dovish: 'Accommodant' };
+  document.getElementById('central-bank-rates').innerHTML = rates.map(r => `
+    <div class="rounded-lg p-3" style="background:#1F2937;border:1px solid #374151;">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="text-xl leading-none">${r.flag}</span>
+        <div><div class="text-xs font-bold text-slate-200 leading-tight">${r.bank}</div><div class="text-xs text-slate-500">${r.name}</div></div>
+      </div>
+      <div class="text-base font-black font-mono text-white">${r.rate} <span class="text-sm font-bold">${r.change}</span></div>
+      <div class="text-xs font-semibold mt-1" style="color:${biasColor[r.bias]}">${biasLabel[r.bias]}</div>
+      <div class="text-xs text-slate-600 mt-1 leading-tight">${r.next_meeting}</div>
+    </div>`).join('');
+}
 function renderGeopolitical(risks) {
   const levelMap = { high: 'geo-high', medium: 'geo-medium', low: 'geo-low' };
   const levelLabel = { high: 'ÉLEVÉ', medium: 'MOYEN', low: 'FAIBLE' };
@@ -982,6 +1005,7 @@ function renderAll(data, vixHistory) {
   renderSignals(data.risk.signals);
   renderHeatmap(data.assets);
   renderMarketTable(data.assets);
+  renderCentralBanks(data.central_bank_rates || []);
   renderCalendar(data.economic_calendar);
   renderGeopolitical(data.geopolitical_risks);
   renderNews(data.news);
