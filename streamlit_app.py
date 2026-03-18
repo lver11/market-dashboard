@@ -60,18 +60,52 @@ MARKET_ASSETS = [
 ]
 
 NEWS_FEEDS = [
+    # ── Agences internationales ──────────────────────────────────────────────
     ("Reuters Top",      "https://feeds.reuters.com/reuters/topNews"),
     ("Reuters Biz",      "https://feeds.reuters.com/reuters/businessNews"),
-    ("AP Top News",      "https://apnews.com/rss"),
+    ("AP Business",      "https://apnews.com/rss"),
+    # ── Médias financiers US ─────────────────────────────────────────────────
     ("CNBC Markets",     "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100003114"),
-    ("Bloomberg/GN",     "https://news.google.com/rss/search?q=bloomberg+finance+market&hl=en-US&gl=US&ceid=US:en"),
+    ("CNBC Economy",     "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=20910258"),
+    ("MarketWatch",      "https://feeds.marketwatch.com/marketwatch/topstories/"),
+    ("WSJ Markets",      "https://feeds.a.dj.com/rss/RSSMarketsMain.xml"),
+    ("Yahoo Finance",    "https://finance.yahoo.com/news/rssindex"),
+    ("Seeking Alpha",    "https://seekingalpha.com/market_currents.xml"),
+    ("Investopedia",     "https://www.investopedia.com/feedbuilder/feed/getfeed/?feedName=rss_headline"),
+    ("Barron's",         "https://www.barrons.com/xml/rss/3_7623.xml"),
+    # ── Via Google News (Bloomberg, FT, Economist sans paywall) ─────────────
+    ("Bloomberg/GN",     "https://news.google.com/rss/search?q=bloomberg+finance+markets&hl=en-US&gl=US&ceid=US:en"),
+    ("FT/GN",            "https://news.google.com/rss/search?q=financial+times+markets+economy&hl=en-US&gl=US&ceid=US:en"),
+    ("Economist/GN",     "https://news.google.com/rss/search?q=economist+finance+economy+rates&hl=en-US&gl=US&ceid=US:en"),
+    ("ZeroHedge/GN",     "https://news.google.com/rss/search?q=site:zerohedge.com&hl=en-US&gl=US&ceid=US:en"),
+    # ── Banques centrales & institutions ────────────────────────────────────
+    ("Fed Reserve",      "https://www.federalreserve.gov/feeds/press_all.xml"),
+    ("BIS/GN",           "https://news.google.com/rss/search?q=bis+bank+for+international+settlements+financial+stability&hl=en-US&gl=US&ceid=US:en"),
+    ("IMF Blog",         "https://www.imf.org/en/Blogs/rss"),
+    # ── Canada — English ────────────────────────────────────────────────────
+    ("Globe & Mail",     "https://www.theglobeandmail.com/investing/markets/rss/"),
+    ("Financial Post",   "https://financialpost.com/feed/"),
+    ("BNN Bloomberg",    "https://www.bnnbloomberg.ca/feed/"),
+    # ── Canada — Français ───────────────────────────────────────────────────
+    ("Radio-Canada Éco", "https://ici.radio-canada.ca/rss/4159"),
+    ("Les Affaires",     "https://www.lesaffaires.com/rss/nouvelles-economiques/"),
+    ("La Presse Aff.",   "https://www.lapresse.ca/affaires/rss"),
+    # ── Crypto ──────────────────────────────────────────────────────────────
+    ("CoinDesk",         "https://www.coindesk.com/arc/outboundfeeds/rss/"),
+    ("CoinTelegraph",    "https://cointelegraph.com/rss"),
+    # ── Reddit ──────────────────────────────────────────────────────────────
     ("r/investing",      "https://www.reddit.com/r/investing/.rss"),
+    ("r/stocks",         "https://www.reddit.com/r/stocks/.rss"),
     ("r/wallstreetbets", "https://www.reddit.com/r/wallstreetbets/.rss"),
     ("r/economics",      "https://www.reddit.com/r/economics/.rss"),
     ("r/geopolitics",    "https://www.reddit.com/r/geopolitics/.rss"),
+    ("r/CanadaFinance",  "https://www.reddit.com/r/PersonalFinanceCanada/.rss"),
 ]
 _REDDIT_UA = "Mozilla/5.0 (compatible; market-dashboard/1.0)"
-_FEEDS_WITH_UA = {"r/investing", "r/wallstreetbets", "r/economics", "r/geopolitics"}
+_FEEDS_WITH_UA = {
+    "r/investing", "r/stocks", "r/wallstreetbets",
+    "r/economics", "r/geopolitics", "r/CanadaFinance",
+}
 
 ECONOMIC_CALENDAR = [
     {"date": "2026-03-11", "event": "CPI YoY (Feb)",           "country": "US", "importance": "critical", "forecast": "2.4%",      "previous": "3.0%",        "actual": "2.4%"},
@@ -195,29 +229,84 @@ def _vix_history_cached():
 @st.cache_data(ttl=300, show_spinner=False)
 def _news_cached():
     all_items = []
+    seen_titles: set = set()
+
     for source, url in NEWS_FEEDS:
         try:
-            headers = {"User-Agent": _REDDIT_UA} if source in _FEEDS_WITH_UA else {}
+            headers = {"User-Agent": _REDDIT_UA} if source in _FEEDS_WITH_UA else {
+                "User-Agent": "Mozilla/5.0 (compatible; MarketDashboard/2.0; +https://fondaction.com)"
+            }
             feed = feedparser.parse(url, request_headers=headers)
-            for entry in feed.entries[:6]:
-                title   = getattr(entry, "title", "")
+            count = 0
+            for entry in feed.entries:
+                if count >= 4:
+                    break
+                title   = getattr(entry, "title", "").strip()
                 link    = getattr(entry, "link", "#")
                 summary = getattr(entry, "summary", getattr(entry, "description", ""))
-                tl = title.lower(); tags = []
-                if any(w in tl for w in ["war","conflict","attack","strike","military","nuclear",
-                                          "sanctions","nato","ukraine","russia","china","taiwan",
-                                          "iran","israel","hamas"]): tags.append("geopolitical")
-                if any(w in tl for w in ["inflation","rate","fed","ecb","boj","central bank",
-                                          "gdp","jobs","recession","cpi","ppi","fomc"]): tags.append("economic")
-                if any(w in tl for w in ["market","stock","equity","bond","gold","oil","crypto",
-                                          "bitcoin","rally","sell-off","crash"]): tags.append("market")
-                all_items.append({"title": title, "source": source, "url": link,
-                                   "published": getattr(entry, "published", ""),
-                                   "summary": (summary[:180] + "...") if len(summary) > 180 else summary,
-                                   "tags": tags})
+
+                # Deduplicate by normalized title
+                title_key = title.lower()[:80]
+                if not title or title_key in seen_titles:
+                    continue
+                seen_titles.add(title_key)
+
+                tl   = title.lower()
+                tags = []
+
+                # Geopolitical
+                if any(w in tl for w in [
+                    "war","conflict","attack","strike","military","nuclear",
+                    "sanctions","nato","ukraine","russia","china","taiwan",
+                    "iran","israel","hamas","missile","coup","troops",
+                ]):
+                    tags.append("geopolitical")
+
+                # Economic / macro
+                if any(w in tl for w in [
+                    "inflation","rate","fed","ecb","boj","bdc","bank of canada",
+                    "gdp","jobs","recession","cpi","ppi","fomc","monetary",
+                    "interest rate","taux","banque centrale","emploi","pib",
+                ]):
+                    tags.append("economic")
+
+                # Markets
+                if any(w in tl for w in [
+                    "market","stock","equity","bond","gold","oil","crypto",
+                    "bitcoin","rally","sell-off","crash","bourse","marché",
+                    "s&p","nasdaq","dow","tsx","vix","yield","spread",
+                ]):
+                    tags.append("market")
+
+                # Crypto
+                if any(w in tl for w in [
+                    "bitcoin","ethereum","crypto","blockchain","defi","nft",
+                    "binance","coinbase","stablecoin","altcoin","solana","btc","eth",
+                ]):
+                    tags.append("crypto")
+
+                # Canada
+                if any(w in tl for w in [
+                    "canada","canadian","bdc","boc","tsx","loonie","ontario",
+                    "québec","quebec","alberta","ottawa","trudeau","carney",
+                ]) or source in {"Globe & Mail","Financial Post","BNN Bloomberg",
+                                  "Radio-Canada Éco","Les Affaires","La Presse Aff.",
+                                  "r/CanadaFinance"}:
+                    tags.append("canada")
+
+                all_items.append({
+                    "title":     title,
+                    "source":    source,
+                    "url":       link,
+                    "published": getattr(entry, "published", ""),
+                    "summary":   (summary[:200] + "…") if len(summary) > 200 else summary,
+                    "tags":      tags,
+                })
+                count += 1
         except Exception as e:
             logger.warning(f"Feed {source}: {e}")
-    return all_items[:24]
+
+    return all_items[:60]
 
 
 # ── MISO: Technical helpers ──────────────────────────────────────────────────
