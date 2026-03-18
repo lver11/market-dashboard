@@ -220,6 +220,182 @@ def _news_cached():
     return all_items[:24]
 
 
+# ── MISO: Technical helpers ──────────────────────────────────────────────────
+
+def _calc_rsi(series, period: int = 9):
+    """Wilder-smoothed RSI(period). Returns last value or None."""
+    try:
+        delta = series.diff().dropna()
+        if len(delta) < period + 1:
+            return None
+        gain = delta.clip(lower=0).ewm(com=period - 1, min_periods=period).mean()
+        loss = (-delta.clip(upper=0)).ewm(com=period - 1, min_periods=period).mean()
+        rs   = gain / loss.replace(0, float("inf"))
+        rsi  = 100.0 - (100.0 / (1.0 + rs))
+        return round(float(rsi.iloc[-1]), 1)
+    except Exception:
+        return None
+
+
+def _calc_bb_pct_b(series, period: int = 20, k: float = 2.0):
+    """Bollinger %B = (price − lower) / (upper − lower). >1 = above upper band."""
+    try:
+        if len(series) < period:
+            return None
+        sma   = series.rolling(period).mean()
+        std   = series.rolling(period).std(ddof=0)
+        upper = float((sma + k * std).iloc[-1])
+        lower = float((sma - k * std).iloc[-1])
+        px    = float(series.iloc[-1])
+        if upper == lower:
+            return 0.5
+        return round((px - lower) / (upper - lower), 3)
+    except Exception:
+        return None
+
+
+def _calc_demark(closes):
+    """Simplified DeMark Sequential: count consecutive bars where Close < Close[-4] (buy)
+    or > Close[-4] (sell). Returns (setup_count, countdown_count, direction)."""
+    try:
+        arr = closes.values
+        n   = len(arr)
+        if n < 5:
+            return 0, 0, "neutral"
+        is_buy  = arr[-1] < arr[-5]
+        is_sell = arr[-1] > arr[-5]
+        count = 0
+        if is_buy:
+            for i in range(n - 1, max(n - 10, 3), -1):
+                if arr[i] < arr[i - 4]:
+                    count += 1
+                else:
+                    break
+            return min(count, 9), 0, "buy"
+        elif is_sell:
+            for i in range(n - 1, max(n - 10, 3), -1):
+                if arr[i] > arr[i - 4]:
+                    count += 1
+                else:
+                    break
+            return min(count, 9), 0, "sell"
+        return 0, 0, "neutral"
+    except Exception:
+        return 0, 0, "neutral"
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def fetch_miso() -> dict:
+    """Market Immune System Oscillator — 5 composantes, score 100 = plus survendu."""
+    import math
+    _empty: dict = {
+        "composite": None, "status": "N/A", "color": "#64748b",
+        "signal": "Données insuffisantes", "emoji": "⚪", "components": [],
+    }
+    try:
+        spx   = yf.Ticker("^GSPC").history(period="3mo")["Close"].dropna()
+        vix   = yf.Ticker("^VIX").history(period="3mo")["Close"].dropna()
+        nyad  = yf.Ticker("^NYAD").history(period="3mo")["Close"].dropna()
+        vix3m = yf.Ticker("^VIX3M").history(period="3mo")["Close"].dropna()
+        if len(vix3m) < 2:
+            vix3m = yf.Ticker("^VXMT").history(period="3mo")["Close"].dropna()
+    except Exception:
+        return _empty
+
+    components: list = []
+
+    # 1. NYSE Breadth RSI(9) — score = 100 − RSI (oversold breadth → high score)
+    if len(nyad) >= 10:
+        br_rsi = _calc_rsi(nyad, 9)
+        if br_rsi is not None:
+            components.append({
+                "name": "NYSE Breadth RSI(9)", "weight": 20,
+                "raw_label": f"RSI = {br_rsi}",
+                "score": round(100 - br_rsi, 1),
+                "desc": "Survendu (bas RSI) → score élevé",
+            })
+
+    # 2. VIX Bollinger %B — score = clamp(%B × 100, 0, 100)
+    if len(vix) >= 21:
+        bb = _calc_bb_pct_b(vix)
+        if bb is not None:
+            components.append({
+                "name": "VIX Bollinger %B", "weight": 25,
+                "raw_label": f"%B = {bb:.2f}",
+                "score": round(min(100.0, max(0.0, bb * 100)), 1),
+                "desc": "VIX > bande sup. → panique extrême",
+            })
+
+    # 3. SPX RSI(9) — score = 100 − RSI
+    if len(spx) >= 10:
+        spx_rsi = _calc_rsi(spx, 9)
+        if spx_rsi is not None:
+            components.append({
+                "name": "SPX RSI(9)", "weight": 25,
+                "raw_label": f"RSI = {spx_rsi}",
+                "score": round(100 - spx_rsi, 1),
+                "desc": "SPX survendu → rebond potentiel",
+            })
+
+    # 4. VIX Term Structure — VIX / VIX3M via sigmoid (50 at ratio=1, ~98.5 at ratio=1.93)
+    if len(vix) >= 2 and len(vix3m) >= 2:
+        vix_last = float(vix.iloc[-1])
+        v3m_last = float(vix3m.iloc[-1])
+        if v3m_last > 0:
+            ratio = round(vix_last / v3m_last, 3)
+            sc_ts = round(100.0 / (1.0 + math.exp(-4.5 * (ratio - 1.0))), 1)
+            components.append({
+                "name": "VIX Term Structure", "weight": 20,
+                "raw_label": f"VIX/VIX3M = {ratio:.2f}",
+                "score": sc_ts,
+                "desc": "Backwardation (VIX > VIX3M) → panique",
+            })
+
+    # 5. DeMark Sequential — buy setup progress toward 9/9
+    if len(spx) >= 13:
+        setup, countdown, direction = _calc_demark(spx)
+        if direction == "buy":
+            sc_dm = round(min(100.0, (setup / 9) * 45 + (countdown / 13) * 55), 1)
+        elif direction == "sell":
+            sc_dm = round(max(0.0, 50 - (setup / 9) * 50), 1)
+        else:
+            sc_dm = 50.0
+        dir_lbl = "▼ Achat" if direction == "buy" else "▲ Vente" if direction == "sell" else "→ Neutre"
+        components.append({
+            "name": "DeMark Sequential", "weight": 10,
+            "raw_label": f"Setup: {setup}/9 · CD: {countdown}/13 ({dir_lbl})",
+            "score": sc_dm,
+            "desc": "Setup achat complet → zone retournement",
+        })
+
+    if not components:
+        return _empty
+
+    total_w   = sum(c["weight"] for c in components)
+    composite = round(sum(c["score"] * c["weight"] for c in components) / total_w, 1)
+
+    if composite >= 75:
+        status, color, emoji = "APPROACHING OVERSOLD", "#ef4444", "🔴"
+        signal = "Stress extrême — conditions de retournement haussier potentiel"
+    elif composite >= 55:
+        status, color, emoji = "ELEVATED STRESS", "#f59e0b", "🟡"
+        signal = "Stress élevé — surveiller les signaux de retournement"
+    elif composite >= 40:
+        status, color, emoji = "NEUTRAL", "#94a3b8", "⚪"
+        signal = "Conditions équilibrées — pas de signal directionnel fort"
+    elif composite >= 25:
+        status, color, emoji = "MILD OVERBOUGHT", "#3b82f6", "🔵"
+        signal = "Marché solide — légère surchauffe potentielle"
+    else:
+        status, color, emoji = "OVERBOUGHT", "#22c55e", "🟢"
+        signal = "Complacence extrême — surveiller signal retournement baissier"
+
+    return {
+        "composite": composite, "status": status, "color": color,
+        "signal": signal, "emoji": emoji, "components": components,
+    }
+
+
 def _risk_score(market_data):
     signals = []; ws = 0.0; tw = 0.0
 
@@ -339,6 +515,7 @@ tab1, tab2 = st.tabs(["📊 Market Turbulence Dashboard", "🏦 Fondaction Snaps
 with tab1:
     data = _full_data()
     vix  = _vix_history_cached()
+    miso = fetch_miso()
     html = (TEMPLATE_DIR / "index.html").read_text(encoding="utf-8")
     inject = (
         f'<script>'
@@ -348,6 +525,75 @@ with tab1:
     )
     html = html.replace("</head>", inject + "</head>")
     components.html(html, height=950, scrolling=True)
+
+    # ── MISO — Market Immune System Oscillator ───────────────────────────────
+    st.markdown(
+        '<div style="font-size:0.7rem;font-weight:700;color:#94a3b8;'
+        'text-transform:uppercase;letter-spacing:.1em;margin:8px 0 6px;">'
+        '🧬 Market Immune System Oscillator (MISO) — Indicateur de survendu composite'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+
+    _MISO_RGB = {
+        "#ef4444": "239,68,68", "#f59e0b": "245,158,11", "#94a3b8": "148,163,184",
+        "#3b82f6": "59,130,246", "#22c55e": "34,197,94",
+    }
+
+    if miso.get("composite") is not None:
+        mc  = miso["composite"]
+        clr = miso["color"]
+        rgb = _MISO_RGB.get(clr, "148,163,184")
+
+        st.markdown(
+            f'<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:0.8rem">'
+            f'<span style="font-size:2.1rem;font-weight:900;color:{clr};font-family:monospace;line-height:1">'
+            f'{mc:.1f}<span style="font-size:0.85rem;color:#64748b;font-weight:400"> / 100</span></span>'
+            f'<span style="background:rgba({rgb},0.12);border:1px solid rgba({rgb},0.35);color:{clr};'
+            f'font-size:0.72rem;font-weight:800;padding:4px 13px;border-radius:20px;'
+            f'letter-spacing:0.1em;white-space:nowrap">{miso["emoji"]} {miso["status"]}</span>'
+            f'<span style="font-size:0.73rem;color:#94a3b8;font-style:italic">{miso["signal"]}</span>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+
+        n_comp    = len(miso["components"])
+        miso_cols = st.columns(n_comp) if n_comp else []
+        for col, comp in zip(miso_cols, miso["components"]):
+            sc      = comp["score"]
+            bar_clr = "#ef4444" if sc >= 70 else "#f59e0b" if sc >= 45 else "#22c55e"
+            with col:
+                st.markdown(
+                    f'<div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:0.65rem 0.75rem;">'
+                    f'<div style="font-size:0.67rem;font-weight:700;color:#e2e8f0;margin-bottom:5px;line-height:1.2">'
+                    f'{comp["name"]}</div>'
+                    f'<div style="display:flex;justify-content:space-between;align-items:baseline;">'
+                    f'<span style="font-size:1.3rem;font-weight:900;color:{bar_clr};font-family:monospace">{sc:.1f}</span>'
+                    f'<span style="font-size:0.62rem;color:#475569">/100</span></div>'
+                    f'<div style="height:5px;background:#334155;border-radius:3px;margin:5px 0 5px;">'
+                    f'<div style="height:5px;width:{min(sc,100):.0f}%;background:{bar_clr};'
+                    f'border-radius:3px;"></div></div>'
+                    f'<div style="font-size:0.63rem;color:#94a3b8;font-family:monospace;'
+                    f'white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{comp["raw_label"]}</div>'
+                    f'<div style="font-size:0.59rem;color:#475569;margin-top:2px;line-height:1.3">{comp["desc"]}</div>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+
+        st.markdown(
+            '<p style="font-size:0.62rem;color:#475569;margin-top:6px">'
+            '📊 Score 0–100 · '
+            '<span style="color:#ef4444;font-weight:700">100 = plus survendu</span> '
+            '(pression max + potentiel de rebond) · '
+            '<span style="color:#22c55e;font-weight:700">0 = plus suracheté</span> '
+            '(complacence max) · '
+            'Pondération : VIX %B 25% · SPX RSI 25% · Breadth RSI 20% · Term Structure 20% · DeMark 10% · '
+            'Sources : ^GSPC · ^VIX · ^NYAD · ^VIX3M'
+            '</p>',
+            unsafe_allow_html=True,
+        )
+    else:
+        st.caption("⚠️ MISO — données insuffisantes (^NYAD ou ^VIX3M non disponibles)")
 
 with tab2:
     # ── Excel upload ────────────────────────────────────────────────────────
