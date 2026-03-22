@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Oil & LNG Ecosystem Dashboard</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            surface: '#0f172a',
+            card: '#1e293b',
+            border: '#334155',
+          },
+          fontFamily: { mono: ['JetBrains Mono', 'Fira Code', 'monospace'] },
+        }
+      }
+    }
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+
+    /* ── Cards ── */
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 1.25rem; }
+    .card-sm { padding: 0.875rem; }
+    .section-title {
+      font-size: 0.65rem; font-weight: 600; letter-spacing: 0.12em;
+      text-transform: uppercase; color: #64748b; margin-bottom: 0.75rem;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+
+    /* ── Energy status colors ── */
+    .bullish   { color: #22c55e; }
+    .bearish   { color: #ef4444; }
+    .neutral-c { color: #f59e0b; }
+    .bullish-bg { background: rgba(34,197,94,0.12); border-color: rgba(34,197,94,0.3); }
+    .bearish-bg { background: rgba(239,68,68,0.12);  border-color: rgba(239,68,68,0.3); }
+    .neutral-bg { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.3); }
+
+    /* ── Gauge ── */
+    .gauge-container { position: relative; width: 100%; max-width: 240px; margin: 0 auto; }
+    .gauge-label { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); text-align: center; }
+
+    /* ── Heatmap tiles ── */
+    .heatmap-tile {
+      border-radius: 8px; padding: 0.5rem 0.625rem;
+      font-size: 0.7rem; text-align: center; cursor: default;
+      border: 1px solid transparent; min-width: 80px;
+      transition: transform 0.1s;
+    }
+    .heatmap-tile:hover { transform: scale(1.04); z-index: 2; }
+
+    /* ── Ticker tape ── */
+    .ticker-scroll { overflow: hidden; background: #0c1220; border-bottom: 1px solid #1e2d45; height: 32px; display: flex; align-items: center; white-space: nowrap; }
+    .ticker-inner { display: inline-block; animation: ticker 60s linear infinite; }
+    .ticker-inner:hover { animation-play-state: paused; }
+    @keyframes ticker { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
+
+    /* ── Live dot ── */
+    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; animation: pulse-dot 2s infinite; display: inline-block; }
+    @keyframes pulse-dot { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(1.4); } }
+
+    /* ── Risk level pills ── */
+    .level-high   { background: rgba(239,68,68,0.15);  color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+    .level-medium { background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+    .level-low    { background: rgba(34,197,94,0.15);  color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+
+    /* ── Progress bar ── */
+    .progress-bar { height: 6px; border-radius: 3px; background: #1e293b; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+
+    /* ── News tags ── */
+    .tag { padding: 1px 6px; border-radius: 4px; font-size: 0.6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .tag-opec     { background: rgba(251,146,60,0.2); color: #fb923c; }
+    .tag-lng      { background: rgba(99,102,241,0.2); color: #a5b4fc; }
+    .tag-supply   { background: rgba(34,197,94,0.2);  color: #4ade80; }
+    .tag-refining { background: rgba(168,85,247,0.2); color: #c084fc; }
+    .tag-crude    { background: rgba(245,158,11,0.2); color: #fbbf24; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- ═══ TICKER TAPE ═══════════════════════════════════════════════════════════ -->
+<div class="ticker-scroll text-xs font-mono" id="ticker-tape">
+  <span class="ticker-inner" id="ticker-inner">
+    <span class="text-slate-500 px-4">Loading commodity data...</span>
+  </span>
+</div>
+
+<!-- ═══ HEADER ════════════════════════════════════════════════════════════════ -->
+<header class="border-b border-slate-800 bg-slate-900/60 backdrop-blur sticky top-0 z-50">
+  <div class="max-w-screen-2xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:linear-gradient(135deg,#ea580c,#f59e0b)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+          <path d="M12 2c0 0-6 6-6 10a6 6 0 0012 0c0-4-6-10-6-10z"/>
+          <path d="M12 12v4"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-sm font-bold text-white leading-tight">Oil &amp; LNG Ecosystem Dashboard</h1>
+        <p class="text-xs text-slate-500">Real-Time Energy Markets · Crude · Natural Gas · LNG · OPEC</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="hidden md:flex items-center gap-1.5 text-xs text-slate-400">
+        <span class="live-dot"></span><span>Live</span>
+      </div>
+      <div class="text-xs font-mono text-slate-400" id="clock">--:--:--</div>
+      <div class="text-xs text-slate-500 hidden sm:block" id="last-updated-header">—</div>
+      <a href="/" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border" style="background:rgba(59,130,246,0.15);color:#93c5fd;border-color:rgba(59,130,246,0.35);">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+        Market Dashboard
+      </a>
+      <a href="/snapshot" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border" style="background:rgba(99,102,241,0.15);color:#a5b4fc;border-color:rgba(99,102,241,0.35);">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        Snapshot
+      </a>
+      <button onclick="forceRefresh()" class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs text-slate-300 transition-colors border border-slate-700">
+        <svg id="refresh-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ═══ HERO COMMODITY STRIP ══════════════════════════════════════════════════ -->
+<div class="border-b border-slate-800" style="background:#0c1520">
+  <div class="max-w-screen-2xl mx-auto px-4 py-3">
+    <div class="flex flex-wrap gap-3 items-center" id="hero-strip">
+      <!-- Populated by JS -->
+      <div class="text-xs text-slate-500 animate-pulse">Loading commodity prices...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MAIN CONTENT ══════════════════════════════════════════════════════════ -->
+<main class="max-w-screen-2xl mx-auto px-4 py-5 space-y-5">
+
+  <!-- Row 1: Energy Score + Price Chart -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+    <!-- Energy Sentiment Score -->
+    <div class="card">
+      <div class="section-title">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M12 2c0 0-6 6-6 10a6 6 0 0012 0c0-4-6-10-6-10z"/></svg>
+        Energy Market Sentiment
+      </div>
+
+      <div class="gauge-container" style="height:140px">
+        <svg viewBox="0 0 200 110" width="100%" height="140">
+          <defs>
+            <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%"   stop-color="#ef4444"/>
+              <stop offset="35%"  stop-color="#f97316"/>
+              <stop offset="50%"  stop-color="#f59e0b"/>
+              <stop offset="65%"  stop-color="#84cc16"/>
+              <stop offset="100%" stop-color="#22c55e"/>
+            </linearGradient>
+          </defs>
+          <!-- Background arc -->
+          <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#1e3a2f" stroke-width="16" stroke-linecap="round"/>
+          <!-- Colored arc -->
+          <path id="gauge-arc" d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="url(#gaugeGrad)" stroke-width="16" stroke-linecap="round"
+                stroke-dasharray="0 251.2" style="transition:stroke-dasharray 1s ease"/>
+          <!-- Needle -->
+          <line id="gauge-needle" x1="100" y1="100" x2="100" y2="28" stroke="#f8fafc" stroke-width="2.5" stroke-linecap="round"
+                style="transform-origin:100px 100px; transform:rotate(0deg); transition:transform 1s ease"/>
+          <circle cx="100" cy="100" r="5" fill="#f8fafc"/>
+          <!-- Labels -->
+          <text x="14"  y="116" fill="#ef4444" font-size="8" font-family="Inter">BEAR</text>
+          <text x="163" y="116" fill="#22c55e" font-size="8" font-family="Inter">BULL</text>
+        </svg>
+        <div class="gauge-label" style="bottom:-4px">
+          <div class="text-2xl font-bold text-white font-mono" id="energy-score-num">--</div>
+          <div class="text-xs font-semibold mt-0.5" id="energy-score-label">Loading...</div>
+        </div>
+      </div>
+
+      <p class="text-xs text-slate-400 mt-3 leading-relaxed" id="energy-score-desc">—</p>
+
+      <!-- Signals -->
+      <div class="mt-4 space-y-2" id="energy-signals"></div>
+    </div>
+
+    <!-- Price Chart (WTI / Brent / Henry Hub) -->
+    <div class="card lg:col-span-2">
+      <div class="flex items-center justify-between mb-3">
+        <div class="section-title mb-0">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          90-Day Price History
+        </div>
+        <div class="flex gap-2 text-xs">
+          <span class="flex items-center gap-1"><span style="width:20px;height:2px;background:#fb923c;display:inline-block;border-radius:1px"></span>WTI</span>
+          <span class="flex items-center gap-1"><span style="width:20px;height:2px;background:#60a5fa;display:inline-block;border-radius:1px"></span>Brent</span>
+          <span class="flex items-center gap-1 text-slate-500">
+            <span style="width:20px;height:2px;background:#a78bfa;display:inline-block;border-radius:1px"></span>
+            <span>Henry Hub (×5)</span>
+          </span>
+        </div>
+      </div>
+      <div style="height:240px; position:relative">
+        <canvas id="priceChart"></canvas>
+        <div id="chart-loading" class="absolute inset-0 flex items-center justify-center text-slate-500 text-sm">
+          Loading price history...
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 2: Stock Heatmap -->
+  <div class="card">
+    <div class="section-title">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Energy Equity Heatmap — Daily % Change
+    </div>
+    <div id="heatmap-container" class="space-y-3">
+      <div class="text-xs text-slate-500 animate-pulse">Loading equity data...</div>
+    </div>
+  </div>
+
+  <!-- Row 3: EIA + OPEC + Geo Risks -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+    <!-- EIA Weekly Inventory -->
+    <div class="card">
+      <div class="section-title">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+        EIA Weekly Inventory
+      </div>
+      <div class="text-xs text-slate-500 mb-3" id="eia-date">Report date: —</div>
+      <div class="space-y-2.5" id="eia-items"></div>
+      <div class="mt-3 text-xs text-slate-600 italic">Source: EIA Weekly Petroleum Status Report</div>
+    </div>
+
+    <!-- OPEC Dashboard -->
+    <div class="card">
+      <div class="section-title">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        OPEC+ Dashboard
+      </div>
+      <div id="opec-content">
+        <div class="text-xs text-slate-500 animate-pulse">Loading...</div>
+      </div>
+    </div>
+
+    <!-- Geopolitical Risks -->
+    <div class="card">
+      <div class="section-title">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Energy Geopolitical Risks
+      </div>
+      <div class="space-y-2.5" id="geo-risks"></div>
+    </div>
+  </div>
+
+  <!-- Row 4: Spreads Analysis -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="spreads-row">
+    <!-- Populated by JS -->
+  </div>
+
+  <!-- Row 5: News -->
+  <div class="card">
+    <div class="section-title">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v2"/><path d="M2 7h4v11H2z"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="13" y2="15"/></svg>
+      Energy & LNG News Feed
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="news-grid">
+      <div class="text-xs text-slate-500 animate-pulse">Loading news...</div>
+    </div>
+  </div>
+
+</main>
+
+<!-- Footer -->
+<footer class="border-t border-slate-800 mt-6 py-4 text-center text-xs text-slate-600">
+  Oil &amp; LNG Ecosystem Dashboard · Data: Yahoo Finance, EIA, Reuters, Google News · Refreshes every 60s
+</footer>
+
+<script>
+// ─── Utilities ────────────────────────────────────────────────────────────────
+const fmt = (v, d=2) => v == null ? '—' : Number(v).toFixed(d);
+const fmtPct = (v) => v == null ? '—' : (v > 0 ? '+' : '') + Number(v).toFixed(2) + '%';
+const fmtPrice = (p, ticker) => {
+  if (p == null) return '—';
+  // Gasoline & Heating Oil are in $/gallon — multiply by 42 to show $/bbl
+  if (ticker === 'RB=F' || ticker === 'HO=F') return '$' + (p * 42).toFixed(2) + '/bbl';
+  if (ticker === 'NG=F') return '$' + Number(p).toFixed(3) + '/MMBtu';
+  return '$' + Number(p).toFixed(2);
+};
+
+// Heatmap color based on % change
+function heatColor(pct) {
+  if (pct == null) return { bg: '#1e293b', text: '#64748b', border: '#334155' };
+  if (pct >= 3)    return { bg: 'rgba(21,128,61,0.45)',   text: '#4ade80', border: 'rgba(34,197,94,0.4)' };
+  if (pct >= 1.5)  return { bg: 'rgba(21,128,61,0.25)',   text: '#86efac', border: 'rgba(34,197,94,0.25)' };
+  if (pct >= 0.4)  return { bg: 'rgba(21,128,61,0.12)',   text: '#a7f3d0', border: 'rgba(34,197,94,0.15)' };
+  if (pct >= -0.4) return { bg: '#1e293b',                text: '#94a3b8', border: '#334155' };
+  if (pct >= -1.5) return { bg: 'rgba(127,29,29,0.12)',   text: '#fca5a5', border: 'rgba(239,68,68,0.15)' };
+  if (pct >= -3)   return { bg: 'rgba(127,29,29,0.25)',   text: '#f87171', border: 'rgba(239,68,68,0.3)' };
+  return             { bg: 'rgba(127,29,29,0.45)',         text: '#ef4444', border: 'rgba(239,68,68,0.5)' };
+}
+
+// Clock
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('en-US', { hour12: false });
+}
+setInterval(updateClock, 1000); updateClock();
+
+// ─── Gauge ────────────────────────────────────────────────────────────────────
+function updateGauge(score) {
+  const pct = score / 100;
+  const totalLen = 251.2;
+  const filled = pct * totalLen;
+  document.getElementById('gauge-arc').setAttribute('stroke-dasharray', `${filled} ${totalLen - filled}`);
+  // Needle: -90deg (left=0) to +90deg (right=100)
+  const deg = -90 + pct * 180;
+  document.getElementById('gauge-needle').style.transform = `rotate(${deg}deg)`;
+}
+
+// ─── Ticker Tape ──────────────────────────────────────────────────────────────
+function buildTicker(assets) {
+  const futures = assets.filter(a => a.group === 'Futures');
+  const etfs    = assets.filter(a => a.group === 'ETFs');
+  const pieces  = [...futures, ...etfs].map(a => {
+    const col = a.change_pct == null ? '#64748b' : a.change_pct >= 0 ? '#22c55e' : '#ef4444';
+    const arrow = a.change_pct == null ? '' : a.change_pct >= 0 ? '▲' : '▼';
+    const price = fmtPrice(a.price, a.ticker);
+    return `<span class="px-3" style="color:${col}">${a.name} <strong>${price}</strong> ${arrow}${fmtPct(a.change_pct)}</span>`;
+  });
+  const inner = document.getElementById('ticker-inner');
+  inner.innerHTML = pieces.join('<span class="text-slate-700 px-2">|</span>');
+}
+
+// ─── Hero Strip ───────────────────────────────────────────────────────────────
+function buildHeroStrip(assets) {
+  const futures = assets.filter(a => a.group === 'Futures');
+  const strip = document.getElementById('hero-strip');
+  strip.innerHTML = futures.map(a => {
+    const c = a.change_pct >= 0 ? '#22c55e' : '#ef4444';
+    const bg = a.change_pct >= 0 ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)';
+    const arrow = a.change_pct >= 0 ? '▲' : '▼';
+    const price = fmtPrice(a.price, a.ticker);
+    return `
+      <div class="flex flex-col px-4 py-2 rounded-lg border border-slate-700/50" style="background:${bg}; min-width:120px">
+        <span class="text-xs text-slate-400 font-medium">${a.name}</span>
+        <span class="text-base font-bold font-mono text-white">${price}</span>
+        <span class="text-xs font-semibold" style="color:${c}">${arrow} ${fmtPct(a.change_pct)}</span>
+      </div>`;
+  }).join('');
+}
+
+// ─── Heatmap ──────────────────────────────────────────────────────────────────
+const GROUP_ORDER = ['Integrated Majors','E&P','Canadian Energy','LNG Players','Services','Refiners','ETFs'];
+const GROUP_ICONS = {
+  'Integrated Majors': '🏭', 'E&P': '⛏️', 'Canadian Energy': '🍁',
+  'LNG Players': '🧊', 'Services': '🔧', 'Refiners': '🏗️', 'ETFs': '📊',
+};
+
+function buildHeatmap(assets) {
+  const byGroup = {};
+  assets.filter(a => a.group !== 'Futures').forEach(a => {
+    if (!byGroup[a.group]) byGroup[a.group] = [];
+    byGroup[a.group].push(a);
+  });
+
+  const container = document.getElementById('heatmap-container');
+  container.innerHTML = GROUP_ORDER.filter(g => byGroup[g]).map(group => {
+    const tiles = byGroup[group].map(a => {
+      const col = heatColor(a.change_pct);
+      return `
+        <div class="heatmap-tile" style="background:${col.bg};border-color:${col.border};color:${col.text}"
+             title="${a.name} (${a.ticker}): ${fmtPrice(a.price, a.ticker)} ${fmtPct(a.change_pct)}">
+          <div class="font-semibold text-xs leading-tight">${a.ticker}</div>
+          <div class="font-bold text-sm leading-tight">${fmtPct(a.change_pct)}</div>
+          <div class="text-slate-400 text-xs leading-tight" style="font-size:0.6rem">${fmtPrice(a.price, a.ticker)}</div>
+        </div>`;
+    }).join('');
+    return `
+      <div>
+        <div class="text-xs text-slate-500 mb-1.5 font-semibold">${GROUP_ICONS[group] || ''} ${group}</div>
+        <div class="flex flex-wrap gap-2">${tiles}</div>
+      </div>`;
+  }).join('');
+}
+
+// ─── Energy Score Signals ─────────────────────────────────────────────────────
+function buildSignals(signals) {
+  const el = document.getElementById('energy-signals');
+  el.innerHTML = signals.map(s => {
+    const col  = s.status === 'bullish' ? '#22c55e' : s.status === 'bearish' ? '#ef4444' : '#f59e0b';
+    const bg   = s.status === 'bullish' ? 'rgba(34,197,94,0.08)' : s.status === 'bearish' ? 'rgba(239,68,68,0.08)' : 'rgba(245,158,11,0.08)';
+    const pct  = (s.score / 100) * 100;
+    return `
+      <div class="rounded-lg p-2 border" style="background:${bg};border-color:${col}30">
+        <div class="flex justify-between items-center mb-1">
+          <span class="text-xs font-medium text-slate-300">${s.name}</span>
+          <span class="text-xs font-bold font-mono" style="color:${col}">${s.value != null ? (s.value > 0 ? '+' : '') + Number(s.value).toFixed(2) + s.unit : '—'}</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:${pct}%;background:${col}"></div>
+        </div>
+        <div class="flex justify-between mt-1">
+          <span class="text-xs" style="color:${col};font-size:0.6rem">${s.label}</span>
+          <span class="text-xs text-slate-600" style="font-size:0.6rem">${s.weight}%</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ─── EIA Inventory ────────────────────────────────────────────────────────────
+function buildEIA(eia) {
+  document.getElementById('eia-date').textContent = 'Week ending: ' + (eia.report_date || '—');
+  const keys = ['crude_oil','gasoline','distillates','cushing','spr','refinery_util'];
+  const el = document.getElementById('eia-items');
+  el.innerHTML = keys.map(k => {
+    const item = eia[k];
+    if (!item) return '';
+    const chg = item.change;
+    const col = chg > 0 ? '#f87171' : chg < 0 ? '#4ade80' : '#94a3b8';  // draw-down = green for crude
+    const arrow = chg > 0 ? '▲' : chg < 0 ? '▼' : '=';
+    const chgStr = chg !== 0 ? `${arrow} ${chg > 0 ? '+' : ''}${Number(chg).toFixed(1)} ${item.unit}` : '= unchanged';
+    return `
+      <div class="flex justify-between items-center py-1.5 border-b border-slate-800">
+        <span class="text-xs text-slate-300">${item.label}</span>
+        <div class="text-right">
+          <div class="text-xs font-bold font-mono text-white">${Number(item.value).toFixed(1)} ${item.unit}</div>
+          <div class="text-xs font-semibold" style="color:${col};font-size:0.6rem">${chgStr}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ─── OPEC Dashboard ───────────────────────────────────────────────────────────
+function buildOPEC(opec) {
+  const el = document.getElementById('opec-content');
+  const comp = opec.compliance_pct;
+  const compCol = comp >= 90 ? '#22c55e' : comp >= 70 ? '#f59e0b' : '#ef4444';
+  const surplus = opec.surplus_mmbpd;
+  const surpCol = surplus <= 0.2 ? '#4ade80' : surplus <= 0.5 ? '#fbbf24' : '#f87171';
+
+  const producers = (opec.key_producers || []).map(p => {
+    const diff = p.production - p.quota;
+    const col = diff <= 0.05 ? '#4ade80' : diff <= 0.15 ? '#fbbf24' : '#f87171';
+    return `
+      <div class="flex justify-between items-center py-1 border-b border-slate-800 text-xs">
+        <span class="text-slate-300">${p.country}</span>
+        <div class="text-right">
+          <span class="font-mono font-bold text-white">${p.production.toFixed(1)}</span>
+          <span class="text-slate-600"> / ${p.quota.toFixed(1)} mb/d</span>
+          <span class="ml-1 font-semibold" style="color:${col};font-size:0.6rem">${diff > 0 ? '+' : ''}${diff.toFixed(1)}</span>
+        </div>
+      </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="space-y-3">
+      <div class="grid grid-cols-2 gap-2">
+        <div class="rounded-lg p-2 text-center border border-slate-700" style="background:#162032">
+          <div class="text-xs text-slate-500">Production</div>
+          <div class="text-lg font-bold font-mono text-white">${opec.total_production_mmbpd}</div>
+          <div class="text-xs text-slate-400">mb/d total</div>
+        </div>
+        <div class="rounded-lg p-2 text-center border border-slate-700" style="background:#162032">
+          <div class="text-xs text-slate-500">Compliance</div>
+          <div class="text-lg font-bold font-mono" style="color:${compCol}">${comp}%</div>
+          <div class="text-xs text-slate-400">quota adherence</div>
+        </div>
+      </div>
+      <div class="flex justify-between text-xs py-1.5 border-b border-slate-800">
+        <span class="text-slate-400">Surplus vs target</span>
+        <span class="font-bold font-mono" style="color:${surpCol}">+${surplus.toFixed(1)} mb/d</span>
+      </div>
+      <div class="flex justify-between text-xs py-1.5 border-b border-slate-800">
+        <span class="text-slate-400">Report month</span>
+        <span class="text-slate-300 font-medium">${opec.report_month}</span>
+      </div>
+      <div class="flex justify-between text-xs py-1.5 border-b border-slate-800">
+        <span class="text-slate-400">Next meeting</span>
+        <span class="text-amber-400 font-medium">${opec.next_meeting}</span>
+      </div>
+      <div>
+        <div class="text-xs text-slate-600 mb-1.5 uppercase tracking-wider font-semibold" style="font-size:0.6rem">Key Producers (mb/d)</div>
+        ${producers}
+      </div>
+    </div>`;
+}
+
+// ─── Geopolitical Risks ───────────────────────────────────────────────────────
+function buildGeoRisks(risks) {
+  const el = document.getElementById('geo-risks');
+  el.innerHTML = risks.map(r => {
+    const lvlClass = `level-${r.level}`;
+    return `
+      <div class="rounded-lg p-2.5 border border-slate-700" style="background:#0f1a2a">
+        <div class="flex items-start justify-between gap-2 mb-1">
+          <div>
+            <span class="text-xs font-semibold text-white">${r.title}</span>
+            <span class="text-xs text-slate-500 ml-1.5">${r.region}</span>
+          </div>
+          <span class="text-xs px-1.5 py-0.5 rounded font-semibold ${lvlClass}" style="white-space:nowrap;font-size:0.6rem">${r.level.toUpperCase()}</span>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed mb-1">${r.description}</p>
+        <div class="text-xs font-semibold text-amber-500" style="font-size:0.65rem">&#x25B8; ${r.market_impact}</div>
+      </div>`;
+  }).join('');
+}
+
+// ─── Spreads Analysis ─────────────────────────────────────────────────────────
+function buildSpreads(assets) {
+  const byTicker = {};
+  assets.forEach(a => { byTicker[a.ticker] = a; });
+
+  const wti   = byTicker['CL=F'];
+  const brent = byTicker['BZ=F'];
+  const ng    = byTicker['NG=F'];
+  const rbob  = byTicker['RB=F'];
+  const ho    = byTicker['HO=F'];
+  const xle   = byTicker['XLE'];
+  const xop   = byTicker['XOP'];
+
+  const spreads = [];
+
+  // WTI-Brent spread
+  if (wti?.price && brent?.price) {
+    const spread = brent.price - wti.price;
+    spreads.push({
+      label: 'WTI–Brent Spread',
+      value: `$${spread >= 0 ? '+' : ''}${spread.toFixed(2)}/bbl`,
+      sub: spread > 0 ? 'Brent premium (normal)' : 'WTI premium (unusual)',
+      col: spread > 0 ? '#4ade80' : '#f87171',
+    });
+  }
+
+  // Crack spread approx (RBOB*42 - WTI)
+  if (rbob?.price && wti?.price) {
+    const crack = (rbob.price * 42) - wti.price;
+    spreads.push({
+      label: '3-2-1 Crack Spread',
+      value: `$${crack.toFixed(2)}/bbl`,
+      sub: crack > 20 ? 'Wide — refinery margin bullish' : crack > 10 ? 'Normal margin' : 'Tight margin',
+      col: crack > 20 ? '#4ade80' : crack > 10 ? '#fbbf24' : '#f87171',
+    });
+  }
+
+  // Heating Oil spread vs WTI
+  if (ho?.price && wti?.price) {
+    const hoSpread = (ho.price * 42) - wti.price;
+    spreads.push({
+      label: 'Heat Oil vs WTI',
+      value: `$${hoSpread.toFixed(2)}/bbl`,
+      sub: hoSpread > 25 ? 'Strong distillate demand' : 'Moderate distillate demand',
+      col: hoSpread > 25 ? '#4ade80' : '#fbbf24',
+    });
+  }
+
+  // XLE vs XOP relative
+  if (xle?.change_pct != null && xop?.change_pct != null) {
+    const rel = xop.change_pct - xle.change_pct;
+    spreads.push({
+      label: 'XOP vs XLE Relative',
+      value: `${rel >= 0 ? '+' : ''}${rel.toFixed(2)}%`,
+      sub: rel > 0 ? 'E&P outperforming broad energy' : 'Integrated majors leading',
+      col: rel > 0 ? '#a78bfa' : '#60a5fa',
+    });
+  }
+
+  const el = document.getElementById('spreads-row');
+  el.innerHTML = spreads.map(s => `
+    <div class="card card-sm">
+      <div class="section-title mb-1" style="font-size:0.6rem">${s.label}</div>
+      <div class="text-xl font-bold font-mono" style="color:${s.col}">${s.value}</div>
+      <div class="text-xs text-slate-500 mt-1">${s.sub}</div>
+    </div>`).join('');
+}
+
+// ─── News ─────────────────────────────────────────────────────────────────────
+function buildNews(items) {
+  const el = document.getElementById('news-grid');
+  if (!items || items.length === 0) {
+    el.innerHTML = '<div class="text-xs text-slate-500">No news available.</div>';
+    return;
+  }
+  const tagLabels = { opec: 'OPEC', lng: 'LNG', supply: 'Supply', refining: 'Refining', crude: 'Crude' };
+  el.innerHTML = items.map(item => {
+    const tags = (item.tags || []).map(t =>
+      `<span class="tag tag-${t}">${tagLabels[t] || t}</span>`
+    ).join(' ');
+    return `
+      <a href="${item.url}" target="_blank" rel="noopener" class="block rounded-xl p-3 border border-slate-700/50 hover:border-amber-500/30 transition-colors group" style="background:#0f1a2a">
+        <div class="flex items-start justify-between gap-2 mb-1.5">
+          <span class="text-xs text-amber-500/70 font-semibold">${item.source}</span>
+          <div class="flex gap-1 flex-wrap justify-end">${tags}</div>
+        </div>
+        <p class="text-sm font-medium text-slate-200 group-hover:text-white leading-snug line-clamp-2 mb-1.5">${item.title}</p>
+        <p class="text-xs text-slate-500 leading-relaxed line-clamp-2">${item.summary || ''}</p>
+      </a>`;
+  }).join('');
+}
+
+// ─── Price Chart ──────────────────────────────────────────────────────────────
+let priceChart = null;
+
+async function loadPriceChart() {
+  try {
+    const res  = await fetch('/api/oil-history');
+    const data = await res.json();
+    document.getElementById('chart-loading').style.display = 'none';
+
+    const labels = (data.wti || data.brent || []).map(d => d.date);
+
+    const ctx = document.getElementById('priceChart').getContext('2d');
+    if (priceChart) priceChart.destroy();
+
+    priceChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'WTI ($/bbl)',
+            data: data.wti?.map(d => d.value) || [],
+            borderColor: '#fb923c', backgroundColor: 'rgba(251,146,60,0.08)',
+            borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false, yAxisID: 'y',
+          },
+          {
+            label: 'Brent ($/bbl)',
+            data: data.brent?.map(d => d.value) || [],
+            borderColor: '#60a5fa', backgroundColor: 'rgba(96,165,250,0.08)',
+            borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false, yAxisID: 'y',
+          },
+          {
+            label: 'Henry Hub ×5',
+            data: data.gas?.map(d => ({ x: d.date, y: d.value * 5 })) || [],
+            borderColor: '#a78bfa', backgroundColor: 'rgba(167,139,250,0.06)',
+            borderWidth: 1.5, pointRadius: 0, tension: 0.3, fill: false, yAxisID: 'y',
+            borderDash: [4, 3],
+          },
+        ],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#1e293b',
+            borderColor: '#334155',
+            borderWidth: 1,
+            titleColor: '#94a3b8',
+            bodyColor: '#e2e8f0',
+            callbacks: {
+              label: ctx => {
+                const label = ctx.dataset.label;
+                const v = ctx.parsed.y;
+                if (label.includes('Henry Hub')) return `HH (×5 display): $${(v/5).toFixed(3)}/MMBtu`;
+                return `${label}: $${v.toFixed(2)}`;
+              }
+            }
+          },
+        },
+        scales: {
+          x: {
+            ticks: { color: '#64748b', font: { size: 10 }, maxTicksLimit: 12 },
+            grid: { color: 'rgba(51,65,85,0.4)' },
+          },
+          y: {
+            ticks: { color: '#64748b', font: { size: 10 }, callback: v => '$' + v.toFixed(0) },
+            grid: { color: 'rgba(51,65,85,0.4)' },
+          },
+        },
+      },
+    });
+  } catch (e) {
+    console.error('Price chart error:', e);
+    document.getElementById('chart-loading').textContent = 'Could not load price history.';
+  }
+}
+
+// ─── Main Data Loader ─────────────────────────────────────────────────────────
+let isRefreshing = false;
+
+async function loadData() {
+  if (isRefreshing) return;
+  isRefreshing = true;
+  const icon = document.getElementById('refresh-icon');
+  if (icon) icon.style.animation = 'spin 1s linear infinite';
+
+  try {
+    const res  = await fetch('/api/oil-data');
+    const data = await res.json();
+
+    // Update header timestamp
+    const ts = new Date(data.last_updated);
+    document.getElementById('last-updated-header').textContent =
+      'Updated ' + ts.toLocaleTimeString('en-US', { hour12: false });
+
+    // Energy score
+    const es = data.energy_score;
+    updateGauge(es.score);
+    document.getElementById('energy-score-num').textContent = es.score.toFixed(1);
+    const scoreLabel = document.getElementById('energy-score-label');
+    scoreLabel.textContent = es.label;
+    scoreLabel.className = es.color === 'green' ? 'text-xs font-semibold bullish' :
+                           es.color === 'red'   ? 'text-xs font-semibold bearish' :
+                                                  'text-xs font-semibold neutral-c';
+    document.getElementById('energy-score-desc').textContent = es.description;
+    if (es.signals) buildSignals(es.signals);
+
+    // Assets
+    if (data.assets) {
+      buildTicker(data.assets);
+      buildHeroStrip(data.assets.filter(a => a.group === 'Futures'));
+      buildHeatmap(data.assets);
+      buildSpreads(data.assets);
+    }
+
+    // EIA
+    if (data.eia) buildEIA(data.eia);
+
+    // OPEC
+    if (data.opec) buildOPEC(data.opec);
+
+    // Geo risks
+    if (data.geo_risks) buildGeoRisks(data.geo_risks);
+
+    // News
+    if (data.news) buildNews(data.news);
+
+  } catch (err) {
+    console.error('Data load error:', err);
+  } finally {
+    isRefreshing = false;
+    if (icon) icon.style.animation = '';
+  }
+}
+
+function forceRefresh() { loadData(); }
+
+// Add spin keyframe
+const style = document.createElement('style');
+style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+document.head.appendChild(style);
+
+// Initial load
+loadData();
+loadPriceChart();
+setInterval(loadData, 60000);
+setInterval(loadPriceChart, 300000);
+</script>
+</body>
+</html>
