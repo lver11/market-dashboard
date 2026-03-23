@@ -151,6 +151,82 @@ BOC_SERIES = {
     "CA30YT=RR": "BD.CDN.LONG.DQ.YLD",
 }
 
+# ── Oil & LNG static data ────────────────────────────────────────────────────
+OIL_LNG_ASSETS = [
+    {"group": "Futures",           "name": "WTI Crude",          "ticker": "CL=F",  "type": "commodity"},
+    {"group": "Futures",           "name": "Brent Crude",         "ticker": "BZ=F",  "type": "commodity"},
+    {"group": "Futures",           "name": "Henry Hub Gas",       "ticker": "NG=F",  "type": "commodity"},
+    {"group": "Futures",           "name": "RBOB Gasoline",       "ticker": "RB=F",  "type": "commodity"},
+    {"group": "Futures",           "name": "Heating Oil",         "ticker": "HO=F",  "type": "commodity"},
+    {"group": "ETFs",              "name": "Energy Sector",       "ticker": "XLE",   "type": "etf"},
+    {"group": "ETFs",              "name": "Oil & Gas E&P",       "ticker": "XOP",   "type": "etf"},
+    {"group": "ETFs",              "name": "Oil Services",        "ticker": "OIH",   "type": "etf"},
+    {"group": "ETFs",              "name": "Natural Gas",         "ticker": "UNG",   "type": "etf"},
+    {"group": "Integrated Majors", "name": "ExxonMobil",          "ticker": "XOM",   "type": "stock"},
+    {"group": "Integrated Majors", "name": "Chevron",             "ticker": "CVX",   "type": "stock"},
+    {"group": "Integrated Majors", "name": "Shell",               "ticker": "SHEL",  "type": "stock"},
+    {"group": "Integrated Majors", "name": "TotalEnergies",       "ticker": "TTE",   "type": "stock"},
+    {"group": "Integrated Majors", "name": "BP",                  "ticker": "BP",    "type": "stock"},
+    {"group": "E&P",               "name": "ConocoPhillips",      "ticker": "COP",   "type": "stock"},
+    {"group": "E&P",               "name": "EOG Resources",       "ticker": "EOG",   "type": "stock"},
+    {"group": "E&P",               "name": "Devon Energy",        "ticker": "DVN",   "type": "stock"},
+    {"group": "E&P",               "name": "Diamondback Energy",  "ticker": "FANG",  "type": "stock"},
+    {"group": "Canadian Energy",   "name": "Canadian Natural",    "ticker": "CNQ",   "type": "stock"},
+    {"group": "Canadian Energy",   "name": "Suncor Energy",       "ticker": "SU",    "type": "stock"},
+    {"group": "Canadian Energy",   "name": "Enbridge",            "ticker": "ENB",   "type": "stock"},
+    {"group": "LNG Players",       "name": "Cheniere Energy",     "ticker": "LNG",   "type": "stock"},
+    {"group": "LNG Players",       "name": "New Fortress Energy", "ticker": "NFE",   "type": "stock"},
+    {"group": "LNG Players",       "name": "NextDecade",          "ticker": "NEXT",  "type": "stock"},
+    {"group": "LNG Players",       "name": "Golar LNG",           "ticker": "GLNG",  "type": "stock"},
+    {"group": "Services",          "name": "SLB",                 "ticker": "SLB",   "type": "stock"},
+    {"group": "Services",          "name": "Halliburton",         "ticker": "HAL",   "type": "stock"},
+    {"group": "Services",          "name": "Baker Hughes",        "ticker": "BKR",   "type": "stock"},
+    {"group": "Refiners",          "name": "Phillips 66",         "ticker": "PSX",   "type": "stock"},
+    {"group": "Refiners",          "name": "Marathon Petroleum",  "ticker": "MPC",   "type": "stock"},
+    {"group": "Refiners",          "name": "Valero Energy",       "ticker": "VLO",   "type": "stock"},
+]
+
+EIA_INVENTORY = {
+    "report_date":   "2026-03-19",
+    "crude_oil":     {"value": 437.2, "change": -2.1, "unit": "MMbbl", "label": "Crude Oil"},
+    "gasoline":      {"value": 241.5, "change": +1.3, "unit": "MMbbl", "label": "Gasoline"},
+    "distillates":   {"value": 117.8, "change": -0.8, "unit": "MMbbl", "label": "Distillates"},
+    "cushing":       {"value":  26.4, "change": -1.2, "unit": "MMbbl", "label": "Cushing, OK"},
+    "spr":           {"value": 395.2, "change":  0.0, "unit": "MMbbl", "label": "SPR"},
+    "refinery_util": {"value":  87.3, "change": +0.6, "unit": "%",     "label": "Refinery Util."},
+}
+
+OPEC_DATA = {
+    "report_month":            "February 2026",
+    "total_production_mmbpd":  26.8,
+    "opec_plus_target_mmbpd":  26.5,
+    "compliance_pct":           89,
+    "surplus_mmbpd":            0.3,
+    "next_meeting":             "June 2026",
+    "key_producers": [
+        {"country": "Saudi Arabia", "flag": "SA", "production": 9.0, "quota": 9.0},
+        {"country": "Russia",       "flag": "RU", "production": 9.1, "quota": 9.0},
+        {"country": "UAE",          "flag": "AE", "production": 3.0, "quota": 2.9},
+        {"country": "Iraq",         "flag": "IQ", "production": 4.1, "quota": 4.0},
+        {"country": "Kuwait",       "flag": "KW", "production": 2.5, "quota": 2.5},
+    ],
+}
+
+ENERGY_GEO_RISKS = [
+    {"region": "Middle East",    "title": "Strait of Hormuz",        "level": "high",   "icon": "ship",           "description": "~20% of global oil & LNG transits this chokepoint. Iran tensions elevated.",       "market_impact": "+$8-15/bbl if closure risk escalates"},
+    {"region": "Russia / Europe","title": "Russian Gas Supply",      "level": "high",   "icon": "flame",          "description": "Nord Stream offline; pipeline routes uncertain. European LNG imports at record highs.", "market_impact": "Persistent EU LNG premium vs Henry Hub"},
+    {"region": "US Gulf Coast",  "title": "LNG Export Expansion",    "level": "medium", "icon": "anchor",         "description": "Sabine Pass T6, Corpus Christi T3, Plaquemines LNG underway. US share rising.",      "market_impact": "Structurally bullish Henry Hub long-term"},
+    {"region": "Libya / Nigeria","title": "African Supply Disruptions","level": "medium","icon": "alert-triangle","description": "Periodic outages from political instability and pipeline sabotage.",                   "market_impact": "+$2-5/bbl on major disruption events"},
+    {"region": "South America",  "title": "Venezuela / Guyana",      "level": "low",    "icon": "trending-up",    "description": "Guyana ramp-up bullish for Atlantic basin. Venezuela sanctions cap output.",          "market_impact": "Net neutral; Guyana growth offsets Venezuela"},
+]
+
+ENERGY_NEWS_FEEDS = [
+    ("EIA Today",   "https://www.eia.gov/rss/todayinenergy.xml"),
+    ("Reuters Biz", "https://feeds.reuters.com/reuters/businessNews"),
+    ("Oil/LNG",     "https://news.google.com/rss/search?q=oil+LNG+OPEC+crude+natural+gas&hl=en-US&gl=US&ceid=US:en"),
+    ("Energy Mkts", "https://news.google.com/rss/search?q=energy+market+petroleum+refinery+gasoline&hl=en-US&gl=US&ceid=US:en"),
+]
+
 # ── Data helpers ────────────────────────────────────────────────────────────
 def _fetch_one(ticker):
     try:
@@ -541,6 +617,139 @@ def _risk_score(market_data):
     return {"score": comp, "label": label, "color": color, "description": desc, "signals": signals}
 
 
+@st.cache_data(ttl=60, show_spinner=False)
+def _oil_data_cached() -> dict:
+    tickers = list({a["ticker"] for a in OIL_LNG_ASSETS}) + ["SPY"]
+    result: dict = {}
+    with ThreadPoolExecutor(max_workers=12) as ex:
+        futures = {ex.submit(_fetch_one, t): t for t in tickers}
+        for f in as_completed(futures, timeout=30):
+            try:
+                ticker, data = f.result()
+                result[ticker] = data
+            except Exception as e:
+                logger.warning(f"Oil future: {e}")
+    return result
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def _oil_history_cached() -> dict:
+    result: dict = {"wti": [], "brent": [], "gas": []}
+    for key, ticker in {"wti": "CL=F", "brent": "BZ=F", "gas": "NG=F"}.items():
+        try:
+            hist = yf.Ticker(ticker).history(period="90d", auto_adjust=True).dropna(subset=["Close"])
+            result[key] = [{"date": str(idx.date()), "value": round(float(row["Close"]), 3)}
+                           for idx, row in hist.iterrows()]
+        except Exception as e:
+            logger.error(f"Oil hist {ticker}: {e}")
+    return result
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def _energy_news_cached() -> list:
+    items: list = []
+    seen: set   = set()
+    for source, url in ENERGY_NEWS_FEEDS:
+        try:
+            feed = feedparser.parse(url)
+            for entry in feed.entries[:5]:
+                title = getattr(entry, "title", "").strip()
+                key   = title.lower()[:80]
+                if not title or key in seen:
+                    continue
+                seen.add(key)
+                tl, tags = title.lower(), []
+                if any(w in tl for w in ["opec","saudi","aramco","quota","cut"]):      tags.append("opec")
+                if any(w in tl for w in ["lng","liquefied","natural gas","henry hub"]): tags.append("lng")
+                if any(w in tl for w in ["eia","inventory","stockpile","supply"]):      tags.append("supply")
+                if any(w in tl for w in ["refin","crack","gasoline","distillate"]):     tags.append("refining")
+                if any(w in tl for w in ["wti","brent","crude","oil price","barrel"]):  tags.append("crude")
+                summary = getattr(entry, "summary", getattr(entry, "description", ""))
+                items.append({"title": title, "source": source, "url": getattr(entry, "link", "#"),
+                               "published": getattr(entry, "published", ""),
+                               "summary": (summary[:180] + "...") if len(summary) > 180 else summary,
+                               "tags": tags})
+        except Exception as e:
+            logger.warning(f"Energy feed {source}: {e}")
+    return items[:20]
+
+
+def _calc_energy_score(raw: dict) -> dict:
+    signals: list = []
+    ws = tw = 0.0
+
+    def add(name, value, unit, score, label, status, weight, desc):
+        nonlocal ws, tw
+        signals.append({"name": name, "value": value, "unit": unit, "score": round(float(score), 1),
+                         "label": label, "status": status, "weight": weight, "description": desc})
+        ws += float(score) * weight; tw += weight
+
+    wti_pct = raw.get("CL=F", {}).get("change_pct")
+    if wti_pct is not None:
+        sc = max(0.0, min(100.0, 50.0 + wti_pct * 8.0))
+        add("WTI Crude Oil", wti_pct, "%", sc,
+            "WTI Rising" if sc>60 else ("WTI Falling" if sc<40 else "WTI Stable"),
+            "bullish" if sc>60 else ("bearish" if sc<40 else "neutral"), 20, "WTI benchmark direction")
+
+    brent_pct = raw.get("BZ=F", {}).get("change_pct")
+    if brent_pct is not None:
+        sc = max(0.0, min(100.0, 50.0 + brent_pct * 8.0))
+        add("Brent Crude", brent_pct, "%", sc,
+            "Brent Rising" if sc>60 else ("Brent Falling" if sc<40 else "Brent Stable"),
+            "bullish" if sc>60 else ("bearish" if sc<40 else "neutral"), 15, "Brent global benchmark")
+
+    ng_pct = raw.get("NG=F", {}).get("change_pct")
+    if ng_pct is not None:
+        sc = max(0.0, min(100.0, 50.0 + ng_pct * 7.0))
+        add("Henry Hub Nat. Gas", ng_pct, "%", sc,
+            "Gas Rising" if sc>60 else ("Gas Falling" if sc<40 else "Gas Stable"),
+            "bullish" if sc>60 else ("bearish" if sc<40 else "neutral"), 15, "US natural gas benchmark")
+
+    xle_pct = raw.get("XLE", {}).get("change_pct")
+    if xle_pct is not None:
+        sc = max(0.0, min(100.0, 50.0 + xle_pct * 9.0))
+        add("Energy Sector (XLE)", xle_pct, "%", sc,
+            "Energy Strong" if sc>60 else ("Energy Weak" if sc<40 else "Energy Neutral"),
+            "bullish" if sc>60 else ("bearish" if sc<40 else "neutral"), 15, "Broad energy equity sentiment")
+
+    spy_pct = raw.get("SPY", {}).get("change_pct")
+    if xle_pct is not None and spy_pct is not None:
+        rel = xle_pct - spy_pct; sc = max(0.0, min(100.0, 50.0 + rel * 15.0))
+        add("Energy vs Market (XLE/SPY)", round(rel, 2), "% rel.", sc,
+            "Energy Outperforming" if sc>60 else ("Energy Underperforming" if sc<40 else "Energy In-Line"),
+            "bullish" if sc>60 else ("bearish" if sc<40 else "neutral"), 20, "Sector rotation signal")
+
+    rbob_pct = raw.get("RB=F", {}).get("change_pct")
+    if rbob_pct is not None and wti_pct is not None:
+        crack = rbob_pct - wti_pct; sc = max(0.0, min(100.0, 50.0 + crack * 12.0))
+        add("Crack Spread (RBOB/WTI)", round(crack, 2), "% rel.", sc,
+            "Crack Widening" if sc>60 else ("Crack Narrowing" if sc<40 else "Crack Stable"),
+            "bullish" if sc>60 else ("bearish" if sc<40 else "neutral"), 15, "Refinery margin proxy")
+
+    composite = round(ws / tw, 1) if tw > 0 else 50.0
+    if   composite >= 70: label, color, desc = "BULLISH",            "green", "Strong energy momentum. Oil prices rising, sector outperforming."
+    elif composite >= 58: label, color, desc = "MODERATELY BULLISH", "green", "Positive energy bias. Favorable conditions for oil & gas producers."
+    elif composite >= 42: label, color, desc = "NEUTRAL",            "amber", "Mixed energy signals. Range-bound prices, balanced supply/demand."
+    elif composite >= 30: label, color, desc = "MODERATELY BEARISH", "red",   "Weak energy conditions. Demand concerns or oversupply building."
+    else:                 label, color, desc = "BEARISH",            "red",   "Energy sector under pressure. Price decline risk elevated."
+    return {"score": composite, "label": label, "color": color, "description": desc, "signals": signals}
+
+
+@st.cache_data(ttl=60, show_spinner="Loading energy market data...")
+def _full_oil_data() -> dict:
+    raw          = _oil_data_cached()
+    energy_score = _calc_energy_score(raw)
+    assets = [{**a, "price": raw.get(a["ticker"], {}).get("price"),
+                    "change": raw.get(a["ticker"], {}).get("change"),
+                    "change_pct": raw.get(a["ticker"], {}).get("change_pct"),
+                    "timestamp":  raw.get(a["ticker"], {}).get("timestamp")}
+              for a in OIL_LNG_ASSETS]
+    return {"energy_score": energy_score, "assets": assets,
+            "eia": EIA_INVENTORY, "opec": OPEC_DATA,
+            "geo_risks": ENERGY_GEO_RISKS, "news": _energy_news_cached(),
+            "last_updated": datetime.now(timezone.utc).isoformat()}
+
+
 @st.cache_data(ttl=60, show_spinner="Chargement des données de marché…")
 def _full_data():
     mkt  = _market_data_cached()
@@ -599,7 +808,7 @@ button[data-baseweb="tab"][aria-selected="true"] {
 </style>
 """, unsafe_allow_html=True)
 
-tab1, tab2 = st.tabs(["📊 Market Turbulence Dashboard", "🏦 Fondaction Snapshot"])
+tab1, tab2, tab3 = st.tabs(["📊 Market Turbulence Dashboard", "🏦 Fondaction Snapshot", "🛢️ Oil & LNG"])
 
 with tab1:
     data = _full_data()
@@ -735,3 +944,16 @@ with tab2:
     # ── Static snapshot HTML ────────────────────────────────────────────────
     html_snap = (TEMPLATE_DIR / "fondaction_snapshot.html").read_text(encoding="utf-8")
     components.html(html_snap, height=1400, scrolling=True)
+
+with tab3:
+    oil_data = _full_oil_data()
+    oil_hist = _oil_history_cached()
+    html_oil = (TEMPLATE_DIR / "oil_lng.html").read_text(encoding="utf-8")
+    oil_inject = (
+        "<script>"
+        f"window.__OIL_PRELOAD__={json.dumps(oil_data, default=str)};"
+        f"window.__OIL_HISTORY_PRELOAD__={json.dumps(oil_hist)};"
+        "</script>"
+    )
+    html_oil = html_oil.replace("</head>", oil_inject + "</head>")
+    components.html(html_oil, height=1400, scrolling=True)
