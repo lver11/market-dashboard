@@ -618,8 +618,14 @@ let priceChart = null;
 
 async function loadPriceChart() {
   try {
-    const res  = await fetch('/api/oil-history');
-    const data = await res.json();
+    let data;
+    if (window.__OIL_HISTORY_PRELOAD__) {
+      data = window.__OIL_HISTORY_PRELOAD__;
+      window.__OIL_HISTORY_PRELOAD__ = null;
+    } else {
+      const res = await fetch('/api/oil-history');
+      data = await res.json();
+    }
     document.getElementById('chart-loading').style.display = 'none';
 
     const labels = (data.wti || data.brent || []).map(d => d.date);
@@ -702,8 +708,14 @@ async function loadData() {
   if (icon) icon.style.animation = 'spin 1s linear infinite';
 
   try {
-    const res  = await fetch('/api/oil-data');
-    const data = await res.json();
+    let data;
+    if (window.__OIL_PRELOAD__) {
+      data = window.__OIL_PRELOAD__;
+      window.__OIL_PRELOAD__ = null; // use once, re-fetch on next refresh
+    } else {
+      const res = await fetch('/api/oil-data');
+      data = await res.json();
+    }
 
     // Update header timestamp
     const ts = new Date(data.last_updated);
