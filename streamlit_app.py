@@ -834,6 +834,18 @@ def _full_data():
     for tk, d in ca.items():
         perf[tk] = {"mtd": d.get("mtd"), "aad": d.get("aad")}
     risk = _risk_score(mkt)
+    # Inject DeMark signal from MISO into risk signals (visible in Signaux composites)
+    miso_data = fetch_miso()
+    dm = next((c for c in miso_data.get("components", []) if "DeMark" in c.get("name", "")), None)
+    if dm is not None:
+        sc = dm["score"]
+        status = "risk-on" if sc < 35 else "risk-off" if sc > 65 else "neutral"
+        lbl = "Setup Buy" if sc > 65 else "Setup Sell" if sc < 35 else "Neutre"
+        risk["signals"].append({
+            "name": "DeMark Sequential", "value": sc, "unit": "",
+            "score": sc, "label": dm["raw_label"], "status": status,
+            "weight": 10, "description": dm["desc"],
+        })
     today = datetime.now(timezone.utc).date()
     assets = [
         {**a,
