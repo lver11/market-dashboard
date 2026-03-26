@@ -163,6 +163,12 @@ secret-*.*
 .claude/.env.local*
 .claude/local/
 .claude/plans/
+.claude/launch.json
+.claude/start-server.sh
+
+# Local helper scripts
+.git-commit-script.py
+do-commit.sh
 
 # Skill-specific credentials
 .claude/skills/*/.env*
