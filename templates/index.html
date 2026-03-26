@@ -394,6 +394,8 @@
               <th class="text-right">Prix</th>
               <th class="text-right">Variation $</th>
               <th class="text-right">Variation %</th>
+              <th class="text-right">MTD</th>
+              <th class="text-right">AAD</th>
               <th>Signal</th>
             </tr>
           </thead>
@@ -474,6 +476,12 @@ const fmt = {
   pct:   (v) => v == null ? '—' : (v > 0 ? '+' : '') + v.toFixed(2) + '%',
   chg:   (v) => v == null ? '—' : (v > 0 ? '+' : '') + v.toFixed(4),
 };
+
+function fmtPerf(v) {
+  if (v == null) return '<span class="text-slate-600 text-xs">—</span>';
+  const cls = v > 0 ? 'text-green-400' : v < 0 ? 'text-red-400' : 'text-slate-400';
+  return `<span class="${cls} font-mono text-xs font-semibold">${(v > 0 ? '+' : '') + v.toFixed(2) + '%'}</span>`;
+}
 
 function changeClass(v) {
   if (v == null) return 'flat';
@@ -661,6 +669,8 @@ function renderMarketTable(assets) {
         <td class="text-right font-mono font-medium">${priceFmt}</td>
         <td class="text-right font-mono ${cc}">${changeArrow(a.change_pct)} ${fmt.chg(a.change)}</td>
         <td class="text-right font-mono font-semibold ${cc}">${fmt.pct(a.change_pct)}</td>
+        <td class="text-right">${fmtPerf(a.mtd)}</td>
+        <td class="text-right">${fmtPerf(a.aad)}</td>
         <td>${signal}</td>
       </tr>`;
   }).join('');

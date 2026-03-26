@@ -47,15 +47,28 @@ MARKET_ASSETS = [
     {"group": "Bonds",       "name": "IG Credit (LQD)",     "ticker": "LQD",       "type": "etf"},
     {"group": "Commodities", "name": "Gold",                "ticker": "GC=F",      "type": "commodity"},
     {"group": "Commodities", "name": "WTI Oil",             "ticker": "CL=F",      "type": "commodity"},
+    {"group": "Commodities", "name": "Brent Crude",         "ticker": "BZ=F",      "type": "commodity"},
     {"group": "Commodities", "name": "Silver",              "ticker": "SI=F",      "type": "commodity"},
+    {"group": "Commodities", "name": "Copper",              "ticker": "HG=F",      "type": "commodity"},
+    {"group": "Commodities", "name": "Natural Gas",         "ticker": "NG=F",      "type": "commodity"},
+    {"group": "Commodities", "name": "Platinum",            "ticker": "PL=F",      "type": "commodity"},
+    {"group": "Commodities", "name": "Corn",                "ticker": "ZC=F",      "type": "commodity"},
+    {"group": "Commodities", "name": "Wheat",               "ticker": "ZW=F",      "type": "commodity"},
     {"group": "Currencies",  "name": "DXY (USD Index)",     "ticker": "DX-Y.NYB",  "type": "currency"},
     {"group": "Currencies",  "name": "EUR/USD",             "ticker": "EURUSD=X",  "type": "currency"},
     {"group": "Currencies",  "name": "USD/JPY",             "ticker": "JPY=X",     "type": "currency"},
-    {"group": "Currencies",  "name": "USD/CHF",             "ticker": "CHFUSD=X",  "type": "currency"},
+    {"group": "Currencies",  "name": "GBP/USD",             "ticker": "GBPUSD=X",  "type": "currency"},
+    {"group": "Currencies",  "name": "USD/CHF",             "ticker": "CHF=X",     "type": "currency"},
+    {"group": "Currencies",  "name": "AUD/USD",             "ticker": "AUDUSD=X",  "type": "currency"},
+    {"group": "Currencies",  "name": "NZD/USD",             "ticker": "NZDUSD=X",  "type": "currency"},
     {"group": "Currencies",  "name": "USD/CAD",             "ticker": "USDCAD=X",  "type": "currency"},
+    {"group": "Currencies",  "name": "USD/CNY",             "ticker": "CNY=X",     "type": "currency"},
+    {"group": "Currencies",  "name": "USD/MXN",             "ticker": "MXN=X",     "type": "currency"},
+    {"group": "Currencies",  "name": "USD/BRL",             "ticker": "BRL=X",     "type": "currency"},
     {"group": "Crypto",      "name": "Bitcoin",             "ticker": "BTC-USD",   "type": "crypto"},
     {"group": "Crypto",      "name": "Ethereum",            "ticker": "ETH-USD",   "type": "crypto"},
     {"group": "Volatility",  "name": "VIX",                 "ticker": "^VIX",      "type": "volatility"},
+    {"group": "Volatility",  "name": "MOVE (Bond Vol)",     "ticker": "^MOVE",     "type": "volatility"},
     {"group": "Risk Proxies","name": "S&P 500 ETF (SPY)",   "ticker": "SPY",       "type": "etf"},
 ]
 
@@ -150,6 +163,9 @@ BOC_SERIES = {
     "CA10YT=RR": "BD.CDN.10YR.DQ.YLD",
     "CA30YT=RR": "BD.CDN.LONG.DQ.YLD",
 }
+
+YIELD_TICKERS = {"^IRX", "^FVX", "^TNX", "^TYX",
+                 "CA2YT=RR", "CA5YT=RR", "CA10YT=RR", "CA30YT=RR"}
 
 # ── Oil & LNG static data ────────────────────────────────────────────────────
 OIL_LNG_ASSETS = [
@@ -263,8 +279,9 @@ def _market_data_cached():
 
 @st.cache_data(ttl=300, show_spinner=False)
 def _ca_yields_cached():
-    today = datetime.now(timezone.utc).date()
-    year_start = today.replace(month=1, day=1).isoformat()
+    today       = datetime.now(timezone.utc).date()
+    year_start  = today.replace(month=1, day=1).isoformat()
+    month_start = today.replace(day=1).isoformat()
     result = {}
     for ticker, series in BOC_SERIES.items():
         try:
@@ -275,7 +292,8 @@ def _ca_yields_cached():
             obs = [o for o in data.get("observations", [])
                    if o.get(series, {}).get("v") not in (None, "")]
             if not obs:
-                result[ticker] = {"price": None, "change": None, "change_pct": None, "timestamp": None}
+                result[ticker] = {"price": None, "change": None, "change_pct": None,
+                                   "mtd": None, "aad": None, "timestamp": None}
                 continue
             latest = float(obs[-1][series]["v"])
             change = change_pct = None
@@ -283,11 +301,18 @@ def _ca_yields_cached():
                 prev = float(obs[-2][series]["v"])
                 change = round(latest - prev, 3)
                 change_pct = round((change / prev) * 100, 2) if prev else None
+            # AAD: absolute pp change since Jan 1
+            aad = round(latest - float(obs[0][series]["v"]), 2) if obs else None
+            # MTD: absolute pp change since month start
+            month_obs = [o for o in obs if o["d"] >= month_start]
+            mtd = round(latest - float(month_obs[0][series]["v"]), 2) if month_obs else aad
             result[ticker] = {"price": round(latest, 3), "change": change,
-                               "change_pct": change_pct, "timestamp": obs[-1]["d"]}
+                               "change_pct": change_pct, "mtd": mtd, "aad": aad,
+                               "timestamp": obs[-1]["d"]}
         except Exception as e:
             logger.warning(f"BOC {series}: {e}")
-            result[ticker] = {"price": None, "change": None, "change_pct": None, "timestamp": None}
+            result[ticker] = {"price": None, "change": None, "change_pct": None,
+                               "mtd": None, "aad": None, "timestamp": None}
     return result
 
 
@@ -750,11 +775,64 @@ def _full_oil_data() -> dict:
             "last_updated": datetime.now(timezone.utc).isoformat()}
 
 
+@st.cache_data(ttl=300, show_spinner=False)
+def _period_perf_cached() -> dict:
+    """Fetch MTD and AAD (YTD) performance for all non-BOC tickers."""
+    non_boc = [a["ticker"] for a in MARKET_ASSETS if a["ticker"] not in BOC_SERIES]
+
+    def _fetch_perf(ticker):
+        try:
+            hist = yf.Ticker(ticker).history(period="ytd", auto_adjust=True).dropna(subset=["Close"])
+            if len(hist) < 1:
+                return ticker, {"mtd": None, "aad": None}
+            latest = float(hist["Close"].iloc[-1])
+            year_start_val = float(hist["Close"].iloc[0])
+            is_yield = ticker in YIELD_TICKERS
+            if is_yield:
+                aad = round(latest - year_start_val, 2)
+            else:
+                aad = round((latest - year_start_val) / year_start_val * 100, 2) if year_start_val else None
+            # MTD: filter rows from the 1st of current month
+            month_start = hist.index[0].replace(
+                year=datetime.now(timezone.utc).year,
+                month=datetime.now(timezone.utc).month,
+                day=1
+            )
+            month_hist = hist[hist.index >= month_start]
+            if len(month_hist) >= 1:
+                ms_val = float(month_hist["Close"].iloc[0])
+                if is_yield:
+                    mtd = round(latest - ms_val, 2)
+                else:
+                    mtd = round((latest - ms_val) / ms_val * 100, 2) if ms_val else None
+            else:
+                mtd = aad
+            return ticker, {"mtd": mtd, "aad": aad}
+        except Exception as e:
+            logger.warning(f"Perf {ticker}: {e}")
+            return ticker, {"mtd": None, "aad": None}
+
+    result = {}
+    with ThreadPoolExecutor(max_workers=10) as ex:
+        futures = {ex.submit(_fetch_perf, t): t for t in non_boc}
+        for f in as_completed(futures, timeout=45):
+            try:
+                tk, d = f.result()
+                result[tk] = d
+            except Exception as e:
+                logger.warning(f"Perf future: {e}")
+    return result
+
+
 @st.cache_data(ttl=60, show_spinner="Chargement des données de marché…")
 def _full_data():
     mkt  = _market_data_cached()
     ca   = _ca_yields_cached()
+    perf = _period_perf_cached()
     mkt  = {**mkt, **ca}
+    # Merge CA yield MTD/AAD into perf dict
+    for tk, d in ca.items():
+        perf[tk] = {"mtd": d.get("mtd"), "aad": d.get("aad")}
     risk = _risk_score(mkt)
     today = datetime.now(timezone.utc).date()
     assets = [
@@ -762,7 +840,9 @@ def _full_data():
          "price":      mkt.get(a["ticker"], {}).get("price"),
          "change":     mkt.get(a["ticker"], {}).get("change"),
          "change_pct": mkt.get(a["ticker"], {}).get("change_pct"),
-         "timestamp":  mkt.get(a["ticker"], {}).get("timestamp")}
+         "timestamp":  mkt.get(a["ticker"], {}).get("timestamp"),
+         "mtd":        perf.get(a["ticker"], {}).get("mtd"),
+         "aad":        perf.get(a["ticker"], {}).get("aad")}
         for a in MARKET_ASSETS
     ]
     cal = []
