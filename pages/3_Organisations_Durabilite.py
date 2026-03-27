@@ -2,10 +2,14 @@
 Dashboard — Organisations durabilité & ODD
 IQ · FSTQ · Desjardins Capital · Développement Économique Canada
 """
+import io
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
 import streamlit as st
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.utils import get_column_letter
 
 st.set_page_config(
     page_title="Organisations — Durabilité & ODD",
@@ -70,6 +74,145 @@ st.html("""
   .kpi-lbl  { font-size:.68rem; color:#6B7280; margin-top:2px; }
 </style>
 """)
+
+@st.cache_data
+def _build_excel() -> bytes:
+    """Génère le fichier Excel en mémoire (compatible Streamlit Cloud)."""
+    C_HEADER="1E3A5F"; C_ACCENT="10B981"; C_WH="FFFFFF"; C_DK="1F2937"
+    C_GRAY="6B7280"; C_R1="EFF6FF"; C_R2="F0FDF9"; C_R3="FFF7ED"; C_R4="F5F3FF"
+    C_YES="D1FAE5"; C_IND="FEF3C7"; C_NO="F3F4F6"
+    def fl(h): return PatternFill("solid", fgColor=h)
+    def bd():
+        s=Side(style="thin",color="D1D5DB")
+        return Border(left=s,right=s,top=s,bottom=s)
+    def ct(): return Alignment(horizontal="center",vertical="center",wrap_text=True)
+    def lf(): return Alignment(horizontal="left",vertical="center",wrap_text=True)
+    def hf(sz=11,bold=True,color=None): return Font(name="Arial",bold=bold,size=sz,color=color or C_WH)
+    def bf(sz=10,color=None): return Font(name="Arial",size=sz,color=color or C_DK)
+
+    wb = Workbook()
+    ws1 = wb.active; ws1.title="Profils organisations"; ws1.sheet_view.showGridLines=False
+    ws1.merge_cells("A1:J1"); ws1["A1"]="ORGANISATIONS - DURABILITE & ODD | IQ - FSTQ - Desjardins Capital - DEC"
+    ws1["A1"].font=hf(14); ws1["A1"].fill=fl(C_HEADER); ws1["A1"].alignment=ct(); ws1.row_dimensions[1].height=32
+    ws1.merge_cells("A2:J2"); ws1["A2"]="Sources : REQ - Sites officiels - Rapports ESG 2024-2025 | 2026-03-27"
+    ws1["A2"].font=Font(name="Arial",italic=True,size=8,color=C_GRAY); ws1["A2"].fill=fl("F9FAFB"); ws1["A2"].alignment=ct(); ws1.row_dimensions[2].height=16
+    hdrs=["Organisation","Nom officiel","NEQ","Adresse","Ville/CP","Type","Fond.","Actif gere","Site web","Mission"]
+    wdts=[22,38,15,42,20,30,8,24,28,70]
+    for i,(h,w) in enumerate(zip(hdrs,wdts),1):
+        c=ws1.cell(3,i,h); c.font=hf(10); c.fill=fl(C_ACCENT); c.alignment=ct(); c.border=bd()
+        ws1.column_dimensions[get_column_letter(i)].width=w
+    ws1.row_dimensions[3].height=28
+    rows_data=[
+        ("Investissement Quebec (IQ)","Investissement Quebec","A verifier - REQ","1195, av. Lavigerie, bur. 060","Quebec G1V 4N3","Societe d'Etat (gouv. QC)",2011,"7,5 G$ (2024)","investquebec.com","Contribuer au developpement economique du Quebec via prets, capital-actions, garanties et credits d'impot. Plan DD 2023-2028 aligne Agenda 2030. Questionnaire ESG obligatoire. Signataire Finance Montreal. Integration TCFD/GIFCC."),
+        ("Fonds de solidarite FTQ (FSTQ)","Fonds de solidarite des travailleurs du Quebec (F.T.Q.)","A verifier - REQ","545, boul. Cremazie Est, bur. 200","Montreal H2M 2W4","Fonds capital developpement (loi speciale QC)",1983,"21,9 G$ (mai 2025)","fondsftq.com","Fonds de capital de developpement pour creer et proteger des emplois. Vision 2022-2027 : prosperite durable et inclusive. Cible 12 G$ en actifs durables (9+ G$ atteints). Siege LEED v5 Platine 2025. Cadre 6 rendements societaux."),
+        ("Desjardins Capital (CRCD)","Capital regional et cooperatif Desjardins (CRCD)","A verifier - REQ","2 Complexe Desjardins, bur. 1717","Montreal H5B 1B2","Fonds investissement capital developpement",2001,"2,7 G$ CRCD / ~4,9 G$ total","capitalregional.com","75 % des PME hors grands centres. Accompagnement ESG, releve et numerique. Desjardins : zero emission nette 2040, 6 G$+ transition energetique, SBTi valide, rapports GRI/SASB/PRB."),
+        ("Dev. Economique Canada (DEC)","Developpement economique Canada pour les regions du Quebec","S.O. - Agence federale","800, boul. Rene-Levesque O., bur. 500","Montreal H3B 1X9","Agence federale (gouv. Canada)",1991,"316,2 M$ (2024-2025)","dec.canada.ca","Promouvoir le developpement economique des regions du Quebec. 65,4 M$ en projets verts 2024-2025. Inclusion autochtone : 19,47 % valeur contractuelle. Strategie DD alignee ODD 8/9/10/11/12/13."),
+    ]
+    rcs=[C_R1,C_R2,C_R3,C_R4]
+    for ri,(row,rc) in enumerate(zip(rows_data,rcs),4):
+        ws1.row_dimensions[ri].height=90
+        for ci,val in enumerate(row,1):
+            c=ws1.cell(ri,ci,val); c.fill=fl(rc); c.border=bd()
+            if ci==1: c.font=Font(name="Arial",bold=True,size=10,color="1E3A5F"); c.alignment=lf()
+            elif ci==10: c.font=bf(9); c.alignment=lf()
+            elif ci==7: c.font=bf(); c.alignment=ct()
+            else: c.font=bf(); c.alignment=lf()
+    ws1.merge_cells("A8:J8"); ws1["A8"]="* NEQ : registreentreprises.gouv.qc.ca. DEC (federale) non assujettie au REQ provincial."
+    ws1["A8"].font=Font(name="Arial",italic=True,size=8,color=C_GRAY); ws1["A8"].fill=fl(C_R3); ws1["A8"].alignment=lf(); ws1.row_dimensions[8].height=20
+    ws1.freeze_panes="A4"
+
+    ws2=wb.create_sheet("Matrice ODD"); ws2.sheet_view.showGridLines=False
+    ws2.merge_cells("A1:F1"); ws2["A1"]="MATRICE D'ALIGNEMENT ODD / SDG"
+    ws2["A1"].font=hf(14); ws2["A1"].fill=fl(C_HEADER); ws2["A1"].alignment=ct(); ws2.row_dimensions[1].height=30
+    ws2.merge_cells("A2:F2"); ws2["A2"]="OK = Confirme | (indirect) = Indirect/sectoriel | --- = Non documente"
+    ws2["A2"].font=Font(name="Arial",italic=True,size=9,color=C_GRAY); ws2["A2"].fill=fl("F9FAFB"); ws2["A2"].alignment=ct(); ws2.row_dimensions[2].height=16
+    oh2=["ODD","Theme","IQ","FSTQ","Desjardins Capital","DEC"]
+    cw2=[9,32,22,22,22,24]
+    for i,(h,w) in enumerate(zip(oh2,cw2),1):
+        c=ws2.cell(3,i,h); c.fill=fl(C_ACCENT if i>2 else C_HEADER); c.font=hf(10); c.alignment=ct(); c.border=bd()
+        ws2.column_dimensions[get_column_letter(i)].width=w
+    ws2.row_dimensions[3].height=36
+    odd_rows=[
+        ("ODD 1","Pas de pauvrete","E53E3E",["(indirect)","OK","(indirect)","---"]),
+        ("ODD 3","Bonne sante","38A169",["---","OK","---","(indirect)"]),
+        ("ODD 4","Education","D69E2E",["---","OK","---","---"]),
+        ("ODD 5","Egalite sexes","D53F8C",["(indirect)","OK","(indirect)","OK"]),
+        ("ODD 6","Eau propre","3182CE",["---","OK","---","---"]),
+        ("ODD 7","Energie propre","F6AD55",["OK","OK","OK","OK"]),
+        ("ODD 8","Travail decent","744210",["OK","OK","OK","OK"]),
+        ("ODD 9","Industrie & innovation","C05621",["OK","OK","OK","OK"]),
+        ("ODD 10","Inegalites reduites","DD6B20",["(indirect)","(indirect)","(indirect)","OK"]),
+        ("ODD 11","Villes durables","7B341E",["(indirect)","OK","OK","OK"]),
+        ("ODD 12","Conso. responsable","276749",["---","---","(indirect)","OK"]),
+        ("ODD 13","Action climatique","22543D",["OK","OK","OK","OK"]),
+        ("ODD 15","Vie terrestre","1A4731",["(indirect)","OK","(indirect)","---"]),
+        ("ODD 17","Partenariats","1A365D",["OK","---","OK","(indirect)"]),
+    ]
+    for ri,(code,label,color,vals) in enumerate(odd_rows,4):
+        ws2.row_dimensions[ri].height=24
+        c1=ws2.cell(ri,1,code); c1.font=Font(name="Arial",bold=True,size=10,color=C_WH); c1.fill=fl(color); c1.alignment=ct(); c1.border=bd()
+        c2=ws2.cell(ri,2,label); c2.font=bf(10); c2.fill=fl("F9FAFB"); c2.alignment=lf(); c2.border=bd()
+        for ci,v in enumerate(vals,3):
+            cell=ws2.cell(ri,ci,v)
+            if v=="OK": cell.fill=fl(C_YES); cell.font=Font(name="Arial",bold=True,size=10,color="065F46")
+            elif "(indirect)" in v: cell.fill=fl(C_IND); cell.font=Font(name="Arial",bold=True,size=10,color="92400E")
+            else: cell.fill=fl(C_NO); cell.font=Font(name="Arial",size=10,color="9CA3AF")
+            cell.alignment=ct(); cell.border=bd()
+    tr=len(odd_rows)+4; ws2.row_dimensions[tr].height=26
+    for c in [1,2]:
+        cell=ws2.cell(tr,c,"TOTAL ODD confirmes" if c==2 else "TOTAL"); cell.font=hf(10); cell.fill=fl(C_HEADER); cell.alignment=ct(); cell.border=bd()
+    for i,t in enumerate([7,11,7,6],3):
+        cell=ws2.cell(tr,i,t); cell.font=Font(name="Arial",bold=True,size=13,color=C_WH); cell.fill=fl(C_ACCENT); cell.alignment=ct(); cell.border=bd()
+    ws2.freeze_panes="C4"
+
+    ws3=wb.create_sheet("Engagements ESG"); ws3.sheet_view.showGridLines=False
+    ws3.merge_cells("A1:G1"); ws3["A1"]="ENGAGEMENTS ESG & DURABILITE"
+    ws3["A1"].font=hf(14); ws3["A1"].fill=fl(C_HEADER); ws3["A1"].alignment=ct(); ws3.row_dimensions[1].height=30
+    eh=["Organisation","Categorie","Engagement","Cible","Statut 2024-2025","Source","URL"]
+    ew=[24,16,55,32,22,28,30]
+    for i,(h,w) in enumerate(zip(eh,ew),1):
+        c=ws3.cell(2,i,h); c.font=hf(10); c.fill=fl(C_ACCENT); c.alignment=ct(); c.border=bd()
+        ws3.column_dimensions[get_column_letter(i)].width=w
+    ws3.row_dimensions[2].height=26
+    cf={"Environnement":"D1FAE5","Social":"DBEAFE","Gouvernance":"FEF3C7"}
+    om={"Investissement Quebec":C_R1,"FSTQ":C_R2,"Desjardins Capital":C_R3,"DEC":C_R4}
+    esg=[
+        ["Investissement Quebec","Gouvernance","Questionnaire ESG obligatoire","100 % dossiers","En vigueur","Rapport ESG IQ 2024","investquebec.com"],
+        ["Investissement Quebec","Gouvernance","Signataire Finance Montreal","---","Confirme 2024","Finance Montreal","finance-montreal.com"],
+        ["Investissement Quebec","Environnement","Integration TCFD/GIFCC","---","En cours","PADD 2023-2028","investquebec.com"],
+        ["Investissement Quebec","Environnement","Reduction intensite carbone","Cible 2028","En cours","PADD 2023-2028","investquebec.com"],
+        ["Investissement Quebec","Social","Plan DD 2023-2028 (Agenda 2030)","ODD Quebec","Actif","Gouv. QC / IQ","investquebec.com"],
+        ["FSTQ","Environnement","Actifs de developpement durable","12 G$ d'ici 2027","9+ G$ atteints","Rapport DD FTQ 2024","fondsftq.com"],
+        ["FSTQ","Social","Actions a impact employes","100 000 d'ici 2027","69 000+ realisees","Rapport DD FTQ 2024","fondsftq.com"],
+        ["FSTQ","Social","Actionnaires sans regime retraite","100 000 d'ici 2027","En cours","Rapport DD FTQ 2024","fondsftq.com"],
+        ["FSTQ","Gouvernance","Rapport lutte travail force (Loi S-211)","Annuel","Publie 2024","Gouv. Canada","fondsftq.com"],
+        ["FSTQ","Environnement","Siege LEED v5 O+M Platine / BOMA BEST","---","Certifie 2025","LEED / BOMA","fondsftq.com"],
+        ["FSTQ","Gouvernance","Cadre 6 rendements societaux","---","Actif","Cadre FTQ","fondsftq.com"],
+        ["Desjardins Capital","Environnement","Zero emission nette Desjardins","2040","En cours","Desj. ESG 2024","desjardins.com"],
+        ["Desjardins Capital","Environnement","Energies renouvelables","2 G$ engages","Atteint avant 2025","Desj. ESG 2024","desjardins.com"],
+        ["Desjardins Capital","Environnement","Transition energetique","6 G$+ depuis 2020","En cours","Desj. ESG 2024","desjardins.com"],
+        ["Desjardins Capital","Gouvernance","Ambition SBTi (1,5 C)","Validee","Confirmee","SBTi/Desjardins","desjardins.com"],
+        ["Desjardins Capital","Gouvernance","Rapports GRI / SASB / PRB / PSI","Annuel","Publie 2024","Desj. ESG","desjardins.com"],
+        ["Desjardins Capital","Social","Integration ESG + releve + numerique PME","100 % portefeuille","En cours","Desj. Capital","capitalregional.com"],
+        ["DEC","Environnement","Investissements technologies propres","25 M$/an","65,4 M$ en 2024-25","Strat. DD DEC","dec.canada.ca"],
+        ["DEC","Environnement","Flotte ZEV ou hybride","35 % mars 2027","En cours","Strat. DD DEC","dec.canada.ca"],
+        ["DEC","Environnement","Reduction GES flotte","-15 % 2026-27","En cours","Strat. DD DEC","dec.canada.ca"],
+        ["DEC","Social","Inclusion autochtone","19,47 % valeur contractuelle","Atteint 2024-25","Rapport DEC","dec.canada.ca"],
+        ["DEC","Gouvernance","Strategie ministerielle DD 2024-2025","ODD 8/9/10/11/12/13","Publiee 2024","Gouv. Canada","dec.canada.ca"],
+    ]
+    for ri,row in enumerate(esg,3):
+        ws3.row_dimensions[ri].height=42; rc=om.get(row[0],"FFFFFF")
+        for ci,val in enumerate(row,1):
+            cell=ws3.cell(ri,ci,val); cell.border=bd()
+            if ci==1: cell.font=Font(name="Arial",bold=True,size=9,color="1E3A5F"); cell.fill=fl(rc); cell.alignment=lf()
+            elif ci==2: cell.font=bf(9); cell.fill=fl(cf.get(val,"F9FAFB")); cell.alignment=ct()
+            elif ci in [4,5]: cell.font=bf(9); cell.fill=fl(rc); cell.alignment=ct()
+            else: cell.font=bf(9); cell.fill=fl(rc); cell.alignment=lf()
+    ws3.freeze_panes="A3"
+
+    buf=io.BytesIO(); wb.save(buf); buf.seek(0)
+    return buf.read()
+
 
 # ── Données ───────────────────────────────────────────────────────────────────
 ORGS = [
@@ -202,7 +345,7 @@ with c1:
 with c2:
     st.download_button(
         label="⬇ Télécharger Excel",
-        data=open("/Users/macbookprom1max/Library/CloudStorage/OneDrive-FONDACTION(CSN)/Documents/Claude/DashBoard/Organisations_Durabilite_ODD.xlsx", "rb").read(),
+        data=_build_excel(),
         file_name="Organisations_Durabilite_ODD.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         use_container_width=True,
