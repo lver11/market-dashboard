@@ -75,6 +75,13 @@ st.html("""
 </style>
 """)
 
+def _hex_rgba(hex_color: str, alpha: float) -> str:
+    """Convertit '#RRGGBB' en 'rgba(R,G,B,alpha)' pour plotly."""
+    h = hex_color.lstrip("#")
+    r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+    return f"rgba({r},{g},{b},{alpha})"
+
+
 @st.cache_data
 def _build_excel() -> bytes:
     """Génère le fichier Excel en mémoire (compatible Streamlit Cloud)."""
@@ -418,7 +425,7 @@ with tab1:
                     theta=categories + [categories[0]],
                     fill="toself",
                     line_color=org["couleur"],
-                    fillcolor=org["couleur"] + "33",
+                    fillcolor=_hex_rgba(org["couleur"], 0.2),
                 ))
                 fig_r.update_layout(
                     polar=dict(
@@ -556,7 +563,7 @@ with tab3:
                 theta=cats + [cats[0]],
                 name=org["court"],
                 line_color=org["couleur"],
-                fillcolor=org["couleur"] + "22",
+                fillcolor=_hex_rgba(org["couleur"], 0.13),
                 fill="toself",
             ))
         fig_multi.update_layout(
