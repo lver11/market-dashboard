@@ -458,13 +458,21 @@ with st.sidebar:
     )
     if uploaded:
         raw = uploaded.read()
-        st.session_state["snap_file"] = raw
-        st.session_state["snap_name"] = uploaded.name
+        # Seulement re-parser si le fichier a changé (comparaison par taille)
+        if raw != st.session_state.get("snap_file"):
+            st.session_state["snap_file"] = raw
+            st.session_state["snap_name"] = uploaded.name
+            st.session_state["snap_error"] = None
+            st.rerun()  # Force un re-render complet de la page
         st.success(f"✓ {uploaded.name}")
     elif "snap_name" in st.session_state:
         st.info(f"📄 En mémoire : {st.session_state['snap_name']}")
     else:
         st.caption("Aucun fichier chargé — données du 12 mars 2026.")
+
+    # Afficher erreur de parsing si elle existe
+    if st.session_state.get("snap_error"):
+        st.error(f"⚠️ Erreur : {st.session_state['snap_error']}")
 
     st.markdown("---")
     st.markdown(
@@ -476,18 +484,24 @@ with st.sidebar:
     )
 
 # ── Load data (uploaded or fallback) ─────────────────────────────────────────
+_parse_ok = False
 if "snap_file" in st.session_state:
     try:
         date_str, SCORECARD, HOPE_DATA, TACT_DATA, THESES_DATA, RISQUES_DATA, MATRICE = \
             parse_snapshot(st.session_state["snap_file"])
         data_src = st.session_state.get("snap_name", "fichier uploadé")
+        st.session_state["snap_error"] = None
+        _parse_ok = True
     except Exception as exc:
-        st.error(f"⚠️ Erreur de lecture du fichier : {exc}")
+        err_msg = str(exc)
+        st.session_state["snap_error"] = err_msg
+        st.error(f"⚠️ Erreur de lecture du fichier — vérifiez que l'onglet **Snapshot** existe : `{err_msg}`")
         date_str, SCORECARD, HOPE_DATA, TACT_DATA, THESES_DATA, RISQUES_DATA, MATRICE = \
             "12 mars 2026", _SCORECARD_DEFAULT, _HOPE_DEFAULT, _TACT_DEFAULT, \
             _THESES_DEFAULT, _RISQUES_DEFAULT, _MATRICE_DEFAULT
-        data_src = "Tableau_Bord_Fondaction_Bloomberg-3.xlsx (fallback)"
-else:
+        data_src = "fallback (erreur de lecture)"
+
+if not _parse_ok and "snap_file" not in st.session_state:
     date_str = "12 mars 2026"
     SCORECARD = _SCORECARD_DEFAULT
     HOPE_DATA = _HOPE_DEFAULT
@@ -495,6 +509,7 @@ else:
     THESES_DATA = _THESES_DEFAULT
     RISQUES_DATA = _RISQUES_DEFAULT
     MATRICE = _MATRICE_DEFAULT
+    data_src = "Tableau_Bord_Fondaction_Bloomberg-3.xlsx"
     data_src = "Tableau_Bord_Fondaction_Bloomberg-3.xlsx"
 
 # ── Header ────────────────────────────────────────────────────────────────────
