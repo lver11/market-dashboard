@@ -247,8 +247,9 @@ def parse_snapshot(file_bytes: bytes):
     scorecard[2]["jaune"] = sum(1 for r in all_th if r["statut"] == "Jaune")
     scorecard[2]["rouge"] = sum(1 for r in all_th if r["statut"] == "Rouge")
 
-    # RISQUES (rows 81-100)
+    # RISQUES (rows 81-100) — Canada extrait séparément
     risques_data: dict = {}
+    canada_data: dict = {}
     current = None
     for ri in range(81, 101):
         row = df.iloc[ri]
@@ -259,19 +260,36 @@ def parse_snapshot(file_bytes: bytes):
             current = cat
         if current:
             sig = safe_str(row[5])
-            risques_data.setdefault(current, [])
-            risques_data[current].append({
+            entry = {
                 "ind": ind,
                 "val": fmt_val(row[3]),
                 "seuil": safe_str(row[4]) or "—",
                 "signal": sig if sig in ("Vert", "Jaune", "Rouge") else "—",
                 "comm": safe_str(row[6]),
-            })
+            }
+            if current.upper() == "CANADA":
+                canada_data.setdefault(current, [])
+                canada_data[current].append(entry)
+            else:
+                risques_data.setdefault(current, [])
+                risques_data[current].append(entry)
 
     all_r = [r for rows in risques_data.values() for r in rows]
     scorecard[3]["vert"]  = sum(1 for r in all_r if r["signal"] == "Vert")
     scorecard[3]["jaune"] = sum(1 for r in all_r if r["signal"] == "Jaune")
     scorecard[3]["rouge"] = sum(1 for r in all_r if r["signal"] == "Rouge")
+
+    # Canada scorecard — score calculé depuis les indicateurs
+    all_ca = [r for rows in canada_data.values() for r in rows]
+    ca_v = sum(1 for r in all_ca if r["signal"] == "Vert")
+    ca_j = sum(1 for r in all_ca if r["signal"] == "Jaune")
+    ca_r = sum(1 for r in all_ca if r["signal"] == "Rouge")
+    total_ca = ca_v + ca_j + ca_r
+    ca_score = int((ca_v + 0.5 * ca_j) / total_ca * 100) if total_ca > 0 else 0
+    scorecard.insert(4, {
+        "cat": "Canada", "score": ca_score, "trend": "→",
+        "vert": ca_v, "jaune": ca_j, "rouge": ca_r, "color": "#EF4444",
+    })
 
     # MATRICE (rows 104-108)
     matrice = []
@@ -290,7 +308,7 @@ def parse_snapshot(file_bytes: bytes):
         matrice.append({"risque": risque, "prob": prob, "impact": impact,
                         "score": score_m, "plan": plan})
 
-    return date_str, scorecard, hope_data, tact_data, theses_data, risques_data, matrice
+    return date_str, scorecard, hope_data, tact_data, theses_data, risques_data, canada_data, matrice
 
 
 # ── Fallback hardcoded data ────────────────────────────────────────────────────
@@ -299,6 +317,7 @@ _SCORECARD_DEFAULT = [
     {"cat": "Signaux Tactiques", "score": 50, "trend": "→", "vert": 7,  "jaune": 4,  "rouge": 7,  "color": "#F59E0B"},
     {"cat": "Thèses Clés",       "score": 71, "trend": "↑", "vert": 11, "jaune": 8,  "rouge": 2,  "color": "#34D399"},
     {"cat": "Alertes Risques",   "score": 79, "trend": "↑", "vert": 12, "jaune": 6,  "rouge": 1,  "color": "#F87171"},
+    {"cat": "Canada",            "score": 50, "trend": "→", "vert": 1,  "jaune": 2,  "rouge": 0,  "color": "#EF4444"},
     {"cat": "SCORE GLOBAL",      "score": 66, "trend": "→", "vert": None, "jaune": None, "rouge": None, "color": "#A78BFA"},
 ]
 
@@ -426,11 +445,14 @@ _RISQUES_DEFAULT = {
         {"ind": "USD Index (DXY)",                  "val": "99.51", "seuil": ">110",      "signal": "Vert",  "comm": "Force dollar"},
         {"ind": "USD/CNY",                          "val": "6.87",  "seuil": ">7.5",      "signal": "Vert",  "comm": "Tensions Chine"},
     ],
+}
+
+_CANADA_DEFAULT = {
     "CANADA": [
-        {"ind": "Écart taux 10Y CA−US",             "val": "−0.75", "seuil": "<−1.0%",   "signal": "Jaune", "comm": "Divergence politique monétaire"},
-        {"ind": "CAD/USD",                          "val": "0.735", "seuil": "<0.70",     "signal": "Jaune", "comm": "Faiblesse dollar canadien"},
-        {"ind": "Renouvellements hypothécaires 2026","val": "—",    "seuil": "Qualitatif","signal": "—",     "comm": "Mur hypothécaire à surveiller"},
-        {"ind": "Indice TSX vs S&P 500 (rel perf)", "val": "5.46",  "seuil": "<−10%",    "signal": "Vert",  "comm": "Sous-performance Canada"},
+        {"ind": "Écart taux 10Y CA−US",              "val": "−0.75", "seuil": "<−1.0%",   "signal": "Jaune", "comm": "Divergence politique monétaire"},
+        {"ind": "CAD/USD",                           "val": "0.735", "seuil": "<0.70",     "signal": "Jaune", "comm": "Faiblesse dollar canadien"},
+        {"ind": "Renouvellements hypothécaires 2026","val": "—",     "seuil": "Qualitatif","signal": "—",     "comm": "Mur hypothécaire à surveiller"},
+        {"ind": "Indice TSX vs S&P 500 (rel perf)",  "val": "5.46",  "seuil": "<−10%",    "signal": "Vert",  "comm": "Sous-performance Canada"},
     ],
 }
 
@@ -487,7 +509,7 @@ with st.sidebar:
 _parse_ok = False
 if "snap_file" in st.session_state:
     try:
-        date_str, SCORECARD, HOPE_DATA, TACT_DATA, THESES_DATA, RISQUES_DATA, MATRICE = \
+        date_str, SCORECARD, HOPE_DATA, TACT_DATA, THESES_DATA, RISQUES_DATA, CANADA_DATA, MATRICE = \
             parse_snapshot(st.session_state["snap_file"])
         data_src = st.session_state.get("snap_name", "fichier uploadé")
         st.session_state["snap_error"] = None
@@ -496,9 +518,9 @@ if "snap_file" in st.session_state:
         err_msg = str(exc)
         st.session_state["snap_error"] = err_msg
         st.error(f"⚠️ Erreur de lecture du fichier — vérifiez que l'onglet **Snapshot** existe : `{err_msg}`")
-        date_str, SCORECARD, HOPE_DATA, TACT_DATA, THESES_DATA, RISQUES_DATA, MATRICE = \
-            "12 mars 2026", _SCORECARD_DEFAULT, _HOPE_DEFAULT, _TACT_DEFAULT, \
-            _THESES_DEFAULT, _RISQUES_DEFAULT, _MATRICE_DEFAULT
+        date_str, SCORECARD, HOPE_DATA, TACT_DATA, THESES_DATA = \
+            "12 mars 2026", _SCORECARD_DEFAULT, _HOPE_DEFAULT, _TACT_DEFAULT, _THESES_DEFAULT
+        RISQUES_DATA, CANADA_DATA, MATRICE = _RISQUES_DEFAULT, _CANADA_DEFAULT, _MATRICE_DEFAULT
         data_src = "fallback (erreur de lecture)"
 
 if not _parse_ok and "snap_file" not in st.session_state:
@@ -508,8 +530,8 @@ if not _parse_ok and "snap_file" not in st.session_state:
     TACT_DATA = _TACT_DEFAULT
     THESES_DATA = _THESES_DEFAULT
     RISQUES_DATA = _RISQUES_DEFAULT
+    CANADA_DATA = _CANADA_DEFAULT
     MATRICE = _MATRICE_DEFAULT
-    data_src = "Tableau_Bord_Fondaction_Bloomberg-3.xlsx"
     data_src = "Tableau_Bord_Fondaction_Bloomberg-3.xlsx"
 
 # ── Header ────────────────────────────────────────────────────────────────────
@@ -534,10 +556,11 @@ st.html(f"""
 total_ind = (sum(len(v) for v in HOPE_DATA.values()) +
              sum(len(v) for v in TACT_DATA.values()) +
              sum(len(v) for v in THESES_DATA.values()) +
-             sum(len(v) for v in RISQUES_DATA.values()))
+             sum(len(v) for v in RISQUES_DATA.values()) +
+             sum(len(v) for v in CANADA_DATA.values()))
 
 st.html(f'<p class="section-hdr">Scorecard Global — {total_ind} indicateurs</p>')
-cols = st.columns(5)
+cols = st.columns(6)
 for col, d in zip(cols, SCORECARD):
     with col:
         st.plotly_chart(gauge_fig(d["score"], d["color"], d["cat"]),
@@ -564,12 +587,14 @@ h_s  = sc.get("Cycle HOPE", {}).get("score", 63)
 t_s  = sc.get("Signaux Tactiques", {}).get("score", 50)
 th_s = sc.get("Thèses Clés", {}).get("score", 71)
 r_s  = sc.get("Alertes Risques", {}).get("score", 79)
+ca_s = sc.get("Canada", {}).get("score", 50)
 
-tab1, tab2, tab3, tab4 = st.tabs([
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
     f"🏗️  HOPE — Cycle ({h_s}/100)",
     f"📈  Signaux Tactiques ({t_s}/100)",
     f"💡  Thèses Clés ({th_s}/100)",
     f"⚠️  Alertes Risques ({r_s}/100)",
+    f"🍁  Canada ({ca_s}/100)",
 ])
 
 # ── TAB 1 : HOPE ─────────────────────────────────────────────────────────────
@@ -704,3 +729,24 @@ with tab4:
           <span style="flex:3;font-size:0.65rem;color:#6B7280;">{plan_disp}</span>
         </div>"""
     st.html(mat_html)
+
+# ── TAB 5 : CANADA ───────────────────────────────────────────────────────────
+with tab5:
+    ca_all = [r for rows in CANADA_DATA.values() for r in rows]
+    ca_v_t = sum(1 for r in ca_all if r["signal"] == "Vert")
+    ca_j_t = sum(1 for r in ca_all if r["signal"] == "Jaune")
+    ca_r_t = sum(1 for r in ca_all if r["signal"] == "Rouge")
+    st.html(f'<p class="section-hdr">{len(ca_all)} indicateurs — {ca_v_t} Verts · {ca_j_t} Jaunes · {ca_r_t} Rouges</p>')
+    for section, rows in CANADA_DATA.items():
+        st.html(f'<div class="subsec-hdr">{section}</div>')
+        html = ""
+        for r in rows:
+            html += f"""
+            <div class="ind-row">
+              <span class="ind-name">{r["ind"]}</span>
+              <span class="ind-val">{r["val"]}</span>
+              <span class="ind-seuil">{r["seuil"]}</span>
+              {sig_badge(r["signal"])}
+              <span class="ind-note" style="flex:2;text-align:left;">{r["comm"]}</span>
+            </div>"""
+        st.html(html)
