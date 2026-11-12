@@ -21,6 +21,10 @@ from flask import Flask, jsonify, render_template
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+from utils.static_data import (  # noqa: E402 — hand-maintained reference data
+    ECONOMIC_CALENDAR, GEOPOLITICAL_RISKS, CENTRAL_BANK_RATES, EIA_INVENTORY, OPEC_DATA, ENERGY_GEO_RISKS,
+)
+
 app = Flask(__name__)
 
 # ─── In-memory cache ──────────────────────────────────────────────────────────
@@ -85,8 +89,8 @@ MARKET_ASSETS = [
 # ─── News Feeds ───────────────────────────────────────────────────────────────
 NEWS_FEEDS = [
     # Wire services
-    ("Reuters Top",    "https://feeds.reuters.com/reuters/topNews"),
-    ("Reuters Biz",    "https://feeds.reuters.com/reuters/businessNews"),
+    ("Reuters/GN Top",    "https://news.google.com/rss/search?q=site:reuters.com+markets&hl=en-US&gl=US&ceid=US:en"),
+    ("Reuters/GN Biz",    "https://news.google.com/rss/search?q=site:reuters.com+business&hl=en-US&gl=US&ceid=US:en"),
     ("AP Top News",    "https://apnews.com/rss"),
     # Finance media
     ("CNBC Markets",   "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100003114"),
@@ -102,131 +106,6 @@ NEWS_FEEDS = [
 _REDDIT_USER_AGENT = "Mozilla/5.0 (compatible; market-dashboard/1.0; +https://github.com/lver11/market-dashboard)"
 _FEEDS_NEEDING_UA  = {"r/investing", "r/wallstreetbets", "r/economics", "r/geopolitics"}
 
-# ─── Economic Calendar (Q1-Q2 2026) ──────────────────────────────────────────
-ECONOMIC_CALENDAR = [
-    # === MARCH 2026 ===
-    {"date": "2026-03-06", "event": "Non-Farm Payrolls (Feb)",      "country": "US", "importance": "critical",
-     "forecast": "200K", "previous": "256K"},
-    {"date": "2026-03-06", "event": "Unemployment Rate (Feb)",       "country": "US", "importance": "high",
-     "forecast": "4.1%", "previous": "4.0%"},
-    {"date": "2026-03-06", "event": "ECB Rate Decision",             "country": "EU", "importance": "critical",
-     "forecast": "Hold", "previous": "2.65%"},
-    {"date": "2026-03-07", "event": "Michigan Consumer Confidence",  "country": "US", "importance": "medium",
-     "forecast": None, "previous": "64.7"},
-    {"date": "2026-03-11", "event": "JOLTS Job Openings (Jan)",      "country": "US", "importance": "medium",
-     "forecast": None, "previous": "7.6M"},
-    {"date": "2026-03-11", "event": "CPI YoY (Feb)",                 "country": "US", "importance": "critical",
-     "forecast": "2.4%", "previous": "3.0%", "actual": "2.4%"},
-    {"date": "2026-03-11", "event": "Core CPI YoY (Feb)",            "country": "US", "importance": "critical",
-     "forecast": "2.5%", "previous": "3.3%", "actual": "2.5%"},
-    {"date": "2026-03-13", "event": "Initial Jobless Claims",        "country": "US", "importance": "medium",
-     "forecast": None, "previous": "242K"},
-    {"date": "2026-03-17", "event": "US Retail Sales (Feb)",         "country": "US", "importance": "high",
-     "forecast": None, "previous": "-0.2%"},
-    {"date": "2026-03-18", "event": "PPI (Feb)",                     "country": "US", "importance": "medium",
-     "forecast": None, "previous": "3.5%"},
-    {"date": "2026-03-15", "event": "China Industrial Production",   "country": "CN", "importance": "medium",
-     "forecast": None, "previous": "6.2%"},
-    {"date": "2026-03-15", "event": "China Retail Sales",            "country": "CN", "importance": "medium",
-     "forecast": None, "previous": "3.7%"},
-    {"date": "2026-03-17", "event": "NY Fed Manufacturing",          "country": "US", "importance": "medium",
-     "forecast": None, "previous": "5.7"},
-    {"date": "2026-03-17", "event": "FOMC Meeting Begins",           "country": "US", "importance": "high",
-     "forecast": None, "previous": None},
-    {"date": "2026-03-18", "event": "FOMC Rate Decision",            "country": "US", "importance": "critical",
-     "forecast": "No change", "previous": "3.50-3.75%"},
-    {"date": "2026-03-18", "event": "Powell Press Conference",       "country": "US", "importance": "critical",
-     "forecast": None, "previous": None},
-    {"date": "2026-03-18", "event": "FOMC Dot Plot / Projections",   "country": "US", "importance": "high",
-     "forecast": None, "previous": None},
-    {"date": "2026-03-19", "event": "BOJ Rate Decision",             "country": "JP", "importance": "high",
-     "forecast": None, "previous": "0.50%"},
-    {"date": "2026-03-20", "event": "Philadelphia Fed Index",        "country": "US", "importance": "medium",
-     "forecast": None, "previous": "18.1"},
-    {"date": "2026-03-21", "event": "Michigan Consumer Confidence (Final)", "country": "US", "importance": "medium",
-     "forecast": None, "previous": None},
-    {"date": "2026-03-25", "event": "S&P/Case-Shiller Home Prices", "country": "US", "importance": "low",
-     "forecast": None, "previous": None},
-    {"date": "2026-03-26", "event": "Consumer Confidence (CB)",      "country": "US", "importance": "medium",
-     "forecast": None, "previous": "104.1"},
-    {"date": "2026-03-13", "event": "GDP Q4 2025 (2nd Estimate)",    "country": "US", "importance": "high",
-     "forecast": "1.4%", "previous": "1.4%"},
-    {"date": "2026-03-13", "event": "PCE Price Index YoY (Jan)",     "country": "US", "importance": "critical",
-     "forecast": None, "previous": "2.9%"},
-    {"date": "2026-03-13", "event": "Personal Income & Spending (Jan)", "country": "US", "importance": "medium",
-     "forecast": None, "previous": None},
-    {"date": "2026-03-26", "event": "Durable Goods Orders (Feb)",    "country": "US", "importance": "medium",
-     "forecast": None, "previous": "3.1%"},
-    # === APRIL 2026 ===
-    {"date": "2026-04-01", "event": "ISM Manufacturing PMI (Mar)",   "country": "US", "importance": "high",
-     "forecast": None, "previous": "50.3"},
-    {"date": "2026-04-02", "event": "JOLTS Job Openings (Feb)",      "country": "US", "importance": "medium",
-     "forecast": None, "previous": None},
-    {"date": "2026-04-03", "event": "Non-Farm Payrolls (Mar)",       "country": "US", "importance": "critical",
-     "forecast": None, "previous": "200K"},
-    {"date": "2026-04-03", "event": "Unemployment Rate (Mar)",       "country": "US", "importance": "high",
-     "forecast": None, "previous": "4.1%"},
-    {"date": "2026-04-10", "event": "CPI (Mar)",                     "country": "US", "importance": "critical",
-     "forecast": None, "previous": "2.4%"},
-    {"date": "2026-04-16", "event": "China GDP Q1 2026",             "country": "CN", "importance": "high",
-     "forecast": None, "previous": "5.0%"},
-    {"date": "2026-04-29", "event": "FOMC Rate Decision",            "country": "US", "importance": "critical",
-     "forecast": None, "previous": "3.50-3.75%"},
-    {"date": "2026-04-30", "event": "GDP Q1 2026 (Advance)",         "country": "US", "importance": "high",
-     "forecast": None, "previous": "2.3%"},
-]
-
-# ─── Geopolitical Risk Monitor ────────────────────────────────────────────────
-GEOPOLITICAL_RISKS = [
-    {
-        "region": "Europe",
-        "title": "Ukraine-Russia War",
-        "level": "high",
-        "icon": "sword",
-        "description": "Active conflict; ceasefire talks ongoing. NATO supply lines under pressure.",
-        "market_impact": "Energy prices, European equities, EUR weakness",
-    },
-    {
-        "region": "Middle East",
-        "title": "Middle East Tensions",
-        "level": "high",
-        "icon": "flame",
-        "description": "Regional escalation risks; Red Sea shipping disruptions affecting supply chains.",
-        "market_impact": "Oil premium, shipping costs, global inflation",
-    },
-    {
-        "region": "Asia Pacific",
-        "title": "Taiwan Strait / China-US",
-        "level": "medium",
-        "icon": "alert-triangle",
-        "description": "Elevated military activity; US-China strategic competition intensifying.",
-        "market_impact": "Tech supply chains, semiconductors, Asian equities",
-    },
-    {
-        "region": "Americas",
-        "title": "US-China Trade War",
-        "level": "medium",
-        "icon": "trending-down",
-        "description": "Tariff escalation; supply chain decoupling in critical sectors.",
-        "market_impact": "Global trade, tech sector, EM currencies",
-    },
-    {
-        "region": "Global",
-        "title": "Central Bank Policy Divergence",
-        "level": "medium",
-        "icon": "bar-chart-2",
-        "description": "Fed vs ECB vs BOJ divergent paths creating currency volatility.",
-        "market_impact": "USD strength, carry trades, EM debt",
-    },
-    {
-        "region": "Americas",
-        "title": "US Fiscal Sustainability",
-        "level": "low",
-        "icon": "dollar-sign",
-        "description": "Debt ceiling concerns; rising deficit affecting bond market sentiment.",
-        "market_impact": "Treasury yields, USD long-term, sovereign ratings",
-    },
-]
 
 # ─── Bank of Canada Valet API ─────────────────────────────────────────────────
 BOC_SERIES = {
@@ -240,15 +119,6 @@ BOC_SERIES = {
 YIELD_TICKERS = {"^IRX", "^FVX", "^TNX", "^TYX",
                  "CA2YT=RR", "CA5YT=RR", "CA10YT=RR", "CA30YT=RR"}
 
-# ─── Central Bank Policy Rates ────────────────────────────────────────────────
-CENTRAL_BANK_RATES = [
-    {"flag": "🇺🇸", "name": "États-Unis",  "bank": "Fed",  "rate": "3.50–3.75%", "bias": "neutral",  "change": "=",  "next_meeting": "17-18 mars 2026"},
-    {"flag": "🇪🇺", "name": "Zone Euro",   "bank": "BCE",  "rate": "2.65%",      "bias": "dovish",   "change": "↓",  "next_meeting": "17 avr. 2026"},
-    {"flag": "🇨🇦", "name": "Canada",      "bank": "BdC",  "rate": "3.00%",      "bias": "dovish",   "change": "↓",  "next_meeting": "16 avr. 2026"},
-    {"flag": "🇬🇧", "name": "Royaume-Uni", "bank": "BOE",  "rate": "4.50%",      "bias": "neutral",  "change": "↓",  "next_meeting": "8 mai 2026"},
-    {"flag": "🇯🇵", "name": "Japon",       "bank": "BOJ",  "rate": "0.50%",      "bias": "hawkish",  "change": "↑",  "next_meeting": "19 mars 2026"},
-    {"flag": "🇨🇭", "name": "Suisse",      "bank": "BNS",  "rate": "0.25%",      "bias": "neutral",  "change": "↓",  "next_meeting": "20 mars 2026"},
-]
 
 # ─── Oil & LNG Assets ─────────────────────────────────────────────────────────
 OIL_LNG_ASSETS = [
@@ -294,78 +164,10 @@ OIL_LNG_ASSETS = [
 ]
 
 # EIA Weekly Petroleum Status Report (source: EIA.gov, updated manually each Wednesday)
-EIA_INVENTORY = {
-    "report_date":    "2026-03-19",
-    "crude_oil":      {"value": 437.2, "change": -2.1, "unit": "MMbbl", "label": "Crude Oil"},
-    "gasoline":       {"value": 241.5, "change": +1.3, "unit": "MMbbl", "label": "Gasoline"},
-    "distillates":    {"value": 117.8, "change": -0.8, "unit": "MMbbl", "label": "Distillates"},
-    "cushing":        {"value":  26.4, "change": -1.2, "unit": "MMbbl", "label": "Cushing, OK"},
-    "spr":            {"value": 395.2, "change":  0.0, "unit": "MMbbl", "label": "SPR"},
-    "refinery_util":  {"value":  87.3, "change": +0.6, "unit": "%",     "label": "Refinery Util."},
-}
-
-OPEC_DATA = {
-    "report_month":            "February 2026",
-    "total_production_mmbpd":  26.8,
-    "opec_plus_target_mmbpd":  26.5,
-    "compliance_pct":           89,
-    "surplus_mmbpd":            0.3,
-    "next_meeting":             "June 2026",
-    "key_producers": [
-        {"country": "Saudi Arabia", "flag": "SA", "production": 9.0, "quota": 9.0},
-        {"country": "Russia",       "flag": "RU", "production": 9.1, "quota": 9.0},
-        {"country": "UAE",          "flag": "AE", "production": 3.0, "quota": 2.9},
-        {"country": "Iraq",         "flag": "IQ", "production": 4.1, "quota": 4.0},
-        {"country": "Kuwait",       "flag": "KW", "production": 2.5, "quota": 2.5},
-    ],
-}
-
-ENERGY_GEO_RISKS = [
-    {
-        "region": "Middle East",
-        "title": "Strait of Hormuz",
-        "level": "high",
-        "icon": "ship",
-        "description": "~20% of global oil & LNG transits this chokepoint daily. Iran tensions remain elevated.",
-        "market_impact": "+$8-15/bbl if closure risk escalates",
-    },
-    {
-        "region": "Russia / Europe",
-        "title": "Russian Gas Supply",
-        "level": "high",
-        "icon": "flame",
-        "description": "Nord Stream offline; remaining pipeline routes uncertain. European LNG imports at record highs.",
-        "market_impact": "Persistent EU LNG premium vs US Henry Hub",
-    },
-    {
-        "region": "US Gulf Coast",
-        "title": "LNG Export Expansion",
-        "level": "medium",
-        "icon": "anchor",
-        "description": "Sabine Pass T6, Corpus Christi T3, Plaquemines LNG underway. US market share rising globally.",
-        "market_impact": "Structurally bullish Henry Hub long-term demand",
-    },
-    {
-        "region": "Libya / Nigeria",
-        "title": "African Supply Disruptions",
-        "level": "medium",
-        "icon": "alert-triangle",
-        "description": "Periodic production outages from political instability and pipeline sabotage.",
-        "market_impact": "+$2-5/bbl on major disruption events",
-    },
-    {
-        "region": "South America",
-        "title": "Venezuela / Guyana",
-        "level": "low",
-        "icon": "trending-up",
-        "description": "Guyana ramp-up is bullish for Atlantic basin supply. Venezuela sanctions cap output.",
-        "market_impact": "Net neutral; Guyana growth offsets Venezuela shortfall",
-    },
-]
 
 ENERGY_NEWS_FEEDS = [
     ("EIA Today",   "https://www.eia.gov/rss/todayinenergy.xml"),
-    ("Reuters Biz", "https://feeds.reuters.com/reuters/businessNews"),
+    ("Reuters/GN Biz", "https://news.google.com/rss/search?q=site:reuters.com+business&hl=en-US&gl=US&ceid=US:en"),
     ("Oil/LNG",     "https://news.google.com/rss/search?q=oil+LNG+OPEC+crude+natural+gas&hl=en-US&gl=US&ceid=US:en"),
     ("Energy Mkts", "https://news.google.com/rss/search?q=energy+market+petroleum+refinery+gasoline&hl=en-US&gl=US&ceid=US:en"),
 ]

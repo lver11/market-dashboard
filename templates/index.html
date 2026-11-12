@@ -690,7 +690,7 @@ function renderCalendar(events) {
     low: 'badge-low',
   };
 
-  const flagMap = { US: '🇺🇸', EU: '🇪🇺', JP: '🇯🇵', CN: '🇨🇳', GB: '🇬🇧', CA: '🇨🇦' };
+  const flagMap = { US: '🇺🇸', EU: '🇪🇺', JP: '🇯🇵', CN: '🇨🇳', GB: '🇬🇧', CA: '🇨🇦', CH: '🇨🇭', OPEC: '🛢️' };
 
   container.innerHTML = events.map(ev => {
     const daysStr = ev.is_today ? '<span class="text-yellow-400 font-bold text-xs">AUJOURD\'HUI</span>'
@@ -707,6 +707,7 @@ function renderCalendar(events) {
 
     const forecast = ev.forecast ? `<span class="text-slate-500 text-xs">Prévu: <b class="text-slate-300">${ev.forecast}</b></span>` : '';
     const previous = ev.previous ? `<span class="text-slate-600 text-xs">Préc: ${ev.previous}</span>` : '';
+    const actual   = ev.actual ? `<span class="text-xs">Réel: <b class="text-amber-300">${ev.actual}</b></span>` : '';
 
     return `
       <div class="${rowBg}">
@@ -720,6 +721,7 @@ function renderCalendar(events) {
             <div class="flex items-center gap-2 mt-0.5 flex-wrap">
               <span class="text-xs text-slate-500 font-mono">${ev.date}</span>
               ${daysStr}
+              ${actual}
               ${forecast}
               ${previous}
             </div>
@@ -1012,10 +1014,20 @@ async function fetchAll() {
     document.getElementById('dashboard-content').classList.remove('hidden');
 
     const updated = new Date(appData.last_updated);
-    const timeStr = updated.toLocaleTimeString('fr-CA', { hour12: false, hour: '2-digit', minute: '2-digit' });
+    const timeStr = updated.toLocaleTimeString('fr-CA', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
     document.getElementById('last-updated-header').textContent = 'Mis à jour ' + timeStr;
 
-    startCountdown();
+    if (window.__PRELOAD__) {
+      // Streamlit mode: data is injected server-side and refreshed on each page
+      // load (or via the Streamlit « Rafraîchir » button). The in-page timer and
+      // button cannot fetch new data, so show the load time instead.
+      const rb = document.getElementById('refresh-btn');
+      if (rb) rb.style.display = 'none';
+      const cd = document.getElementById('countdown');
+      if (cd && cd.parentElement) cd.parentElement.textContent = 'Données chargées à ' + timeStr;
+    } else {
+      startCountdown();
+    }
   } catch (err) {
     console.error('Fetch error:', err);
     document.getElementById('loading-state').innerHTML = `
@@ -1049,7 +1061,7 @@ setInterval(updateClock, 1000);
 updateClock();
 
 // Auto-refresh every 60 seconds
-setInterval(() => { fetchAll(); }, 60 * 1000);
+if (!window.__PRELOAD__) setInterval(() => { fetchAll(); }, 60 * 1000);
 
 // Initial load
 fetchAll();

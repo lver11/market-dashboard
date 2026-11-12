@@ -439,7 +439,7 @@ function buildEIA(eia) {
       <div class="flex justify-between items-center py-1.5 border-b border-slate-800">
         <span class="text-xs text-slate-300">${item.label}</span>
         <div class="text-right">
-          <div class="text-xs font-bold font-mono text-white">${Number(item.value).toFixed(1)} ${item.unit}</div>
+          <div class="text-xs font-bold font-mono text-white">${item.value == null ? 'n.d.' : Number(item.value).toFixed(1) + ' ' + item.unit}</div>
           <div class="text-xs font-semibold" style="color:${col};font-size:0.6rem">${chgStr}</div>
         </div>
       </div>`;
@@ -450,11 +450,22 @@ function buildEIA(eia) {
 function buildOPEC(opec) {
   const el = document.getElementById('opec-content');
   const comp = opec.compliance_pct;
-  const compCol = comp >= 90 ? '#22c55e' : comp >= 70 ? '#f59e0b' : '#ef4444';
+  const compCol = comp == null ? '#94a3b8' : comp >= 90 ? '#22c55e' : comp >= 70 ? '#f59e0b' : '#ef4444';
   const surplus = opec.surplus_mmbpd;
-  const surpCol = surplus <= 0.2 ? '#4ade80' : surplus <= 0.5 ? '#fbbf24' : '#f87171';
+  const surpCol = surplus == null ? '#94a3b8' : surplus <= 0.2 ? '#4ade80' : surplus <= 0.5 ? '#fbbf24' : '#f87171';
+  const surpStr = surplus == null ? 'n.d.' : `${surplus >= 0 ? '+' : ''}${surplus.toFixed(1)} mb/d`;
 
   const producers = (opec.key_producers || []).map(p => {
+    if (p.production == null) {
+      return `
+      <div class="flex justify-between items-center py-1 border-b border-slate-800 text-xs">
+        <span class="text-slate-300">${p.country}</span>
+        <div class="text-right">
+          <span class="text-slate-500">quota </span><span class="font-mono font-bold text-white">${p.quota.toFixed(1)}</span>
+          <span class="text-slate-600"> mb/d</span>
+        </div>
+      </div>`;
+    }
     const diff = p.production - p.quota;
     const col = diff <= 0.05 ? '#4ade80' : diff <= 0.15 ? '#fbbf24' : '#f87171';
     return `
@@ -474,17 +485,17 @@ function buildOPEC(opec) {
         <div class="rounded-lg p-2 text-center border border-slate-700" style="background:#162032">
           <div class="text-xs text-slate-500">Production</div>
           <div class="text-lg font-bold font-mono text-white">${opec.total_production_mmbpd}</div>
-          <div class="text-xs text-slate-400">mb/d total</div>
+          <div class="text-xs text-slate-400">mb/d OPEC+</div>
         </div>
         <div class="rounded-lg p-2 text-center border border-slate-700" style="background:#162032">
           <div class="text-xs text-slate-500">Compliance</div>
-          <div class="text-lg font-bold font-mono" style="color:${compCol}">${comp}%</div>
+          <div class="text-lg font-bold font-mono" style="color:${compCol}">${comp == null ? 'n.d.' : comp + '%'}</div>
           <div class="text-xs text-slate-400">quota adherence</div>
         </div>
       </div>
       <div class="flex justify-between text-xs py-1.5 border-b border-slate-800">
         <span class="text-slate-400">Surplus vs target</span>
-        <span class="font-bold font-mono" style="color:${surpCol}">+${surplus.toFixed(1)} mb/d</span>
+        <span class="font-bold font-mono" style="color:${surpCol}">${surpStr}</span>
       </div>
       <div class="flex justify-between text-xs py-1.5 border-b border-slate-800">
         <span class="text-slate-400">Report month</span>
@@ -495,6 +506,7 @@ function buildOPEC(opec) {
         <span class="text-amber-400 font-medium">${opec.next_meeting}</span>
       </div>
       <div>
+        ${opec.note ? `<div class="text-xs text-amber-300/80 leading-snug">${opec.note}</div>` : ''}
         <div class="text-xs text-slate-600 mb-1.5 uppercase tracking-wider font-semibold" style="font-size:0.6rem">Key Producers (mb/d)</div>
         ${producers}
       </div>

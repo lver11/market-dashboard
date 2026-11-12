@@ -23,6 +23,12 @@ except ImportError:
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from utils.static_data import (  # noqa: E402 — hand-maintained reference data
+    EIA_INVENTORY, OPEC_DATA, ENERGY_GEO_RISKS,
+)
+
 BASE         = Path(__file__).parent.parent
 TEMPLATE_DIR = BASE / "templates"
 
@@ -61,43 +67,9 @@ OIL_LNG_ASSETS = [
     {"group": "Refiners",          "name": "Valero Energy",       "ticker": "VLO",   "type": "stock"},
 ]
 
-EIA_INVENTORY = {
-    "report_date":    "2026-03-19",
-    "crude_oil":      {"value": 437.2, "change": -2.1, "unit": "MMbbl", "label": "Crude Oil"},
-    "gasoline":       {"value": 241.5, "change": +1.3, "unit": "MMbbl", "label": "Gasoline"},
-    "distillates":    {"value": 117.8, "change": -0.8, "unit": "MMbbl", "label": "Distillates"},
-    "cushing":        {"value":  26.4, "change": -1.2, "unit": "MMbbl", "label": "Cushing, OK"},
-    "spr":            {"value": 395.2, "change":  0.0, "unit": "MMbbl", "label": "SPR"},
-    "refinery_util":  {"value":  87.3, "change": +0.6, "unit": "%",     "label": "Refinery Util."},
-}
-
-OPEC_DATA = {
-    "report_month":            "February 2026",
-    "total_production_mmbpd":  26.8,
-    "opec_plus_target_mmbpd":  26.5,
-    "compliance_pct":           89,
-    "surplus_mmbpd":            0.3,
-    "next_meeting":             "June 2026",
-    "key_producers": [
-        {"country": "Saudi Arabia", "flag": "SA", "production": 9.0, "quota": 9.0},
-        {"country": "Russia",       "flag": "RU", "production": 9.1, "quota": 9.0},
-        {"country": "UAE",          "flag": "AE", "production": 3.0, "quota": 2.9},
-        {"country": "Iraq",         "flag": "IQ", "production": 4.1, "quota": 4.0},
-        {"country": "Kuwait",       "flag": "KW", "production": 2.5, "quota": 2.5},
-    ],
-}
-
-ENERGY_GEO_RISKS = [
-    {"region": "Middle East",    "title": "Strait of Hormuz",       "level": "high",   "icon": "ship",           "description": "~20% of global oil & LNG transits this chokepoint daily. Iran tensions remain elevated.", "market_impact": "+$8-15/bbl if closure risk escalates"},
-    {"region": "Russia / Europe","title": "Russian Gas Supply",     "level": "high",   "icon": "flame",          "description": "Nord Stream offline; remaining pipeline routes uncertain. European LNG imports at record highs.", "market_impact": "Persistent EU LNG premium vs US Henry Hub"},
-    {"region": "US Gulf Coast",  "title": "LNG Export Expansion",   "level": "medium", "icon": "anchor",         "description": "Sabine Pass T6, Corpus Christi T3, Plaquemines LNG underway. US market share rising globally.", "market_impact": "Structurally bullish Henry Hub long-term demand"},
-    {"region": "Libya / Nigeria","title": "African Supply Disruptions","level": "medium","icon": "alert-triangle","description": "Periodic production outages from political instability and pipeline sabotage.", "market_impact": "+$2-5/bbl on major disruption events"},
-    {"region": "South America",  "title": "Venezuela / Guyana",     "level": "low",    "icon": "trending-up",    "description": "Guyana ramp-up is bullish for Atlantic basin supply. Venezuela sanctions cap output.", "market_impact": "Net neutral; Guyana growth offsets Venezuela shortfall"},
-]
-
 ENERGY_NEWS_FEEDS = [
     ("EIA Today",   "https://www.eia.gov/rss/todayinenergy.xml"),
-    ("Reuters Biz", "https://feeds.reuters.com/reuters/businessNews"),
+    ("Reuters/GN Biz", "https://news.google.com/rss/search?q=site:reuters.com+business&hl=en-US&gl=US&ceid=US:en"),
     ("Oil/LNG",     "https://news.google.com/rss/search?q=oil+LNG+OPEC+crude+natural+gas&hl=en-US&gl=US&ceid=US:en"),
     ("Energy Mkts", "https://news.google.com/rss/search?q=energy+market+petroleum+refinery+gasoline&hl=en-US&gl=US&ceid=US:en"),
 ]
@@ -312,6 +284,12 @@ st.markdown("""
 [data-testid="stAppViewContainer"] { background: #0B1120; }
 </style>
 """, unsafe_allow_html=True)
+
+# ── Fresh data on every page load (new session = browser reload) ─────────────
+if not st.session_state.get("_fresh_oil_load_done"):
+    for _fn in (_oil_data_cached, _oil_history_cached, _energy_news_cached, _full_oil_data):
+        _fn.clear()
+    st.session_state["_fresh_oil_load_done"] = True
 
 # ── Fetch data ────────────────────────────────────────────────────────────────
 data    = _full_oil_data()

@@ -22,6 +22,12 @@ except ImportError:
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from utils.static_data import (  # noqa: E402 — hand-maintained reference data
+    ECONOMIC_CALENDAR, GEOPOLITICAL_RISKS, CENTRAL_BANK_RATES, EIA_INVENTORY, OPEC_DATA, ENERGY_GEO_RISKS,
+)
+
 BASE = Path(__file__).parent
 TEMPLATE_DIR = BASE / "templates"
 
@@ -74,8 +80,8 @@ MARKET_ASSETS = [
 
 NEWS_FEEDS = [
     # ── Agences internationales ──────────────────────────────────────────────
-    ("Reuters Top",      "https://feeds.reuters.com/reuters/topNews"),
-    ("Reuters Biz",      "https://feeds.reuters.com/reuters/businessNews"),
+    ("Reuters/GN Top",      "https://news.google.com/rss/search?q=site:reuters.com+markets&hl=en-US&gl=US&ceid=US:en"),
+    ("Reuters/GN Biz",      "https://news.google.com/rss/search?q=site:reuters.com+business&hl=en-US&gl=US&ceid=US:en"),
     ("AP Business",      "https://apnews.com/rss"),
     # ── Médias financiers US ─────────────────────────────────────────────────
     ("CNBC Markets",     "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100003114"),
@@ -119,43 +125,6 @@ _FEEDS_WITH_UA = {
     "r/investing", "r/stocks", "r/wallstreetbets",
     "r/economics", "r/geopolitics", "r/CanadaFinance",
 }
-
-ECONOMIC_CALENDAR = [
-    {"date": "2026-03-11", "event": "CPI YoY (Feb)",           "country": "US", "importance": "critical", "forecast": "2.4%",      "previous": "3.0%",        "actual": "2.4%"},
-    {"date": "2026-03-11", "event": "Core CPI YoY (Feb)",      "country": "US", "importance": "critical", "forecast": "2.5%",      "previous": "3.3%",        "actual": "2.5%"},
-    {"date": "2026-03-13", "event": "Initial Jobless Claims",  "country": "US", "importance": "medium",   "forecast": None,        "previous": "242K"},
-    {"date": "2026-03-13", "event": "GDP Q4 2025 (2nd Est.)",  "country": "US", "importance": "high",     "forecast": "1.4%",      "previous": "1.4%"},
-    {"date": "2026-03-13", "event": "PCE Price Index YoY",     "country": "US", "importance": "critical", "forecast": None,        "previous": "2.9%"},
-    {"date": "2026-03-17", "event": "US Retail Sales (Feb)",   "country": "US", "importance": "high",     "forecast": None,        "previous": "-0.2%"},
-    {"date": "2026-03-17", "event": "FOMC Meeting Begins",     "country": "US", "importance": "high",     "forecast": None,        "previous": None},
-    {"date": "2026-03-18", "event": "FOMC Rate Decision",      "country": "US", "importance": "critical", "forecast": "No change", "previous": "3.50-3.75%"},
-    {"date": "2026-03-18", "event": "Powell Press Conference", "country": "US", "importance": "critical", "forecast": None,        "previous": None},
-    {"date": "2026-03-19", "event": "BOJ Rate Decision",       "country": "JP", "importance": "high",     "forecast": None,        "previous": "0.50%"},
-    {"date": "2026-03-26", "event": "Consumer Confidence",     "country": "US", "importance": "medium",   "forecast": None,        "previous": "104.1"},
-    {"date": "2026-04-01", "event": "ISM Manufacturing PMI",   "country": "US", "importance": "high",     "forecast": None,        "previous": "50.3"},
-    {"date": "2026-04-03", "event": "Non-Farm Payrolls (Mar)", "country": "US", "importance": "critical", "forecast": None,        "previous": "200K"},
-    {"date": "2026-04-10", "event": "CPI (Mar)",               "country": "US", "importance": "critical", "forecast": None,        "previous": "2.4%"},
-    {"date": "2026-04-29", "event": "FOMC Rate Decision",      "country": "US", "importance": "critical", "forecast": None,        "previous": "3.50-3.75%"},
-    {"date": "2026-04-30", "event": "GDP Q1 2026 (Advance)",   "country": "US", "importance": "high",     "forecast": None,        "previous": "2.3%"},
-]
-
-GEOPOLITICAL_RISKS = [
-    {"region": "Europe",      "title": "Ukraine-Russia War",            "level": "high",   "icon": "sword",          "description": "Active conflict; ceasefire talks ongoing. NATO supply lines under pressure.",        "market_impact": "Energy prices, European equities, EUR weakness"},
-    {"region": "Middle East", "title": "Middle East Tensions",          "level": "high",   "icon": "flame",          "description": "Regional escalation risks; Red Sea shipping disruptions.",                         "market_impact": "Oil premium, shipping costs, global inflation"},
-    {"region": "Asia Pacific","title": "Taiwan Strait / China-US",      "level": "medium", "icon": "alert-triangle", "description": "Elevated military activity; US-China strategic competition intensifying.",          "market_impact": "Tech supply chains, semiconductors, Asian equities"},
-    {"region": "Americas",    "title": "US-China Trade War",            "level": "medium", "icon": "trending-down",  "description": "Tariff escalation; supply chain decoupling in critical sectors.",                 "market_impact": "Global trade, tech sector, EM currencies"},
-    {"region": "Global",      "title": "Central Bank Policy Divergence","level": "medium", "icon": "bar-chart-2",    "description": "Fed vs ECB vs BOJ divergent paths creating currency volatility.",                 "market_impact": "USD strength, carry trades, EM debt"},
-    {"region": "Americas",    "title": "US Fiscal Sustainability",      "level": "low",    "icon": "dollar-sign",    "description": "Debt ceiling concerns; rising deficit affecting bond market sentiment.",            "market_impact": "Treasury yields, USD long-term, sovereign ratings"},
-]
-
-CENTRAL_BANK_RATES = [
-    {"flag": "🇺🇸", "name": "États-Unis",  "bank": "Fed",  "rate": "3.50–3.75%", "bias": "neutral",  "change": "=",  "next_meeting": "17-18 mars 2026"},
-    {"flag": "🇪🇺", "name": "Zone Euro",   "bank": "BCE",  "rate": "2.65%",      "bias": "dovish",   "change": "↓",  "next_meeting": "17 avr. 2026"},
-    {"flag": "🇨🇦", "name": "Canada",      "bank": "BdC",  "rate": "3.00%",      "bias": "dovish",   "change": "↓",  "next_meeting": "16 avr. 2026"},
-    {"flag": "🇬🇧", "name": "Royaume-Uni", "bank": "BOE",  "rate": "4.50%",      "bias": "neutral",  "change": "↓",  "next_meeting": "8 mai 2026"},
-    {"flag": "🇯🇵", "name": "Japon",       "bank": "BOJ",  "rate": "0.50%",      "bias": "hawkish",  "change": "↑",  "next_meeting": "19 mars 2026"},
-    {"flag": "🇨🇭", "name": "Suisse",      "bank": "BNS",  "rate": "0.25%",      "bias": "neutral",  "change": "↓",  "next_meeting": "20 mars 2026"},
-]
 
 BOC_SERIES = {
     "CA2YT=RR":  "BD.CDN.2YR.DQ.YLD",
@@ -202,43 +171,9 @@ OIL_LNG_ASSETS = [
     {"group": "Refiners",          "name": "Valero Energy",       "ticker": "VLO",   "type": "stock"},
 ]
 
-EIA_INVENTORY = {
-    "report_date":   "2026-03-19",
-    "crude_oil":     {"value": 437.2, "change": -2.1, "unit": "MMbbl", "label": "Crude Oil"},
-    "gasoline":      {"value": 241.5, "change": +1.3, "unit": "MMbbl", "label": "Gasoline"},
-    "distillates":   {"value": 117.8, "change": -0.8, "unit": "MMbbl", "label": "Distillates"},
-    "cushing":       {"value":  26.4, "change": -1.2, "unit": "MMbbl", "label": "Cushing, OK"},
-    "spr":           {"value": 395.2, "change":  0.0, "unit": "MMbbl", "label": "SPR"},
-    "refinery_util": {"value":  87.3, "change": +0.6, "unit": "%",     "label": "Refinery Util."},
-}
-
-OPEC_DATA = {
-    "report_month":            "February 2026",
-    "total_production_mmbpd":  26.8,
-    "opec_plus_target_mmbpd":  26.5,
-    "compliance_pct":           89,
-    "surplus_mmbpd":            0.3,
-    "next_meeting":             "June 2026",
-    "key_producers": [
-        {"country": "Saudi Arabia", "flag": "SA", "production": 9.0, "quota": 9.0},
-        {"country": "Russia",       "flag": "RU", "production": 9.1, "quota": 9.0},
-        {"country": "UAE",          "flag": "AE", "production": 3.0, "quota": 2.9},
-        {"country": "Iraq",         "flag": "IQ", "production": 4.1, "quota": 4.0},
-        {"country": "Kuwait",       "flag": "KW", "production": 2.5, "quota": 2.5},
-    ],
-}
-
-ENERGY_GEO_RISKS = [
-    {"region": "Middle East",    "title": "Strait of Hormuz",        "level": "high",   "icon": "ship",           "description": "~20% of global oil & LNG transits this chokepoint. Iran tensions elevated.",       "market_impact": "+$8-15/bbl if closure risk escalates"},
-    {"region": "Russia / Europe","title": "Russian Gas Supply",      "level": "high",   "icon": "flame",          "description": "Nord Stream offline; pipeline routes uncertain. European LNG imports at record highs.", "market_impact": "Persistent EU LNG premium vs Henry Hub"},
-    {"region": "US Gulf Coast",  "title": "LNG Export Expansion",    "level": "medium", "icon": "anchor",         "description": "Sabine Pass T6, Corpus Christi T3, Plaquemines LNG underway. US share rising.",      "market_impact": "Structurally bullish Henry Hub long-term"},
-    {"region": "Libya / Nigeria","title": "African Supply Disruptions","level": "medium","icon": "alert-triangle","description": "Periodic outages from political instability and pipeline sabotage.",                   "market_impact": "+$2-5/bbl on major disruption events"},
-    {"region": "South America",  "title": "Venezuela / Guyana",      "level": "low",    "icon": "trending-up",    "description": "Guyana ramp-up bullish for Atlantic basin. Venezuela sanctions cap output.",          "market_impact": "Net neutral; Guyana growth offsets Venezuela"},
-]
-
 ENERGY_NEWS_FEEDS = [
     ("EIA Today",   "https://www.eia.gov/rss/todayinenergy.xml"),
-    ("Reuters Biz", "https://feeds.reuters.com/reuters/businessNews"),
+    ("Reuters/GN Biz", "https://news.google.com/rss/search?q=site:reuters.com+business&hl=en-US&gl=US&ceid=US:en"),
     ("Oil/LNG",     "https://news.google.com/rss/search?q=oil+LNG+OPEC+crude+natural+gas&hl=en-US&gl=US&ceid=US:en"),
     ("Energy Mkts", "https://news.google.com/rss/search?q=energy+market+petroleum+refinery+gasoline&hl=en-US&gl=US&ceid=US:en"),
 ]
@@ -900,9 +835,34 @@ button[data-baseweb="tab"][aria-selected="true"] {
 </style>
 """, unsafe_allow_html=True)
 
+# ── Fresh data on every page load ───────────────────────────────────────────
+# A browser reload opens a new Streamlit session: drop the cached market data so
+# every reload fetches live prices, news and signals. Within a session (tab
+# switches, uploads) the caches still apply to keep the app responsive.
+_LIVE_CACHES = (
+    _market_data_cached, _ca_yields_cached, _vix_history_cached, _news_cached,
+    fetch_miso, _period_perf_cached, _full_data,
+    _oil_data_cached, _oil_history_cached, _energy_news_cached, _full_oil_data,
+)
+
+
+def _clear_live_caches() -> None:
+    for fn in _LIVE_CACHES:
+        fn.clear()
+
+
+if not st.session_state.get("_fresh_load_done"):
+    _clear_live_caches()
+    st.session_state["_fresh_load_done"] = True
+
 tab1, tab2, tab3 = st.tabs(["📊 Market Turbulence Dashboard", "🏦 Fondaction Snapshot", "🛢️ Oil & LNG"])
 
 with tab1:
+    _rc1, _rc2 = st.columns([6, 1])
+    with _rc2:
+        if st.button("🔄 Rafraîchir", key="refresh_main", use_container_width=True,
+                     help="Recharge toutes les données de marché maintenant"):
+            _clear_live_caches()
     data = _full_data()
     vix  = _vix_history_cached()
     miso = fetch_miso()
