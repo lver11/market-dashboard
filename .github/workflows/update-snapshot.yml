@@ -1,0 +1,44 @@
+name: Update Fondaction snapshot
+
+on:
+  schedule:
+    # 06:20 and 17:20 Toronto (EST) on weekdays — before the open and after the close
+    - cron: '20 11 * * 1-5'
+    - cron: '20 22 * * 1-5'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-snapshot
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install pandas yfinance
+
+      - name: Rebuild snapshot from free sources
+        run: python scripts/update_snapshot.py
+
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- data/fondaction_snapshot.json; then
+            echo "No change"; exit 0
+          fi
+          git config user.name "snapshot-bot"
+          git config user.email "snapshot-bot@users.noreply.github.com"
+          git add data/fondaction_snapshot.json
+          git commit -m "data: refresh Fondaction snapshot ($(date -u +%Y-%m-%d))"
+          git push

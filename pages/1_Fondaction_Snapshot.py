@@ -110,6 +110,16 @@ def fmt_val(v) -> str:
         return s
 
 
+def src_tag(r: dict) -> str:
+    """Small source / freshness line under an indicator's note (web-updated snapshots)."""
+    src = r.get("src")
+    if not src:
+        return ""
+    color = "#B45309" if ("non rafraîchi" in src or r.get("manual")) else "#374151"
+    label = "✍ " if r.get("manual") else ""
+    return f'<br><span style="font-size:0.58rem;color:{color};font-style:normal;">{label}{src}</span>'
+
+
 def sig_badge(s: str) -> str:
     labels = {"Vert": "✓ VERT", "Jaune": "⚠ JAUNE", "Rouge": "✕ ROUGE"}
     classes = {"Vert": "sig-vert", "Jaune": "sig-jaune", "Rouge": "sig-rouge"}
@@ -530,6 +540,11 @@ if not _parse_ok and "snap_file" not in st.session_state and _BUNDLED.exists():
         date_str, SCORECARD, HOPE_DATA, TACT_DATA = _b["date"], _b["score"], _b["hope"], _b["tact"]
         THESES_DATA, RISQUES_DATA, CANADA_DATA, MATRICE = _b["theses"], _b["risques"], _b["canada"], _b["matrice"]
         data_src = _b.get("source", "data/fondaction_snapshot.json")
+        if _b.get("generated_utc"):
+            _st = _b.get("stats", {})
+            data_src += f"<br>Généré {_b['generated_utc']} · {_st.get('manual', 0)} saisies manuelles"
+            if _st.get("stale"):
+                data_src += f" · ⚠ {_st['stale']} non rafraîchis"
         _parse_ok = True
     except Exception as exc:  # fall back to the hard-coded March 2026 snapshot
         st.warning(f"Snapshot embarqué illisible ({exc}) — affichage des données du 12 mars 2026.")
@@ -627,7 +642,7 @@ with tab1:
               <span class="ind-seuil">{r["seuil"]}</span>
               {sig_badge(r["signal"])}
               <span class="ind-tend {tc}">{r["tend"]}</span>
-              <span class="ind-note">{r["note"]}</span>
+              <span class="ind-note">{r["note"]}{src_tag(r)}</span>
             </div>"""
         st.html(html)
 
@@ -652,7 +667,7 @@ with tab2:
                   <span class="ind-seuil">{r["cible"]}</span>
                   {sig_badge(r["signal"])}
                   <span class="ind-note" style="flex:100%;padding-top:4px;
-                    color:#374151;font-size:0.7rem;">{r["impl"]}</span>
+                    color:#374151;font-size:0.7rem;">{r["impl"]}{src_tag(r)}</span>
                 </div>"""
             st.html(html)
 
@@ -676,7 +691,7 @@ with tab3:
                   <span class="ind-val">{r["val"]}</span>
                   <span class="ind-seuil">{r["cible"]}</span>
                   {sig_badge(r["statut"])}
-                  <span class="ind-note" style="flex:2.5;">{r["note"]}</span>
+                  <span class="ind-note" style="flex:2.5;">{r["note"]}{src_tag(r)}</span>
                 </div>"""
             st.html(html)
 
@@ -700,7 +715,7 @@ with tab4:
                   <span class="ind-val">{r["val"]}</span>
                   <span class="ind-seuil">{r["seuil"]}</span>
                   {sig_badge(r["signal"])}
-                  <span class="ind-note" style="flex:2;text-align:left;">{r["comm"]}</span>
+                  <span class="ind-note" style="flex:2;text-align:left;">{r["comm"]}{src_tag(r)}</span>
                 </div>"""
             st.html(html)
 
@@ -758,6 +773,6 @@ with tab5:
               <span class="ind-val">{r["val"]}</span>
               <span class="ind-seuil">{r["seuil"]}</span>
               {sig_badge(r["signal"])}
-              <span class="ind-note" style="flex:2;text-align:left;">{r["comm"]}</span>
+              <span class="ind-note" style="flex:2;text-align:left;">{r["comm"]}{src_tag(r)}</span>
             </div>"""
         st.html(html)
