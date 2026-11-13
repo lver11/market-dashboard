@@ -77,6 +77,15 @@ def _fred_csv(series_id: str) -> pd.Series:
     return s.dropna()
 
 
+_fred_used: dict[str, str] = {}
+
+
+def fred_src(series_id: str) -> str:
+    """Label of the source that actually served a FRED-equivalent series."""
+    used = _fred_used.get(series_id, "FRED")
+    return f"FRED {series_id}" if used.startswith("FRED") else f"{used} ({series_id})"
+
+
 _bls_cache: dict[str, pd.Series] = {}
 
 
@@ -127,6 +136,7 @@ def fred(series_id: str) -> pd.Series:
             s = fn()
             if len(s):
                 _fred_cache[series_id] = s
+                _fred_used[series_id] = name
                 return s
         except Exception as exc:  # noqa: BLE001
             errors.append(f"{name}: {exc}")
@@ -208,6 +218,14 @@ def chg_1y(t: str) -> float:
     return (last(s) / float(s.iloc[-253]) - 1) * 100
 
 
+def yoy_aligned(s: pd.Series) -> pd.Series:
+    """YoY % matched on calendar dates (a missing month gives no value instead of a shifted one)."""
+    s = s.dropna()
+    prev = s.copy()
+    prev.index = prev.index + pd.DateOffset(years=1)
+    return ((s / prev.reindex(s.index)) - 1).dropna() * 100
+
+
 def rsi(s: pd.Series, n: int) -> float:
     d = s.diff().dropna()
     up = d.clip(lower=0).ewm(alpha=1 / n, adjust=False).mean()
@@ -276,7 +294,7 @@ def F(series_id, transform=None, label=None):
     def _f():
         s = fred(series_id)
         t = transform(s) if transform else s
-        return {"value": float(t.dropna().iloc[-1]), "series": t, "src": f"FRED {label or series_id}",
+        return {"value": float(t.dropna().iloc[-1]), "series": t, "src": fred_src(series_id),
                 "asof": asof(t)}
     return _f
 
@@ -325,9 +343,8 @@ HOPE = [
 
 
 def _yoy_fred(sid):
-    s = fred(sid)
-    y = (s / s.shift(12) - 1) * 100
-    return {"value": float(y.dropna().iloc[-1]), "series": y, "src": f"FRED {sid}", "asof": asof(y)}
+    y = yoy_aligned(fred(sid))
+    return {"value": float(y.iloc[-1]), "series": y, "src": fred_src(sid), "asof": asof(y)}
 
 
 _info_cache: dict = {}
@@ -399,7 +416,7 @@ TACT = [
      lambda: {**manual("em_fwd_pe"), "comp": MAN["em_trail_pe"]["value"]}, lambda v: lo(v, 12, 15)),
     ("VALORISATIONS", "Equity Risk Premium (ERP)", ">2.5%",
      lambda: {"value": 100 / MAN["spx_fwd_pe"]["value"] - last(fred("DGS10")), "comp": 2.0,
-              "src": "1/P/E fwd - 10 ans (FRED DGS10)", "asof": asof(fred("DGS10"))},
+              "src": f"1/P/E fwd - 10 ans ({fred_src('DGS10')})", "asof": asof(fred("DGS10"))},
      lambda v: hi(v, 2.5, 1.5)),
     ("MOMENTUM ETF", "Momentum Small Cap (IWM) 1M%", ">+2%", _ypack("IWM", chg_1m, ytd), lambda v: hi(v, 2, -2)),
     ("MOMENTUM ETF", "Momentum Value (IVE) 1M%", ">+2%", _ypack("IVE", chg_1m, ytd), lambda v: hi(v, 2, -2)),
@@ -493,7 +510,7 @@ def _tsx_rel():
 
 def _ca_us_10y():
     ca, us = boc("BD.CDN.10YR.DQ.YLD"), fred("DGS10")
-    return {"value": last(ca) - last(us), "src": "BdC Valet + FRED DGS10", "asof": asof(ca)}
+    return {"value": last(ca) - last(us), "src": f"BdC Valet + {fred_src('DGS10')}", "asof": asof(ca)}
 
 
 def _cadusd():
@@ -559,9 +576,8 @@ RISQUES = [
 
 def _sc_yoy(vector, label, monthly=True):
     def _f():
-        s = statcan(vector, 30)
-        y = (s / s.shift(12 if monthly else 4) - 1) * 100
-        return {"value": float(y.dropna().iloc[-1]), "series": y, "src": f"StatCan {label}", "asof": asof(y)}
+        y = yoy_aligned(statcan(vector, 30))
+        return {"value": float(y.iloc[-1]), "series": y, "src": f"StatCan {label}", "asof": asof(y)}
     return _f
 
 
@@ -627,7 +643,7 @@ CANADA = [
      lambda: {"value": "~$300Mds", "src": "Interne", "asof": "", "manual": True}, lambda v: "Rouge",
      "Mur hypothécaire: renouvellements à taux plus élevés"),
     ("COMMERCE", "Balance commerciale CA ($CAD Mds)", ">0",
-     _sc_level(87008955, "commerce (v87008955)", lambda s: s / 1000),
+     _sc_level(87008984, "balance commerciale BdP (v87008984)", lambda s: s / 1000),
      lambda v: "Vert" if v > 0 else "Jaune" if v > -2 else "Rouge", "StatCan, mensuel. Exposition tarifs US."),
     ("COMMERCE", "Prix pétrole WCS (Western Canadian Select)", ">$55", lambda: manual("wcs"),
      lambda v: "Vert" if v > 55 else "Jaune" if v > 40 else "Rouge", "Clé pour secteur énergie + dollar canadien"),
