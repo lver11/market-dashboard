@@ -1,0 +1,921 @@
+{
+ "source": "Tableau_Bord_Fondaction_Bloomberg-4.xlsx",
+ "date": "2026-11-13",
+ "score": [
+  {
+   "cat": "Cycle HOPE",
+   "score": 82,
+   "trend": "↑",
+   "vert": 14,
+   "jaune": 3,
+   "rouge": 2,
+   "color": "#60A5FA"
+  },
+  {
+   "cat": "Signaux Tactiques",
+   "score": 67,
+   "trend": "→",
+   "vert": 10,
+   "jaune": 4,
+   "rouge": 4,
+   "color": "#F59E0B"
+  },
+  {
+   "cat": "Thèses Clés",
+   "score": 76,
+   "trend": "↑",
+   "vert": 13,
+   "jaune": 6,
+   "rouge": 2,
+   "color": "#34D399"
+  },
+  {
+   "cat": "Alertes Risques",
+   "score": 65,
+   "trend": "→",
+   "vert": 10,
+   "jaune": 6,
+   "rouge": 4,
+   "color": "#F87171"
+  },
+  {
+   "cat": "Canada",
+   "score": 68,
+   "trend": "→",
+   "vert": 14,
+   "jaune": 6,
+   "rouge": 5,
+   "color": "#EF4444"
+  },
+  {
+   "cat": "SCORE GLOBAL",
+   "score": 73,
+   "trend": "↑",
+   "vert": null,
+   "jaune": null,
+   "rouge": null,
+   "color": "#A78BFA"
+  }
+ ],
+ "hope": {
+  "H - Housing": [
+   {
+    "ind": "Mises en chantier US (SAAR)",
+    "val": "1 221",
+    "seuil": ">1.4M",
+    "signal": "Jaune",
+    "tend": "↓",
+    "note": "Census Bureau, mensuel"
+   },
+   {
+    "ind": "Permis de construire US",
+    "val": "1 398",
+    "seuil": ">1.5M",
+    "signal": "Jaune",
+    "tend": "↓",
+    "note": "Census Bureau, mensuel"
+   },
+   {
+    "ind": "Indice NAHB confiance constructeurs",
+    "val": "29.00",
+    "seuil": ">50",
+    "signal": "Rouge",
+    "tend": "↓",
+    "note": "NAHB, mensuel"
+   },
+   {
+    "ind": "Ventes maisons existantes (YoY%)",
+    "val": "3.75",
+    "seuil": ">0%",
+    "signal": "Rouge",
+    "tend": "↓",
+    "note": "NAR, mensuel"
+   },
+   {
+    "ind": "Indice Case-Shiller 20 villes (YoY%)",
+    "val": "2.65",
+    "seuil": "—",
+    "signal": "Vert",
+    "tend": "↑",
+    "note": "S&P, mensuel avec délai"
+   }
+  ],
+  "O - Orders": [
+   {
+    "ind": "ISM Manufacturing PMI",
+    "val": "55.50",
+    "seuil": ">50",
+    "signal": "Vert",
+    "tend": "↑",
+    "note": "ISM, 1er jour ouvrable du mois"
+   },
+   {
+    "ind": "ISM New Orders",
+    "val": "55.50",
+    "seuil": ">50",
+    "signal": "Vert",
+    "tend": "↑",
+    "note": "ISM composante clé. ⚠️ Valeur 8 suspecte (normalement 30-65). Vérifier NAPMNOI."
+   },
+   {
+    "ind": "Ratio New Orders/Inventories",
+    "val": "1.08",
+    "seuil": ">1.0",
+    "signal": "Vert",
+    "tend": "↑",
+    "note": "=NAPMNOI/NAPMII"
+   },
+   {
+    "ind": "PMI Manufacturier Global",
+    "val": "52.60",
+    "seuil": ">50",
+    "signal": "Vert",
+    "tend": "↑",
+    "note": "S&P Global/JPM"
+   },
+   {
+    "ind": "Commandes biens durables (MoM%)",
+    "val": "1.9",
+    "seuil": ">0%",
+    "signal": "Vert",
+    "tend": "↑",
+    "note": "Census Bureau"
+   }
+  ],
+  "P - Profits": [
+   {
+    "ind": "Croissance BPA S&P 500 (YoY%)",
+    "val": "10.60",
+    "seuil": ">10%",
+    "signal": "Vert",
+    "tend": "↑",
+    "note": "BPA +16% YoY (consensus). Risque: sticker shock IA (Bryant, 11/06) pourrait peser sur révisions futures si monétisation déçoit"
+   },
+   {
+    "ind": "Earnings Yield S&P 500",
+    "val": "3.846",
+    "seuil": ">5%",
+    "signal": "Jaune",
+    "tend": "↓",
+    "note": "Earnings Yield (inverse du P/E). >5% = actions raisonnablement pricées vs taux"
+   },
+   {
+    "ind": "Révisions BPA (3 mois)",
+    "val": "71.10",
+    "seuil": ">0",
+    "signal": "Vert",
+    "tend": "↑",
+    "note": "CESI +57.8: surprises éco positives. Mais dépenses IA créent distorsion dans révisions BPA tech (Campling, Mixed Signals)"
+   },
+   {
+    "ind": "Performance S&P 500 (YTD%)",
+    "val": "10.91",
+    "seuil": ">0%",
+    "signal": "Vert",
+    "tend": "↓",
+    "note": "Proxy: perf YTD du SPX. >5% = Vert, 0-5% = Jaune"
+   }
+  ],
+  "E - Employment": [
+   {
+    "ind": "Emplois non-agricoles (variation)",
+    "val": "165.0",
+    "seuil": "—",
+    "signal": "Vert",
+    "tend": "↑",
+    "note": "BLS, 1er vendredi du mois"
+   },
+   {
+    "ind": "Taux de chômage U3",
+    "val": "4.1",
+    "seuil": "<4.5%",
+    "signal": "Vert",
+    "tend": "↓",
+    "note": "BLS"
+   },
+   {
+    "ind": "Taux de chômage U6",
+    "val": "7.9",
+    "seuil": "—",
+    "signal": "Vert",
+    "tend": "↑",
+    "note": "BLS, mesure élargie"
+   },
+   {
+    "ind": "Initial Jobless Claims (4wk avg)",
+    "val": "195.2",
+    "seuil": "<250K",
+    "signal": "Vert",
+    "tend": "↑",
+    "note": "DOL, hebdomadaire"
+   },
+   {
+    "ind": "JOLTS Job Openings",
+    "val": "7 523",
+    "seuil": "—",
+    "signal": "Vert",
+    "tend": "↑",
+    "note": "BLS, avec délai"
+   }
+  ]
+ },
+ "tact": {
+  "VALORISATIONS": [
+   {
+    "ind": "P/E Forward S&P 500",
+    "val": "20.94",
+    "comp": "26.00",
+    "cible": "<18x",
+    "signal": "Jaune",
+    "impl": "21x fwd vs 26x trailing: croissance pricée, marge de sécurité faible"
+   },
+   {
+    "ind": "P/E Forward S&P 600",
+    "val": "16.52",
+    "comp": "19.39",
+    "cible": "<20x",
+    "signal": "Vert",
+    "impl": "17x fwd vs 19x trailing: attractif pour small caps"
+   },
+   {
+    "ind": "Écart P/E (SPX - S&P600)",
+    "val": "4.426",
+    "comp": "6.608",
+    "cible": "<5x (abs)",
+    "signal": "Vert",
+    "impl": "Écart 4.4x: SPX plus cher que S&P600: rotation small caps possible"
+   },
+   {
+    "ind": "P/E MSCI EAFE",
+    "val": "16.05",
+    "comp": "17.45",
+    "cible": "<14x",
+    "signal": "Jaune",
+    "impl": "16x fwd: décote ~23% vs SPX, décote modérée ex-US"
+   },
+   {
+    "ind": "P/E MSCI EM",
+    "val": "10.53",
+    "comp": "12.69",
+    "cible": "<12x",
+    "signal": "Vert",
+    "impl": "11x fwd: attractif vs historique EM (~12x)"
+   },
+   {
+    "ind": "Equity Risk Premium (ERP)",
+    "val": "-0.376",
+    "comp": "2",
+    "cible": ">4%",
+    "signal": "Rouge",
+    "impl": "ERP -0.4% vs moy. 10 ans ~2%: actions non rémunérées vs obligataire"
+   }
+  ],
+  "MOMENTUM ETF": [
+   {
+    "ind": "Momentum Small Cap (IWM) 1M%",
+    "val": "0.629",
+    "comp": "13.11",
+    "cible": ">+2%",
+    "signal": "Jaune",
+    "impl": "IWM +0.6% 1M vs +13.1% YTD: momentum positif confirmé"
+   },
+   {
+    "ind": "Momentum Value (IVE) 1M%",
+    "val": "3.251",
+    "comp": "13.96",
+    "cible": ">+2%",
+    "signal": "Vert",
+    "impl": "IVE +3.3% 1M vs +14% YTD: rotation value en cours"
+   },
+   {
+    "ind": "Momentum EM (EEM) 1M%",
+    "val": "-6.997",
+    "comp": "11.75",
+    "cible": ">+2%",
+    "signal": "Rouge",
+    "impl": "EEM -7% 1M vs +11.8% YTD: correction court terme, flux YTD encore positifs"
+   },
+   {
+    "ind": "Momentum Commodities (DBC) 1M%",
+    "val": "-7.676",
+    "comp": "38.24",
+    "cible": ">+2%",
+    "signal": "Rouge",
+    "impl": "DBC -7.7% 1M vs +38.2% YTD: tendance positive commodités"
+   }
+  ],
+  "CRÉDIT": [
+   {
+    "ind": "Spread HY US (OAS)",
+    "val": "3.12",
+    "comp": "1.3",
+    "cible": "<350 bps",
+    "signal": "Vert",
+    "impl": "312 bps, +1.3% 1M: sous moy. 5Y (400), crédit sain"
+   },
+   {
+    "ind": "Spread IG US (OAS)",
+    "val": "0.86",
+    "comp": "6.17",
+    "cible": "<100 bps",
+    "signal": "Vert",
+    "impl": "86 bps, +6.2% 1M: sous moy. 5Y (120), pas d'alerte"
+   },
+   {
+    "ind": "Performance dette EM (EMB YTD)",
+    "val": "-5.131",
+    "comp": "-4.879",
+    "cible": ">0% YTD",
+    "signal": "Rouge",
+    "impl": "EMB -5.1% YTD vs -4.9% 1Y: stress dette EM généralisé"
+   },
+   {
+    "ind": "Ratio spread BB/HY total",
+    "val": "0.173",
+    "comp": "0",
+    "cible": "<0.6x",
+    "signal": "Vert",
+    "impl": "Ratio 0.17x: spread BB = petite part du HY total, qualité comprimée"
+   }
+  ],
+  "MOMENTUM": [
+   {
+    "ind": "RSI S&P 500 (14 jours)",
+    "val": "48.38",
+    "comp": "48.77",
+    "cible": "30-70",
+    "signal": "Vert",
+    "impl": "RSI 48 (14j) vs 49 (30j): zone neutre, pas de signal extrême"
+   },
+   {
+    "ind": "S&P 500 vs MA 200 jours",
+    "val": "3.476",
+    "comp": "-1.027",
+    "cible": ">0%",
+    "signal": "Vert",
+    "impl": "SPX +3.5% vs MA200, -1% vs MA50: tendance LT haussière, CT fragile"
+   },
+   {
+    "ind": "VIX",
+    "val": "18.29",
+    "comp": "19.78",
+    "cible": "<20",
+    "signal": "Vert",
+    "impl": "VIX 18 (+20% 1M): volatilité modérée"
+   },
+   {
+    "ind": "Breadth: % actions > MA50",
+    "val": "54.19",
+    "comp": "6.164",
+    "cible": ">60",
+    "signal": "Jaune",
+    "impl": "Breadth 54 YTD, +6.2 sur 1M: participation se rétrécit, surveiller <47"
+   }
+  ]
+ },
+ "theses": {
+  "IA - COUCHE 1: ÉNERGIE": [
+   {
+    "ind": "Capex utilities US (YoY%)",
+    "val": "2.624",
+    "cible": ">10%",
+    "statut": "Rouge",
+    "note": "A New Risk Emerges for Tech Rally: coûts énergie IA sous surveillance (Reynolds, 09/06). Capex utilities en hausse modérée +7% YTD"
+   },
+   {
+    "ind": "Prix uranium spot ($/lb)",
+    "val": "90.70",
+    "cible": ">$80/lb",
+    "statut": "Vert",
+    "note": "Proxy: URA ETF ou Cameco"
+   },
+   {
+    "ind": "Prix gaz naturel Henry Hub",
+    "val": "3.292",
+    "cible": ">$3.50/MMBtu",
+    "statut": "Jaune",
+    "note": "Coût énergie data centers"
+   }
+  ],
+  "IA - COUCHE 2: PUCES": [
+   {
+    "ind": "Revenus NVIDIA (YoY%)",
+    "val": "65.47",
+    "cible": ">20%",
+    "statut": "Vert",
+    "note": "Prix DRAM en hausse malgré baisse coût tokens (Tu/Curtis, 26/06). Mixed Signals AI Spend vs Cost: DRAM costs climb while token prices fade (Campling, 30/06)"
+   },
+   {
+    "ind": "Performance SOX Index (semi) YTD%",
+    "val": "48.33",
+    "cible": ">0%",
+    "statut": "Vert",
+    "note": "Memory Prices Push Higher malgré baisse coût compute. SOX +78% YTD reflète momentum semi fort (Bloomberg, Jun 2026)"
+   }
+  ],
+  "IA - COUCHE 3: INFRASTRUCTURE": [
+   {
+    "ind": "Perf. hyperscalers (AMZN/GOOG/MSFT/META YTD%)",
+    "val": "3.15",
+    "cible": ">+10% YTD",
+    "statut": "Jaune",
+    "note": "AI Monetization Matters: stocks hyperscalers trackent prix tokens (Campling/Curtis, 23/06). Perf YTD -3%, sous-performance vs marché"
+   },
+   {
+    "ind": "Performance Vertiv/Quanta/EQIX",
+    "val": "37.68",
+    "cible": ">+10% YTD",
+    "statut": "Vert",
+    "note": "Signaux mixtes dépenses AI vs coûts infra. Token expenditure x2 tire la demande infra (Campling/Barnert, Jun-Jul 2026)"
+   }
+  ],
+  "IA - COUCHE 5: APPLICATIONS": [
+   {
+    "ind": "Performance Cloud ETF (WCLD YTD%)",
+    "val": "18.39",
+    "cible": ">+10% YTD",
+    "statut": "Vert",
+    "note": "LLM Token Expenditure Index x2 puis pullback (Barnert, 03/07). Sticker shock heavy users IA (Bryant, 11/06). Monétisation = enjeu clé (Campling, 23/06)"
+   }
+  ],
+  "GREAT BROADENING": [
+   {
+    "ind": "Performance relative RTY vs SPX (YTD)",
+    "val": "1.868",
+    "cible": ">0%",
+    "statut": "Vert",
+    "note": "Rotation small caps"
+   },
+   {
+    "ind": "Breadth: % secteurs S&P en hausse",
+    "val": "54.19",
+    "cible": ">53 (proxy)",
+    "statut": "Vert",
+    "note": "Proxy: RSP-SPY+50. >53 = participation large"
+   },
+   {
+    "ind": "Performance S&P Equal Weight vs Cap Weight",
+    "val": "4.195",
+    "cible": ">0%",
+    "statut": "Vert",
+    "note": "RSP vs SPY"
+   }
+  ],
+  "COMMODITÉS - RARETÉ": [
+   {
+    "ind": "Prix cuivre ($/tonne LME)",
+    "val": "13 588",
+    "cible": ">$9,500/t",
+    "statut": "Vert",
+    "note": "LMCADS03 en $/tonne. >$9,500 favorable"
+   },
+   {
+    "ind": "Prix argent ($/oz)",
+    "val": "49.92",
+    "cible": ">$50/oz",
+    "statut": "Jaune",
+    "note": "Demande industrielle"
+   },
+   {
+    "ind": "Inventaires cuivre LME (tonnes)",
+    "val": "13 642",
+    "cible": "Déclin",
+    "statut": "Vert",
+    "note": "Niveau stocks critiques"
+   },
+   {
+    "ind": "Capex minières (majors)",
+    "val": "6.428",
+    "cible": ">+10% YTD",
+    "statut": "Jaune",
+    "note": "Sous-investissement chronique"
+   }
+  ],
+  "STIMULUS FISCAL US": [
+   {
+    "ind": "Performance small caps US (IWM YTD)",
+    "val": "13.11",
+    "cible": ">+10% YTD",
+    "statut": "Vert",
+    "note": "Small caps domestiques = 1ers bénéficiaires"
+   },
+   {
+    "ind": "Performance industrielles US (XLI YTD)",
+    "val": "9.232",
+    "cible": ">+10% YTD",
+    "statut": "Jaune",
+    "note": "Exposition infra / dépenses gouvernementales"
+   },
+   {
+    "ind": "Consumer Confidence (Conference Board)",
+    "val": "91.70",
+    "cible": ">100",
+    "statut": "Jaune",
+    "note": "Effet richesse stimulus sur ménages"
+   },
+   {
+    "ind": "Rendement 10Y US (coût du stimulus)",
+    "val": "5.151",
+    "cible": "<4.50%",
+    "statut": "Rouge",
+    "note": "Risque crowding out si >5%"
+   }
+  ],
+  "SANTÉ / BIOTECH": [
+   {
+    "ind": "Performance XBI (Biotech ETF)",
+    "val": "24.01",
+    "cible": ">+10% YTD",
+    "statut": "Vert",
+    "note": "Thèse IA + Drug discovery"
+   },
+   {
+    "ind": "Approbations FDA (rolling 12m)",
+    "val": "26.46",
+    "cible": ">+5% YTD",
+    "statut": "Vert",
+    "note": "Proxy: IBB ETF YTD%. >5% favorable"
+   }
+  ]
+ },
+ "risques": {
+  "INFLATION": [
+   {
+    "ind": "CPI Core US (YoY%)",
+    "val": "2.6",
+    "seuil": ">3.0%",
+    "signal": "Jaune",
+    "comm": "Fed target 2%"
+   },
+   {
+    "ind": "PCE Core (YoY%)",
+    "val": "3.121",
+    "seuil": ">3.0%",
+    "signal": "Rouge",
+    "comm": "Mesure préférée Fed"
+   },
+   {
+    "ind": "Inflation anticipée 5Y5Y",
+    "val": "2.165",
+    "seuil": ">2.5%",
+    "signal": "Vert",
+    "comm": "Anticipations long terme"
+   },
+   {
+    "ind": "Salaires horaires (YoY%)",
+    "val": "3.1",
+    "seuil": ">4.0%",
+    "signal": "Vert",
+    "comm": "Pression salariale"
+   }
+  ],
+  "TAUX / YIELDS": [
+   {
+    "ind": "Rendement 10 ans US",
+    "val": "5.151",
+    "seuil": ">5.0%",
+    "signal": "Rouge",
+    "comm": "Bond vigilantes. A New Risk Emerges for Tech Rally (Reynolds, 09/06): si taux montent, ERP comprimé (0.1%) rend actions encore plus vulnérables"
+   },
+   {
+    "ind": "Rendement 2 ans US",
+    "val": "4.87",
+    "seuil": ">5.0%",
+    "signal": "Jaune",
+    "comm": "Attentes Fed"
+   },
+   {
+    "ind": "Spread 10Y-2Y (courbe)",
+    "val": "27.98",
+    "seuil": "<-50bps",
+    "signal": "Vert",
+    "comm": "Inversion = risque récession"
+   },
+   {
+    "ind": "Rendement réel 10Y TIPS",
+    "val": "2.892",
+    "seuil": ">2.5%",
+    "signal": "Rouge",
+    "comm": "Coût réel du capital"
+   },
+   {
+    "ind": "Fed Funds futures (dec 2026)",
+    "val": "96.12",
+    "seuil": "<95.50",
+    "signal": "Vert",
+    "comm": "Trajectoire anticipée"
+   }
+  ],
+  "CRÉDIT / LIQUIDITÉ": [
+   {
+    "ind": "Spread TED",
+    "val": "0.64",
+    "seuil": ">50bps",
+    "signal": "Vert",
+    "comm": "Stress interbancaire"
+   },
+   {
+    "ind": "Réserves bancaires Fed",
+    "val": "6 758 867",
+    "seuil": "<6,000,000",
+    "signal": "Vert",
+    "comm": "Liquidité système"
+   },
+   {
+    "ind": "Spread HY US OAS (proxy stress crédit)",
+    "val": "3.12",
+    "seuil": ">5.0 (500 bps)",
+    "signal": "Vert",
+    "comm": "Spread HY OAS en % (2.79 = 279 bps). Proxy taux défaut."
+   }
+  ],
+  "GÉOPOLITIQUE": [
+   {
+    "ind": "Indice incertitude politique US",
+    "val": "18.29",
+    "seuil": ">200",
+    "signal": "Vert",
+    "comm": "VIX 16 = calme. Divergence: marché complaisant vs LLM Token Expenditure pullback et mixed signals AI spend (Campling/Barnert). Risque de spike si correction tech"
+   },
+   {
+    "ind": "Prix pétrole Brent",
+    "val": "96.12",
+    "seuil": ">$80",
+    "signal": "Jaune",
+    "comm": "Choc pétrolier"
+   },
+   {
+    "ind": "USD Index (DXY)",
+    "val": "103.2",
+    "seuil": ">110",
+    "signal": "Jaune",
+    "comm": "Force dollar"
+   },
+   {
+    "ind": "USD/CNY",
+    "val": "6.672",
+    "seuil": ">7.5",
+    "signal": "Vert",
+    "comm": "Tensions Chine"
+   }
+  ],
+  "CANADA": [
+   {
+    "ind": "Écart taux 10Y CA-US",
+    "val": "-1.305",
+    "seuil": "<-1.0%",
+    "signal": "Rouge",
+    "comm": "Divergence politique monétaire"
+   },
+   {
+    "ind": "CAD/USD",
+    "val": "0.701",
+    "seuil": "<0.70",
+    "signal": "Jaune",
+    "comm": "Faiblesse dollar canadien"
+   },
+   {
+    "ind": "Renouvellements hypothécaires 2026",
+    "val": "Risque élevé",
+    "seuil": "Qualitatif",
+    "signal": "Jaune",
+    "comm": "Mur hypothécaire 2025-2026. ~$300Mds renouvellements à taux plus élevés."
+   },
+   {
+    "ind": "Indice TSX vs S&P 500 (rel perf)",
+    "val": "3.046",
+    "seuil": "<-10%",
+    "signal": "Vert",
+    "comm": "Sous-performance Canada"
+   }
+  ]
+ },
+ "canada": {
+  "CROISSANCE": [
+   {
+    "ind": "PIB réel Canada (YoY%)",
+    "val": "1.128",
+    "seuil": ">1.5%",
+    "signal": "Jaune",
+    "comm": "StatCan, trimestriel. Croissance molle attendue 2025-2026."
+   },
+   {
+    "ind": "Indice avancé (Conference Board CA)",
+    "val": "-0.5",
+    "seuil": ">0%",
+    "signal": "Rouge",
+    "comm": "Indicateur avancé 6 mois"
+   },
+   {
+    "ind": "Ventes au détail (YoY%)",
+    "val": "5.4",
+    "seuil": ">2%",
+    "signal": "Vert",
+    "comm": "StatCan, mensuel. Pression consommateur."
+   }
+  ],
+  "INFLATION / BoC": [
+   {
+    "ind": "CPI Canada (YoY%)",
+    "val": "3.1",
+    "seuil": "<2.5%",
+    "signal": "Rouge",
+    "comm": "Cible BoC 2% (fourchette 1-3%)"
+   },
+   {
+    "ind": "CPI Core médian (YoY%)",
+    "val": "1.9",
+    "seuil": "<2.5%",
+    "signal": "Vert",
+    "comm": "Mesure préférée BoC"
+   },
+   {
+    "ind": "Taux directeur BoC",
+    "val": "2.5",
+    "seuil": "<3.0%",
+    "signal": "Vert",
+    "comm": "Banque du Canada, cycle d'assouplissement"
+   },
+   {
+    "ind": "Spread BoC - Fed Funds",
+    "val": "-1.5",
+    "seuil": ">-1.5%",
+    "signal": "Jaune",
+    "comm": "Divergence politique monétaire = pression CAD"
+   }
+  ],
+  "EMPLOI": [
+   {
+    "ind": "Taux de chômage CA",
+    "val": "6.706",
+    "seuil": "<6.5%",
+    "signal": "Jaune",
+    "comm": "StatCan, mensuel"
+   },
+   {
+    "ind": "Création d'emplois (variation mensuelle, k)",
+    "val": "-4.7",
+    "seuil": ">+25k",
+    "signal": "Rouge",
+    "comm": "Labour Force Survey"
+   }
+  ],
+  "TAUX / FX": [
+   {
+    "ind": "Rendement 10Y Canada",
+    "val": "3.846",
+    "seuil": "<4.0%",
+    "signal": "Vert",
+    "comm": "GoC 10-year benchmark"
+   },
+   {
+    "ind": "Rendement 2Y Canada",
+    "val": "3.37",
+    "seuil": "<3.5%",
+    "signal": "Vert",
+    "comm": "Sensible aux décisions BoC"
+   },
+   {
+    "ind": "Spread 10Y CA-US",
+    "val": "-1.305",
+    "seuil": ">-1.0%",
+    "signal": "Rouge",
+    "comm": "Écart yields, indicateur de pression CAD"
+   },
+   {
+    "ind": "CAD/USD",
+    "val": "0.701",
+    "seuil": ">0.72",
+    "signal": "Jaune",
+    "comm": "Faiblesse CAD pression sur importations"
+   }
+  ],
+  "LOGEMENT": [
+   {
+    "ind": "S&P/TSX REIT (YTD%) - proxy logement",
+    "val": "0.041",
+    "seuil": ">0%",
+    "signal": "Jaune",
+    "comm": "iShares XRE - S&P/TSX REIT Composite. Source: Bloomberg."
+   },
+   {
+    "ind": "Mises en chantier CA (k SAAR)",
+    "val": "248.9",
+    "seuil": ">220k",
+    "signal": "Vert",
+    "comm": "SCHL, mensuel"
+   },
+   {
+    "ind": "Renouvellements hypothécaires 2025-2026",
+    "val": "~$300Mds",
+    "seuil": "Qualitatif",
+    "signal": "Rouge",
+    "comm": "Mur hypothécaire: renouvellements à taux plus élevés"
+   }
+  ],
+  "COMMERCE": [
+   {
+    "ind": "Balance commerciale CA ($CAD Mds)",
+    "val": "5.35",
+    "seuil": ">0",
+    "signal": "Vert",
+    "comm": "StatCan, mensuel. Exposition tarifs US."
+   },
+   {
+    "ind": "Prix pétrole WCS (Western Canadian Select)",
+    "val": "60.60",
+    "seuil": ">$55",
+    "signal": "Vert",
+    "comm": "Clé pour secteur énergie + dollar canadien"
+   }
+  ],
+  "MARCHÉS CA": [
+   {
+    "ind": "TSX Composite (niveau)",
+    "val": "36 137",
+    "seuil": "Tendance haussière",
+    "signal": "Vert",
+    "comm": "S&P/TSX Composite"
+   },
+   {
+    "ind": "TSX Composite (YTD%)",
+    "val": "16.08",
+    "seuil": ">5%",
+    "signal": "Vert",
+    "comm": "Performance YTD totale (avec div.)"
+   },
+   {
+    "ind": "P/E Forward TSX",
+    "val": "17.40",
+    "seuil": "<16x",
+    "signal": "Jaune",
+    "comm": "Valorisation relative TSX"
+   },
+   {
+    "ind": "Perf TSX vs S&P 500 (YTD)",
+    "val": "4.111",
+    "seuil": ">-5%",
+    "signal": "Vert",
+    "comm": "Surperformance/sous-perf relative"
+   },
+   {
+    "ind": "Perf Banques CA (S&P/TSX Banks YTD)",
+    "val": "26.49",
+    "seuil": ">0%",
+    "signal": "Vert",
+    "comm": "Indice banques canadiennes"
+   },
+   {
+    "ind": "Perf Énergie CA (S&P/TSX Energy YTD)",
+    "val": "30.24",
+    "seuil": ">0%",
+    "signal": "Vert",
+    "comm": "Indice énergie canadienne"
+   },
+   {
+    "ind": "Perf Matériaux CA (S&P/TSX Materials YTD)",
+    "val": "2.91",
+    "seuil": ">0%",
+    "signal": "Vert",
+    "comm": "Or, métaux, mines - exposition rouge canadien"
+   }
+  ]
+ },
+ "matrice": [
+  {
+   "risque": "Inflation collante (>3%)",
+   "prob": 4,
+   "impact": 4,
+   "score": 16,
+   "plan": ""
+  },
+  {
+   "risque": "Hausse yields obligataires (>5%)",
+   "prob": 2,
+   "impact": 5,
+   "score": 10,
+   "plan": ""
+  },
+  {
+   "risque": "Retard productivité IA",
+   "prob": 3,
+   "impact": 4,
+   "score": 12,
+   "plan": ""
+  },
+  {
+   "risque": "Escalade guerre commerciale",
+   "prob": 3,
+   "impact": 4,
+   "score": 12,
+   "plan": ""
+  },
+  {
+   "risque": "Récession Canada (mur hypothécaire)",
+   "prob": 3,
+   "impact": 3,
+   "score": 9,
+   "plan": ""
+  }
+ ]
+}

@@ -946,56 +946,55 @@ with tab1:
         st.caption("⚠️ MISO — données insuffisantes (^NYAD ou ^VIX3M non disponibles)")
 
 with tab2:
-    # ── Excel upload ────────────────────────────────────────────────────────
-    st.markdown("""
-    <div style="background:#111827;border:1px solid #374151;border-radius:10px;padding:16px 20px;margin-bottom:16px;">
-      <p style="color:#9CA3AF;font-size:0.75rem;text-transform:uppercase;letter-spacing:.1em;margin:0 0 4px;">
-        📥 Mise à jour Bloomberg
-      </p>
-      <p style="color:#F9FAFB;font-size:0.85rem;margin:0;">
-        Téléverse un fichier Excel Bloomberg pour mettre à jour le snapshot.
-      </p>
-    </div>
-    """, unsafe_allow_html=True)
+    # Summary of the latest Bloomberg snapshot (data/fondaction_snapshot.json,
+    # generated from Tableau_Bord_Fondaction_Bloomberg.xlsx). Full detail and
+    # file upload live on the « Fondaction Snapshot » page.
+    _snap_path = BASE / "data" / "fondaction_snapshot.json"
+    try:
+        _snap = json.loads(_snap_path.read_text(encoding="utf-8"))
+    except Exception as exc:  # noqa: BLE001
+        _snap = None
+        st.warning(f"Snapshot introuvable ({exc}).")
 
-    uploaded = st.file_uploader(
-        "Fichier Excel Bloomberg (.xlsx)",
-        type=["xlsx", "xls"],
-        label_visibility="collapsed",
-    )
+    if _snap:
+        st.markdown(f"""
+        <div style="background:#111827;border:1px solid #374151;border-radius:10px;padding:14px 20px;margin:12px 16px;">
+          <p style="color:#9CA3AF;font-size:0.72rem;text-transform:uppercase;letter-spacing:.1em;margin:0 0 4px;">
+            🏦 Tableau de bord Fondaction · Bloomberg
+          </p>
+          <p style="color:#F9FAFB;font-size:0.9rem;margin:0;">
+            Dernière mise à jour : <strong>{_snap.get("date", "—")}</strong>
+            <span style="color:#6B7280;"> · source : {_snap.get("source", "")}</span>
+          </p>
+        </div>
+        """, unsafe_allow_html=True)
 
-    if uploaded is not None:
-        try:
-            import pandas as pd
-            xl = pd.ExcelFile(uploaded)
-            sheet_names = xl.sheet_names
-            st.success(f"✅ Fichier chargé : **{uploaded.name}** — {len(sheet_names)} feuille(s)")
+        _cols = st.columns(len(_snap["score"]))
+        for _c, _row in zip(_cols, _snap["score"]):
+            _counts = ""
+            if _row.get("vert") is not None:
+                _counts = f"🟢 {_row['vert']} · 🟡 {_row['jaune']} · 🔴 {_row['rouge']}"
+            _c.metric(_row["cat"], f"{_row['score']}/100", _row.get("trend", ""), delta_color="off")
+            if _counts:
+                _c.caption(_counts)
 
-            selected = st.selectbox(
-                "Sélectionner une feuille",
-                sheet_names,
-                label_visibility="collapsed",
-            )
-            df = xl.parse(selected, header=None)
-
-            # Style the dataframe
-            st.markdown(f"<p style='color:#6B7280;font-size:0.75rem;margin:8px 0 4px;'>"
-                        f"Feuille : <strong style='color:#93C5FD;'>{selected}</strong> "
-                        f"— {df.shape[0]} lignes × {df.shape[1]} colonnes</p>",
-                        unsafe_allow_html=True)
+        _alerts = [
+            (sec, r) for grp in ("risques", "canada") for sec, rows in _snap.get(grp, {}).items()
+            for r in rows if r.get("signal") == "Rouge"
+        ]
+        if _alerts:
+            st.markdown("<p style='color:#F87171;font-size:0.8rem;margin:12px 16px 4px;font-weight:600;'>"
+                        f"🔴 Signaux rouges — risques & Canada ({len(_alerts)})</p>", unsafe_allow_html=True)
             st.dataframe(
-                df,
-                use_container_width=True,
-                height=400,
+                [{"Section": sec, "Indicateur": r["ind"], "Valeur": r["val"], "Seuil": r["seuil"],
+                  "Commentaire": r.get("comm", "")} for sec, r in _alerts],
+                use_container_width=True, hide_index=True,
             )
-        except Exception as e:
-            st.error(f"Erreur lecture Excel : {e}")
 
-    st.divider()
+    st.page_link("pages/1_Fondaction_Snapshot.py",
+                 label="Ouvrir le snapshot complet (HOPE, tactique, thèses, risques, Canada) →",
+                 icon="📊")
 
-    # ── Static snapshot HTML ────────────────────────────────────────────────
-    html_snap = (TEMPLATE_DIR / "fondaction_snapshot.html").read_text(encoding="utf-8")
-    components.html(html_snap, height=1400, scrolling=True)
 
 with tab3:
     oil_data = _full_oil_data()

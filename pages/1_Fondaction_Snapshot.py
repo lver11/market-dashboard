@@ -4,6 +4,8 @@ Supporte le chargement dynamique via upload Excel (onglet Snapshot).
 """
 
 import io
+from pathlib import Path
+import json
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
@@ -147,166 +149,164 @@ def gauge_fig(score: int, color: str, label: str) -> go.Figure:
 
 
 # ── Excel Parser ───────────────────────────────────────────────────────────────
+# Sections of the "Snapshot" sheet are located by their header text (column B),
+# so rows can be added or removed in the workbook without breaking the parser.
+_SECTION_KEYS = {
+    "sommaire": "SOMMAIRE",
+    "hope":     "INDICATEURS DE CYCLE",
+    "tact":     "SIGNAUX TACTIQUES",
+    "theses":   "SUIVI DES TH",
+    "risques":  "ALERTES RISQUES",
+    "canada":   "INDICATEURS CANADA",
+    "matrice":  "MATRICE PROBABILIT",
+}
+
+
+def _find_sections(df) -> dict:
+    """Return {key: (first_data_row, last_data_row)} for each section found."""
+    starts = {}
+    for ri in range(len(df)):
+        cell = safe_str(df.iloc[ri, 1]).upper()
+        if not cell:
+            continue
+        for key, needle in _SECTION_KEYS.items():
+            if key not in starts and needle in cell and ("═" in cell or key == "matrice"):
+                starts[key] = ri
+    ordered = sorted(starts.items(), key=lambda kv: kv[1])
+    bounds = {}
+    for i, (key, hdr) in enumerate(ordered):
+        stop = ordered[i + 1][1] - 1 if i + 1 < len(ordered) else len(df) - 1
+        bounds[key] = (hdr + 2, stop)  # skip header + column-title rows
+    return bounds
+
+
+def _grouped_rows(df, bounds, builder) -> dict:
+    """Group rows under the category in column B (carried down when blank)."""
+    out: dict = {}
+    if not bounds:
+        return out
+    current = None
+    for ri in range(bounds[0], bounds[1] + 1):
+        row = df.iloc[ri]
+        cat, ind = safe_str(row[1]), safe_str(row[2])
+        if not ind:
+            continue
+        if cat:
+            current = cat
+        if current:
+            out.setdefault(current, []).append(builder(row, ind))
+    return out
+
+
+def _counts(groups: dict, key: str = "signal") -> tuple[int, int, int]:
+    rows = [r for v in groups.values() for r in v]
+    return (sum(r[key] == "Vert" for r in rows),
+            sum(r[key] == "Jaune" for r in rows),
+            sum(r[key] == "Rouge" for r in rows))
+
+
+def _int(v, default=0) -> int:
+    try:
+        return int(float(safe_str(v)))
+    except (TypeError, ValueError):
+        return default
+
+
 def parse_snapshot(file_bytes: bytes):
     df = pd.read_excel(io.BytesIO(file_bytes), sheet_name="Snapshot", header=None)
+    sec = _find_sections(df)
+    missing = [k for k in ("sommaire", "hope", "tact", "theses", "risques") if k not in sec]
+    if missing:
+        raise ValueError(f"sections introuvables dans l'onglet Snapshot : {', '.join(missing)}")
 
     # Date
     date_str = "—"
-    cell = safe_str(df.iloc[1, 1])
-    if "mise" in cell.lower():
-        date_str = cell.split(":")[-1].strip()
+    for ri in range(0, 4):
+        cell = safe_str(df.iloc[ri, 1])
+        if "mise" in cell.lower() and ":" in cell:
+            date_str = cell.split(":", 1)[-1].strip()
+            break
 
-    # Scorecard (rows 6-10, 0-indexed)
-    colors = ["#60A5FA", "#F59E0B", "#34D399", "#F87171", "#A78BFA"]
-    labels = ["Cycle HOPE", "Signaux Tactiques", "Thèses Clés", "Alertes Risques", "SCORE GLOBAL"]
+    # Scorecard — scores, trends and signal counts come straight from the workbook
+    colors = {"Cycle HOPE": "#60A5FA", "Signaux Tactiques": "#F59E0B", "Thèses Clés": "#34D399",
+              "Alertes Risques": "#F87171", "SCORE GLOBAL": "#A78BFA"}
     scorecard = []
-    for i, ri in enumerate([6, 7, 8, 9, 10]):
+    a, b = sec["sommaire"]
+    for ri in range(a, b + 1):
         row = df.iloc[ri]
-        try:
-            score = int(float(safe_str(row[2])))
-        except Exception:
-            score = 0
-        trend = safe_str(row[3]) or "→"
-        scorecard.append({"cat": labels[i], "score": score, "trend": trend,
-                          "vert": None, "jaune": None, "rouge": None, "color": colors[i]})
-
-    # HOPE (rows 14-32)
-    hope_data: dict = {}
-    current = None
-    for ri in range(14, 33):
-        row = df.iloc[ri]
-        cat, ind = safe_str(row[1]), safe_str(row[2])
-        if not ind:
+        cat = safe_str(row[1])
+        if cat not in colors:
             continue
-        if cat:
-            current = cat
-        if current:
-            hope_data.setdefault(current, [])
-            hope_data[current].append({
-                "ind": ind,
-                "val": fmt_val(row[3]),
-                "seuil": safe_str(row[4]) or "—",
-                "signal": safe_str(row[5]) or "—",
-                "tend": safe_str(row[6]) or "→",
-                "note": safe_str(row[7]),
-            })
+        has_counts = safe_str(row[4]) != ""
+        scorecard.append({
+            "cat": cat, "score": _int(row[2]), "trend": safe_str(row[3]) or "→",
+            "vert":  _int(row[4]) if has_counts else None,
+            "jaune": _int(row[5]) if has_counts else None,
+            "rouge": _int(row[6]) if has_counts else None,
+            "color": colors[cat],
+        })
 
-    all_h = [r for rows in hope_data.values() for r in rows]
-    scorecard[0]["vert"]  = sum(1 for r in all_h if r["signal"] == "Vert")
-    scorecard[0]["jaune"] = sum(1 for r in all_h if r["signal"] == "Jaune")
-    scorecard[0]["rouge"] = sum(1 for r in all_h if r["signal"] == "Rouge")
+    hope_data = _grouped_rows(df, sec.get("hope"), lambda r, ind: {
+        "ind": ind, "val": fmt_val(r[3]), "seuil": safe_str(r[4]) or "—",
+        "signal": safe_str(r[5]) or "—", "tend": safe_str(r[6]) or "→", "note": safe_str(r[7])})
 
-    # TACTIQUES (rows 36-53)
-    tact_data: dict = {}
-    current = None
-    for ri in range(36, 54):
-        row = df.iloc[ri]
-        cat, ind = safe_str(row[1]), safe_str(row[2])
-        if not ind:
-            continue
-        if cat:
-            current = cat
-        if current:
-            tact_data.setdefault(current, [])
-            tact_data[current].append({
-                "ind": ind,
-                "val": fmt_val(row[3]),
-                "comp": fmt_val(row[4]),
-                "cible": safe_str(row[5]) or "—",
-                "signal": safe_str(row[6]) or "—",
-                "impl": safe_str(row[7]),
-            })
+    tact_data = _grouped_rows(df, sec.get("tact"), lambda r, ind: {
+        "ind": ind, "val": fmt_val(r[3]), "comp": fmt_val(r[4]), "cible": safe_str(r[5]) or "—",
+        "signal": safe_str(r[6]) or "—", "impl": safe_str(r[7])})
 
-    all_t = [r for rows in tact_data.values() for r in rows]
-    scorecard[1]["vert"]  = sum(1 for r in all_t if r["signal"] == "Vert")
-    scorecard[1]["jaune"] = sum(1 for r in all_t if r["signal"] == "Jaune")
-    scorecard[1]["rouge"] = sum(1 for r in all_t if r["signal"] == "Rouge")
+    theses_data = _grouped_rows(df, sec.get("theses"), lambda r, ind: {
+        "ind": ind, "val": fmt_val(r[3]), "cible": safe_str(r[4]) or "—",
+        "statut": safe_str(r[5]) or "—", "note": safe_str(r[6])})
 
-    # THÈSES (rows 57-77)
-    theses_data: dict = {}
-    current = None
-    for ri in range(57, 78):
-        row = df.iloc[ri]
-        cat, ind = safe_str(row[1]), safe_str(row[2])
-        if not ind:
-            continue
-        if cat:
-            current = cat
-        if current:
-            theses_data.setdefault(current, [])
-            theses_data[current].append({
-                "ind": ind,
-                "val": fmt_val(row[3]),
-                "cible": safe_str(row[4]) or "—",
-                "statut": safe_str(row[5]) or "—",
-                "note": safe_str(row[6]),
-            })
+    def _risk(r, ind):
+        sig = safe_str(r[5])
+        return {"ind": ind, "val": fmt_val(r[3]), "seuil": safe_str(r[4]) or "—",
+                "signal": sig if sig in ("Vert", "Jaune", "Rouge") else "—", "comm": safe_str(r[6])}
 
-    all_th = [r for rows in theses_data.values() for r in rows]
-    scorecard[2]["vert"]  = sum(1 for r in all_th if r["statut"] == "Vert")
-    scorecard[2]["jaune"] = sum(1 for r in all_th if r["statut"] == "Jaune")
-    scorecard[2]["rouge"] = sum(1 for r in all_th if r["statut"] == "Rouge")
+    risques_data = _grouped_rows(df, sec.get("risques"), _risk)
 
-    # RISQUES (rows 81-100) — Canada extrait séparément
-    risques_data: dict = {}
-    canada_data: dict = {}
-    current = None
-    for ri in range(81, 101):
-        row = df.iloc[ri]
-        cat, ind = safe_str(row[1]), safe_str(row[2])
-        if not ind:
-            continue
-        if cat:
-            current = cat
-        if current:
-            sig = safe_str(row[5])
-            entry = {
-                "ind": ind,
-                "val": fmt_val(row[3]),
-                "seuil": safe_str(row[4]) or "—",
-                "signal": sig if sig in ("Vert", "Jaune", "Rouge") else "—",
-                "comm": safe_str(row[6]),
-            }
-            if current.upper() == "CANADA":
-                canada_data.setdefault(current, [])
-                canada_data[current].append(entry)
-            else:
-                risques_data.setdefault(current, [])
-                risques_data[current].append(entry)
+    # Canada: dedicated section when present (newer workbooks), otherwise the
+    # CANADA rows of the risk section (older workbooks).
+    if "canada" in sec:
+        def _ca(r, ind):
+            sig = safe_str(r[5])
+            note = safe_str(r[7])
+            tend = safe_str(r[6])
+            return {"ind": ind, "val": fmt_val(r[3]), "seuil": safe_str(r[4]) or "—",
+                    "signal": sig if sig in ("Vert", "Jaune", "Rouge") else "—",
+                    "comm": f"{tend} {note}".strip() if tend and tend != "→" else note}
+        canada_data = _grouped_rows(df, sec["canada"], _ca)
+    else:
+        canada_data = {k: v for k, v in risques_data.items() if k.upper() == "CANADA"}
+        risques_data = {k: v for k, v in risques_data.items() if k.upper() != "CANADA"}
 
-    all_r = [r for rows in risques_data.values() for r in rows]
-    scorecard[3]["vert"]  = sum(1 for r in all_r if r["signal"] == "Vert")
-    scorecard[3]["jaune"] = sum(1 for r in all_r if r["signal"] == "Jaune")
-    scorecard[3]["rouge"] = sum(1 for r in all_r if r["signal"] == "Rouge")
+    # Fill counts that the workbook does not provide
+    for sc_row, groups, key in ((0, hope_data, "signal"), (1, tact_data, "signal"),
+                                (2, theses_data, "statut"), (3, risques_data, "signal")):
+        if sc_row < len(scorecard) and scorecard[sc_row]["vert"] is None:
+            scorecard[sc_row]["vert"], scorecard[sc_row]["jaune"], scorecard[sc_row]["rouge"] = \
+                _counts(groups, key)
 
-    # Canada scorecard — score calculé depuis les indicateurs
-    all_ca = [r for rows in canada_data.values() for r in rows]
-    ca_v = sum(1 for r in all_ca if r["signal"] == "Vert")
-    ca_j = sum(1 for r in all_ca if r["signal"] == "Jaune")
-    ca_r = sum(1 for r in all_ca if r["signal"] == "Rouge")
+    ca_v, ca_j, ca_r = _counts(canada_data)
     total_ca = ca_v + ca_j + ca_r
-    ca_score = int((ca_v + 0.5 * ca_j) / total_ca * 100) if total_ca > 0 else 0
-    scorecard.insert(4, {
+    ca_score = int((ca_v + 0.5 * ca_j) / total_ca * 100) if total_ca else 0
+    insert_at = next((i for i, s_ in enumerate(scorecard) if s_["cat"] == "SCORE GLOBAL"), len(scorecard))
+    scorecard.insert(insert_at, {
         "cat": "Canada", "score": ca_score, "trend": "→",
         "vert": ca_v, "jaune": ca_j, "rouge": ca_r, "color": "#EF4444",
     })
 
-    # MATRICE (rows 104-108)
+    # Matrice probabilité / impact
     matrice = []
-    for ri in range(104, 109):
-        row = df.iloc[ri]
-        risque = safe_str(row[1])
-        if not risque:
-            continue
-        try:
-            prob   = int(float(safe_str(row[2]) or "0"))
-            impact = int(float(safe_str(row[3]) or "0"))
-            score_m = int(float(safe_str(row[4]) or "0"))
-            plan   = safe_str(row[5])
-        except Exception:
-            prob, impact, score_m, plan = 0, 0, 0, ""
-        matrice.append({"risque": risque, "prob": prob, "impact": impact,
-                        "score": score_m, "plan": plan})
+    if "matrice" in sec:
+        a, b = sec["matrice"]
+        for ri in range(a, b + 1):
+            row = df.iloc[ri]
+            risque = safe_str(row[1])
+            if not risque:
+                continue
+            matrice.append({"risque": risque, "prob": _int(row[2]), "impact": _int(row[3]),
+                            "score": _int(row[4]), "plan": safe_str(row[5])})
 
     return date_str, scorecard, hope_data, tact_data, theses_data, risques_data, canada_data, matrice
 
@@ -490,7 +490,7 @@ with st.sidebar:
     elif "snap_name" in st.session_state:
         st.info(f"📄 En mémoire : {st.session_state['snap_name']}")
     else:
-        st.caption("Aucun fichier chargé — données du 12 mars 2026.")
+        st.caption("Aucun fichier chargé — snapshot embarqué (dernier fichier Bloomberg publié).")
 
     # Afficher erreur de parsing si elle existe
     if st.session_state.get("snap_error"):
@@ -522,6 +522,17 @@ if "snap_file" in st.session_state:
             "12 mars 2026", _SCORECARD_DEFAULT, _HOPE_DEFAULT, _TACT_DEFAULT, _THESES_DEFAULT
         RISQUES_DATA, CANADA_DATA, MATRICE = _RISQUES_DEFAULT, _CANADA_DEFAULT, _MATRICE_DEFAULT
         data_src = "fallback (erreur de lecture)"
+
+_BUNDLED = Path(__file__).resolve().parent.parent / "data" / "fondaction_snapshot.json"
+if not _parse_ok and "snap_file" not in st.session_state and _BUNDLED.exists():
+    try:
+        _b = json.loads(_BUNDLED.read_text(encoding="utf-8"))
+        date_str, SCORECARD, HOPE_DATA, TACT_DATA = _b["date"], _b["score"], _b["hope"], _b["tact"]
+        THESES_DATA, RISQUES_DATA, CANADA_DATA, MATRICE = _b["theses"], _b["risques"], _b["canada"], _b["matrice"]
+        data_src = _b.get("source", "data/fondaction_snapshot.json")
+        _parse_ok = True
+    except Exception as exc:  # fall back to the hard-coded March 2026 snapshot
+        st.warning(f"Snapshot embarqué illisible ({exc}) — affichage des données du 12 mars 2026.")
 
 if not _parse_ok and "snap_file" not in st.session_state:
     date_str = "12 mars 2026"
