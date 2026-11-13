@@ -1,7 +1,7 @@
 {
  "source": "Sources web gratuites (FRED, Yahoo Finance, Banque du Canada, StatCan)",
  "date": "2026-11-13",
- "generated_utc": "2026-11-13 15:15 UTC",
+ "generated_utc": "2026-11-13 15:23 UTC",
  "stats": {
   "total": 103,
   "manual": 20,
@@ -176,7 +176,7 @@
    },
    {
     "ind": "Earnings Yield S&P 500",
-    "val": "4.189",
+    "val": "4.199",
     "seuil": ">5%",
     "signal": "Jaune",
     "tend": "→",
@@ -195,7 +195,7 @@
    },
    {
     "ind": "Performance S&P 500 (YTD%)",
-    "val": "9.892",
+    "val": "9.648",
     "seuil": ">0%",
     "signal": "Vert",
     "tend": "↓",
@@ -211,7 +211,7 @@
     "signal": "Vert",
     "tend": "↑",
     "note": "BLS, 1er vendredi du mois",
-    "src": "FRED PAYEMS · au 2026-10-01"
+    "src": "BLS (PAYEMS) · au 2026-10-01"
    },
    {
     "ind": "Taux de chômage U3",
@@ -220,7 +220,7 @@
     "signal": "Vert",
     "tend": "↓",
     "note": "BLS",
-    "src": "FRED UNRATE · au 2026-10-01"
+    "src": "BLS (UNRATE) · au 2026-10-01"
    },
    {
     "ind": "Taux de chômage U6",
@@ -229,7 +229,7 @@
     "signal": "Vert",
     "tend": "↑",
     "note": "BLS, mesure élargie",
-    "src": "FRED U6RATE · au 2026-10-01"
+    "src": "BLS (U6RATE) · au 2026-10-01"
    },
    {
     "ind": "Initial Jobless Claims (4wk avg, k)",
@@ -247,7 +247,7 @@
     "signal": "Jaune",
     "tend": "↑",
     "note": "BLS, avec délai (millions)",
-    "src": "FRED JTSJOL · au 2026-09-01"
+    "src": "BLS (JTSJOL) · au 2026-09-01"
    }
   ]
  },
@@ -256,10 +256,10 @@
    {
     "ind": "P/E Forward S&P 500",
     "val": "20.94",
-    "comp": "23.87",
+    "comp": "23.82",
     "cible": "<18x",
     "signal": "Jaune",
-    "impl": "20.94 vs 23.87",
+    "impl": "20.94 vs 23.82",
     "src": "Consensus (saisie manuelle) · au 2026-11-13",
     "manual": true
    },
@@ -310,44 +310,44 @@
     "cible": ">2.5%",
     "signal": "Rouge",
     "impl": "-0.324 vs 2",
-    "src": "1/P/E fwd - 10 ans (FRED DGS10) · au 2026-11-12"
+    "src": "1/P/E fwd - 10 ans (Treasury (DGS10)) · au 2026-11-12"
    }
   ],
   "MOMENTUM ETF": [
    {
     "ind": "Momentum Small Cap (IWM) 1M%",
-    "val": "0.222",
-    "comp": "12.76",
+    "val": "-0.065",
+    "comp": "12.43",
     "cible": ">+2%",
     "signal": "Jaune",
-    "impl": "0.222 vs 12.76",
+    "impl": "-0.065 vs 12.43",
     "src": "Yahoo IWM · au 2026-11-13"
    },
    {
     "ind": "Momentum Value (IVE) 1M%",
-    "val": "2.37",
-    "comp": "15.08",
+    "val": "2.175",
+    "comp": "14.86",
     "cible": ">+2%",
     "signal": "Vert",
-    "impl": "2.37 vs 15.08",
+    "impl": "2.175 vs 14.86",
     "src": "Yahoo IVE · au 2026-11-13"
    },
    {
     "ind": "Momentum EM (EEM) 1M%",
-    "val": "-5.629",
-    "comp": "10.90",
+    "val": "-5.777",
+    "comp": "10.73",
     "cible": ">+2%",
     "signal": "Rouge",
-    "impl": "-5.629 vs 10.90",
+    "impl": "-5.777 vs 10.73",
     "src": "Yahoo EEM · au 2026-11-13"
    },
    {
     "ind": "Momentum Commodities (DBC) 1M%",
-    "val": "-7.177",
-    "comp": "38.24",
+    "val": "-7.117",
+    "comp": "38.33",
     "cible": ">+2%",
     "signal": "Rouge",
-    "impl": "-7.177 vs 38.24",
+    "impl": "-7.117 vs 38.33",
     "src": "Yahoo DBC · au 2026-11-13"
    }
   ],
@@ -372,11 +372,11 @@
    },
    {
     "ind": "Performance dette EM (EMB YTD)",
-    "val": "-1.04",
-    "comp": "-0.335",
+    "val": "-1.072",
+    "comp": "-0.368",
     "cible": ">0% YTD",
     "signal": "Rouge",
-    "impl": "-1.04 vs -0.335",
+    "impl": "-1.072 vs -0.368",
     "src": "Yahoo EMB · au 2026-11-13"
    },
    {
@@ -392,38 +392,38 @@
   "MOMENTUM": [
    {
     "ind": "RSI S&P 500 (14 jours)",
-    "val": "44.95",
-    "comp": "46.75",
+    "val": "44.20",
+    "comp": "46.31",
     "cible": "30-70",
     "signal": "Vert",
-    "impl": "44.95 vs 46.75",
+    "impl": "44.20 vs 46.31",
     "src": "Calculé (Yahoo ^GSPC) · au 2026-11-13"
    },
    {
     "ind": "S&P 500 vs MA 200 jours",
-    "val": "2.337",
-    "comp": "-1.879",
+    "val": "2.111",
+    "comp": "-2.092",
     "cible": ">0%",
     "signal": "Vert",
-    "impl": "2.337 vs -1.879",
+    "impl": "2.111 vs -2.092",
     "src": "Calculé (Yahoo ^GSPC) · au 2026-11-13"
    },
    {
     "ind": "VIX",
-    "val": "19.29",
-    "comp": "17.19",
+    "val": "19.76",
+    "comp": "20.05",
     "cible": "<20",
     "signal": "Vert",
-    "impl": "19.29 vs 17.19",
+    "impl": "19.76 vs 20.05",
     "src": "Yahoo ^VIX · au 2026-11-13"
    },
    {
     "ind": "Breadth: RSP vs SPY (+50, proxy)",
-    "val": "55.42",
-    "comp": "5.188",
+    "val": "55.37",
+    "comp": "5.139",
     "cible": ">60",
     "signal": "Jaune",
-    "impl": "55.42 vs 5.188",
+    "impl": "55.37 vs 5.139",
     "src": "Yahoo RSP - SPY · au 2026-11-13"
    }
   ]
@@ -432,7 +432,7 @@
   "IA - COUCHE 1: ÉNERGIE": [
    {
     "ind": "Utilities US (XLU YTD%)",
-    "val": "4.873",
+    "val": "4.778",
     "cible": ">10%",
     "statut": "Rouge",
     "note": "",
@@ -449,7 +449,7 @@
    },
    {
     "ind": "Prix gaz naturel Henry Hub",
-    "val": "3.27",
+    "val": "3.26",
     "cible": ">$3.50/MMBtu",
     "statut": "Jaune",
     "note": "",
@@ -467,7 +467,7 @@
    },
    {
     "ind": "Performance SOX Index (semi) YTD%",
-    "val": "40.87",
+    "val": "40.34",
     "cible": ">0%",
     "statut": "Vert",
     "note": "",
@@ -477,7 +477,7 @@
   "IA - COUCHE 3: INFRASTRUCTURE": [
    {
     "ind": "Perf. hyperscalers (AMZN/GOOG/MSFT/META YTD%)",
-    "val": "3.361",
+    "val": "3.143",
     "cible": ">+10% YTD",
     "statut": "Jaune",
     "note": "",
@@ -485,7 +485,7 @@
    },
    {
     "ind": "Performance Vertiv/Quanta/EQIX",
-    "val": "34.11",
+    "val": "33.66",
     "cible": ">+10% YTD",
     "statut": "Vert",
     "note": "",
@@ -495,7 +495,7 @@
   "IA - COUCHE 5: APPLICATIONS": [
    {
     "ind": "Performance Cloud ETF (WCLD YTD%)",
-    "val": "17.68",
+    "val": "17.17",
     "cible": ">+10% YTD",
     "statut": "Vert",
     "note": "",
@@ -505,7 +505,7 @@
   "GREAT BROADENING": [
    {
     "ind": "Performance relative RTY vs SPX (YTD)",
-    "val": "2.422",
+    "val": "2.355",
     "cible": ">0%",
     "statut": "Vert",
     "note": "",
@@ -513,7 +513,7 @@
    },
    {
     "ind": "Breadth: RSP vs SPY (+50, proxy)",
-    "val": "55.42",
+    "val": "55.37",
     "cible": ">53 (proxy)",
     "statut": "Vert",
     "note": "",
@@ -521,7 +521,7 @@
    },
    {
     "ind": "Performance S&P Equal Weight vs Cap Weight",
-    "val": "5.422",
+    "val": "5.368",
     "cible": ">0%",
     "statut": "Vert",
     "note": "",
@@ -531,7 +531,7 @@
   "COMMODITÉS - RARETÉ": [
    {
     "ind": "Prix cuivre ($/tonne, COMEX)",
-    "val": "13 513",
+    "val": "13 506",
     "cible": ">$9,500/t",
     "statut": "Vert",
     "note": "",
@@ -539,7 +539,7 @@
    },
    {
     "ind": "Prix argent ($/oz)",
-    "val": "49.71",
+    "val": "49.47",
     "cible": ">$50/oz",
     "statut": "Jaune",
     "note": "",
@@ -556,7 +556,7 @@
    },
    {
     "ind": "Mines diversifiées (PICK YTD)",
-    "val": "6.025",
+    "val": "5.76",
     "cible": ">+10% YTD",
     "statut": "Jaune",
     "note": "",
@@ -566,7 +566,7 @@
   "STIMULUS FISCAL US": [
    {
     "ind": "Performance small caps US (IWM YTD)",
-    "val": "12.76",
+    "val": "12.43",
     "cible": ">+10% YTD",
     "statut": "Vert",
     "note": "",
@@ -574,7 +574,7 @@
    },
    {
     "ind": "Performance industrielles US (XLI YTD)",
-    "val": "9.197",
+    "val": "8.924",
     "cible": ">+10% YTD",
     "statut": "Jaune",
     "note": "",
@@ -595,13 +595,13 @@
     "cible": "<4.50%",
     "statut": "Rouge",
     "note": "",
-    "src": "FRED DGS10 · au 2026-11-12"
+    "src": "Treasury (DGS10) · au 2026-11-12"
    }
   ],
   "SANTÉ / BIOTECH": [
    {
     "ind": "Performance XBI (Biotech ETF)",
-    "val": "21.98",
+    "val": "21.81",
     "cible": ">+10% YTD",
     "statut": "Vert",
     "note": "",
@@ -609,7 +609,7 @@
    },
    {
     "ind": "Biotech large cap (IBB YTD, proxy FDA)",
-    "val": "25.31",
+    "val": "25.11",
     "cible": ">+5% YTD",
     "statut": "Vert",
     "note": "",
@@ -621,11 +621,11 @@
   "INFLATION": [
    {
     "ind": "CPI Core US (YoY%)",
-    "val": "2.87",
+    "val": "2.566",
     "seuil": ">3.0%",
     "signal": "Jaune",
     "comm": "Fed target 2%",
-    "src": "FRED CPILFESL · au 2026-10-01"
+    "src": "BLS (CPILFESL) · au 2026-09-01"
    },
    {
     "ind": "PCE Core (YoY%)",
@@ -649,7 +649,7 @@
     "seuil": ">4.0%",
     "signal": "Vert",
     "comm": "Pression salariale",
-    "src": "FRED CES0500000003 · au 2026-10-01"
+    "src": "BLS (CES0500000003) · au 2026-10-01"
    }
   ],
   "TAUX / YIELDS": [
@@ -659,7 +659,7 @@
     "seuil": ">5.0%",
     "signal": "Rouge",
     "comm": "Bond vigilantes",
-    "src": "FRED DGS10 · au 2026-11-12"
+    "src": "Treasury (DGS10) · au 2026-11-12"
    },
    {
     "ind": "Rendement 2 ans US",
@@ -667,7 +667,7 @@
     "seuil": ">5.0%",
     "signal": "Jaune",
     "comm": "Attentes Fed",
-    "src": "FRED DGS2 · au 2026-11-12"
+    "src": "Treasury (DGS2) · au 2026-11-12"
    },
    {
     "ind": "Spread 10Y-2Y (courbe, bps)",
@@ -675,7 +675,7 @@
     "seuil": "<-50bps",
     "signal": "Vert",
     "comm": "Inversion = risque récession",
-    "src": "FRED T10Y2Y · au 2026-11-12"
+    "src": "Treasury (T10Y2Y) · au 2026-11-12"
    },
    {
     "ind": "Rendement réel 10Y TIPS",
@@ -683,7 +683,7 @@
     "seuil": ">2.5%",
     "signal": "Rouge",
     "comm": "Coût réel du capital",
-    "src": "FRED DFII10 · au 2026-11-12"
+    "src": "Treasury (DFII10) · au 2026-11-12"
    },
    {
     "ind": "Fed Funds futures (front month)",
@@ -723,7 +723,7 @@
   "GÉOPOLITIQUE": [
    {
     "ind": "VIX (Volatilité implicite US)",
-    "val": "19.29",
+    "val": "19.76",
     "seuil": ">30",
     "signal": "Vert",
     "comm": "Volatilité implicite",
@@ -731,7 +731,7 @@
    },
    {
     "ind": "Prix pétrole Brent",
-    "val": "96.80",
+    "val": "96.74",
     "seuil": ">$80",
     "signal": "Jaune",
     "comm": "Choc pétrolier",
@@ -761,7 +761,7 @@
     "seuil": "<-1.0%",
     "signal": "Rouge",
     "comm": "Divergence politique monétaire",
-    "src": "BdC Valet + FRED DGS10 · au 2026-11-12"
+    "src": "BdC Valet + Treasury (DGS10) · au 2026-11-12"
    },
    {
     "ind": "CAD/USD",
@@ -782,7 +782,7 @@
    },
    {
     "ind": "Indice TSX vs S&P 500 (rel perf)",
-    "val": "3.859",
+    "val": "3.925",
     "seuil": "<-10%",
     "signal": "Vert",
     "comm": "Sous-performance Canada",
@@ -893,7 +893,7 @@
     "seuil": ">-1.0%",
     "signal": "Rouge",
     "comm": "Écart yields, indicateur de pression CAD",
-    "src": "BdC Valet + FRED DGS10 · au 2026-11-12"
+    "src": "BdC Valet + Treasury (DGS10) · au 2026-11-12"
    },
    {
     "ind": "CAD/USD",
@@ -907,7 +907,7 @@
   "LOGEMENT": [
    {
     "ind": "S&P/TSX REIT (XRE YTD%) - proxy logement",
-    "val": "4.976",
+    "val": "4.775",
     "seuil": ">0%",
     "signal": "Jaune",
     "comm": "iShares XRE",
@@ -934,11 +934,11 @@
   "COMMERCE": [
    {
     "ind": "Balance commerciale CA ($CAD Mds)",
-    "val": "78.55",
+    "val": "5.35",
     "seuil": ">0",
     "signal": "Vert",
     "comm": "StatCan, mensuel. Exposition tarifs US.",
-    "src": "StatCan commerce (v87008955) · au 2026-09-01"
+    "src": "StatCan balance commerciale BdP (v87008984) · au 2026-09-01"
    },
    {
     "ind": "Prix pétrole WCS (Western Canadian Select)",
@@ -953,7 +953,7 @@
   "MARCHÉS CA": [
    {
     "ind": "TSX Composite (niveau)",
-    "val": "36 074",
+    "val": "36 017",
     "seuil": "Au-dessus MA200",
     "signal": "Vert",
     "comm": "S&P/TSX Composite",
@@ -961,7 +961,7 @@
    },
    {
     "ind": "TSX Composite (YTD%)",
-    "val": "13.75",
+    "val": "13.57",
     "seuil": ">5%",
     "signal": "Vert",
     "comm": "Performance YTD",
@@ -978,7 +978,7 @@
    },
    {
     "ind": "Perf TSX vs S&P 500 (YTD)",
-    "val": "3.859",
+    "val": "3.925",
     "seuil": ">-5%",
     "signal": "Vert",
     "comm": "Surperformance/sous-perf relative",
@@ -986,7 +986,7 @@
    },
    {
     "ind": "Perf Banques CA (ZEB YTD)",
-    "val": "33.82",
+    "val": "33.70",
     "seuil": ">0%",
     "signal": "Vert",
     "comm": "BMO Equal Weight Banks (proxy S&P/TSX Banks)",
@@ -994,7 +994,7 @@
    },
    {
     "ind": "Perf Énergie CA (XEG YTD)",
-    "val": "51.18",
+    "val": "50.91",
     "seuil": ">0%",
     "signal": "Vert",
     "comm": "iShares S&P/TSX Capped Energy",
