@@ -566,7 +566,7 @@ st.html(f"""
             border-bottom:1px solid #1F2937;padding-bottom:12px;margin-bottom:16px;">
   <div>
     <div class="snap-title">📊 TABLEAU DE BORD FONDACTION</div>
-    <div class="snap-sub">Snapshot Veille Marchés Bloomberg &nbsp;·&nbsp;
+    <div class="snap-sub">Snapshot Veille Marchés &nbsp;·&nbsp;
       <span style="color:#10B981;">●</span>&nbsp;Dernière mise à jour:
       <strong style="color:#F9FAFB;">{date_str}</strong>
     </div>
