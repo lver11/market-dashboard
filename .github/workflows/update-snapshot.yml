@@ -30,6 +30,8 @@ jobs:
         run: pip install pandas yfinance
 
       - name: Rebuild snapshot from free sources
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
         run: python scripts/update_snapshot.py
 
       - name: Commit if changed

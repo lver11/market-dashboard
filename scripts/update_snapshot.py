@@ -20,6 +20,7 @@ import io
 import json
 import logging
 import math
+import os
 import sys
 import urllib.request
 from datetime import date, datetime, timezone
@@ -46,16 +47,90 @@ def _get(url: str, data: bytes | None = None, headers: dict | None = None, timeo
 
 _fred_cache: dict[str, pd.Series] = {}
 
+# fred.stlouisfed.org refuses connections from GitHub-hosted runners; the official
+# API (api.stlouisfed.org) works with a free key stored as the FRED_API_KEY secret.
+# Without a key, a few series fall back to keyless official sources (BLS, Treasury).
+FRED_API_KEY = os.environ.get("FRED_API_KEY", "").strip()
+
+BLS_IDS = {  # FRED id -> BLS series id (BLS public API v1, no key)
+    "UNRATE": "LNS14000000", "U6RATE": "LNS13327709", "PAYEMS": "CES0000000001",
+    "CES0500000003": "CES0500000003", "JTSJOL": "JTS000000000000000JOL", "CPILFESL": "CUSR0000SA0L1E",
+}
+TREASURY = {  # FRED id -> (Treasury curve type, column)
+    "DGS10": ("daily_treasury_yield_curve", "10 Yr"), "DGS2": ("daily_treasury_yield_curve", "2 Yr"),
+    "DFII10": ("daily_treasury_real_yield_curve", "10 YR"),
+}
+
+
+def _fred_api(series_id: str) -> pd.Series:
+    url = ("https://api.stlouisfed.org/fred/series/observations?file_type=json&observation_start=2015-01-01"
+           f"&series_id={series_id}&api_key={FRED_API_KEY}")
+    obs = json.loads(_get(url))["observations"]
+    return pd.Series({pd.Timestamp(o["date"]): pd.to_numeric(o["value"], errors="coerce") for o in obs}).dropna()
+
+
+def _fred_csv(series_id: str) -> pd.Series:
+    raw = _get(f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series_id}", timeout=15)
+    df = pd.read_csv(io.BytesIO(raw))
+    s = pd.to_numeric(df.iloc[:, 1], errors="coerce")
+    s.index = pd.to_datetime(df.iloc[:, 0])
+    return s.dropna()
+
+
+_bls_cache: dict[str, pd.Series] = {}
+
+
+def _bls(series_id: str) -> pd.Series:
+    if not _bls_cache:
+        body = json.dumps({"seriesid": list(BLS_IDS.values()), "startyear": str(TODAY.year - 2),
+                           "endyear": str(TODAY.year)}).encode()
+        j = json.loads(_get("https://api.bls.gov/publicAPI/v1/timeseries/data/", data=body,
+                            headers={"Content-Type": "application/json"}))
+        for ser in j["Results"]["series"]:
+            pts = {pd.Timestamp(int(d["year"]), int(d["period"][1:]), 1): float(d["value"])
+                   for d in ser["data"] if d["period"].startswith("M") and d["period"] != "M13"}
+            _bls_cache[ser["seriesID"]] = pd.Series(pts).sort_index()
+    return _bls_cache[series_id]
+
+
+def _treasury(kind: str, col: str) -> pd.Series:
+    frames = []
+    for y in (TODAY.year - 1, TODAY.year):
+        url = ("https://home.treasury.gov/resource-center/data-chart-center/interest-rates/"
+               f"daily-treasury-rates.csv/{y}/all?type={kind}&field_tdr_date_value={y}&page&_format=csv")
+        frames.append(pd.read_csv(io.BytesIO(_get(url))))
+    df = pd.concat(frames)
+    cols = {c.lower(): c for c in df.columns}
+    s = pd.to_numeric(df[cols[col.lower()]], errors="coerce")
+    s.index = pd.to_datetime(df["Date"])
+    return s.dropna().sort_index()
+
 
 def fred(series_id: str) -> pd.Series:
-    """Full history of a FRED series (no API key needed)."""
-    if series_id not in _fred_cache:
-        raw = _get(f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series_id}")
-        df = pd.read_csv(io.BytesIO(raw))
-        s = pd.to_numeric(df.iloc[:, 1], errors="coerce")
-        s.index = pd.to_datetime(df.iloc[:, 0])
-        _fred_cache[series_id] = s.dropna()
-    return _fred_cache[series_id]
+    """Full history of a FRED series, with keyless fallbacks for a few series."""
+    if series_id in _fred_cache:
+        return _fred_cache[series_id]
+    errors = []
+    attempts = []
+    if FRED_API_KEY:
+        attempts.append(("FRED API", lambda: _fred_api(series_id)))
+    if series_id in BLS_IDS:
+        attempts.append(("BLS", lambda: _bls(BLS_IDS[series_id])))
+    if series_id in TREASURY:
+        attempts.append(("Treasury", lambda: _treasury(*TREASURY[series_id])))
+    if series_id == "T10Y2Y":
+        attempts.append(("Treasury", lambda: (_treasury(*TREASURY["DGS10"]) - _treasury(*TREASURY["DGS2"])).dropna()))
+    if not FRED_API_KEY:
+        attempts.append(("FRED csv", lambda: _fred_csv(series_id)))
+    for name, fn in attempts:
+        try:
+            s = fn()
+            if len(s):
+                _fred_cache[series_id] = s
+                return s
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"{name}: {exc}")
+    raise RuntimeError(f"{series_id} indisponible ({'; '.join(errors) or 'aucune source'})")
 
 
 _boc_cache: dict[str, pd.Series] = {}
@@ -630,7 +705,13 @@ def evaluate(defs, group: str, prev: dict, kind: str) -> dict:
                 row = dict(old[ind])
                 row["src"] = (row.get("src") or "") + (" · ⚠ non rafraîchi" if "non rafraîchi" not in
                                                        (row.get("src") or "") else "")
-                out.setdefault(cat, []).append(row)
+            else:  # keep the indicator visible, excluded from the counts
+                sig_key = "statut" if kind == "theses" else "signal"
+                row = {"ind": ind, "val": "n.d.", sig_key: "—", "src": "⚠ non rafraîchi (source indisponible)"}
+                row.update({"hope": {"seuil": seuil, "tend": "→", "note": note},
+                            "tact": {"comp": "—", "cible": seuil, "impl": ""},
+                            "theses": {"cible": seuil, "note": note}}.get(kind, {"seuil": seuil, "comm": note}))
+            out.setdefault(cat, []).append(row)
             continue
         trend = trend_of(res.get("series"))
         src = _src_note(res, stale)
