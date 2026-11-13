@@ -87,9 +87,9 @@ def _bls(series_id: str) -> pd.Series:
         j = json.loads(_get("https://api.bls.gov/publicAPI/v1/timeseries/data/", data=body,
                             headers={"Content-Type": "application/json"}))
         for ser in j["Results"]["series"]:
-            pts = {pd.Timestamp(int(d["year"]), int(d["period"][1:]), 1): float(d["value"])
+            pts = {pd.Timestamp(int(d["year"]), int(d["period"][1:]), 1): pd.to_numeric(d["value"], errors="coerce")
                    for d in ser["data"] if d["period"].startswith("M") and d["period"] != "M13"}
-            _bls_cache[ser["seriesID"]] = pd.Series(pts).sort_index()
+            _bls_cache[ser["seriesID"]] = pd.Series(pts, dtype=float).dropna().sort_index()
     return _bls_cache[series_id]
 
 
@@ -703,8 +703,8 @@ def evaluate(defs, group: str, prev: dict, kind: str) -> dict:
             log.warning("%s / %s: %s", group, ind, exc)
             if ind in old:
                 row = dict(old[ind])
-                row["src"] = (row.get("src") or "") + (" · ⚠ non rafraîchi" if "non rafraîchi" not in
-                                                       (row.get("src") or "") else "")
+                row["src"] = ((row.get("src") or "") + (" · ⚠ non rafraîchi" if "non rafraîchi" not in
+                                                        (row.get("src") or "") else "")).lstrip(" ·")
             else:  # keep the indicator visible, excluded from the counts
                 sig_key = "statut" if kind == "theses" else "signal"
                 row = {"ind": ind, "val": "n.d.", sig_key: "—", "src": "⚠ non rafraîchi (source indisponible)"}
