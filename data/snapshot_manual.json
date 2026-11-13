@@ -1,30 +1,101 @@
 {
   "_lisez_moi": "Valeurs saisies à la main pour les indicateurs sans source gratuite. Modifier 'value' (et 'asof') puis committer : la mise à jour quotidienne recalcule le signal avec les règles du classeur. Les valeurs ci-dessous proviennent du classeur Bloomberg du 13 novembre 2026.",
-  "nahb":            {"value": 29,      "asof": "2026-11-13", "src": "NAHB (saisie manuelle)"},
-  "ism_pmi":         {"value": 55.5,    "asof": "2026-11-13", "src": "ISM (saisie manuelle)"},
-  "ism_new_orders":  {"value": 55.5,    "asof": "2026-11-13", "src": "ISM (saisie manuelle)"},
-  "ism_inventories": {"value": 51.4,    "asof": "2026-11-13", "src": "ISM (saisie manuelle)"},
-  "global_pmi":      {"value": 52.6,    "asof": "2026-11-13", "src": "S&P Global/JPM (saisie manuelle)"},
-  "cesi":            {"value": 71.1,    "asof": "2026-11-13", "src": "Citi CESI (saisie manuelle)"},
-  "spx_fwd_pe":      {"value": 20.94,   "asof": "2026-11-13", "src": "Consensus (saisie manuelle)"},
-  "spx_eps_growth":  {"value": 10.6,    "asof": "2026-11-13", "src": "Consensus (saisie manuelle)"},
-  "sml_fwd_pe":      {"value": 16.52,   "asof": "2026-11-13", "src": "Consensus (saisie manuelle)"},
-  "sml_trail_pe":    {"value": 19.39,   "asof": "2026-11-13", "src": "Consensus (saisie manuelle)"},
-  "eafe_fwd_pe":     {"value": 16.05,   "asof": "2026-11-13", "src": "Consensus (saisie manuelle)"},
-  "eafe_trail_pe":   {"value": 17.45,   "asof": "2026-11-13", "src": "Consensus (saisie manuelle)"},
-  "em_fwd_pe":       {"value": 10.53,   "asof": "2026-11-13", "src": "Consensus (saisie manuelle)"},
-  "em_trail_pe":     {"value": 12.69,   "asof": "2026-11-13", "src": "Consensus (saisie manuelle)"},
-  "tsx_fwd_pe":      {"value": 17.40,   "asof": "2026-11-13", "src": "Consensus (saisie manuelle)"},
-  "uranium":         {"value": 90.7,    "asof": "2026-11-13", "src": "UxC spot (saisie manuelle)"},
-  "lme_cu_stocks":   {"value": 13642,   "asof": "2026-11-13", "src": "LME (saisie manuelle)", "chg_1m_pct": -6.0},
-  "conf_board":      {"value": 91.7,    "asof": "2026-11-13", "src": "Conference Board (saisie manuelle)"},
-  "ca_lei":          {"value": -0.5,    "asof": "2026-11-13", "src": "Conference Board CA (saisie manuelle)"},
-  "wcs":             {"value": 60.6,    "asof": "2026-11-13", "src": "WCS (saisie manuelle)"},
+  "nahb": {
+    "value": 29,
+    "asof": "2026-11-13",
+    "src": "NAHB (saisie manuelle)"
+  },
+  "ism_pmi": {
+    "value": 55.5,
+    "asof": "2026-11-13",
+    "src": "ISM (saisie manuelle)"
+  },
+  "ism_new_orders": {
+    "value": 55.5,
+    "asof": "2026-11-13",
+    "src": "ISM (saisie manuelle)"
+  },
+  "ism_inventories": {
+    "value": 51.4,
+    "asof": "2026-11-13",
+    "src": "ISM (saisie manuelle)"
+  },
+  "global_pmi": {
+    "value": 52.6,
+    "asof": "2026-11-13",
+    "src": "S&P Global/JPM (saisie manuelle)"
+  },
+  "cesi": {
+    "value": 71.1,
+    "asof": "2026-11-13",
+    "src": "Citi CESI (saisie manuelle)"
+  },
+  "spx_eps_growth": {
+    "value": 10.6,
+    "asof": "2026-11-13",
+    "src": "Consensus (saisie manuelle)"
+  },
+  "tsx_fwd_pe": {
+    "value": 17.4,
+    "asof": "2026-11-13",
+    "src": "Consensus (saisie manuelle)"
+  },
+  "uranium": {
+    "value": 90.7,
+    "asof": "2026-11-13",
+    "src": "UxC spot (saisie manuelle)"
+  },
+  "lme_cu_stocks": {
+    "value": 13642,
+    "asof": "2026-11-13",
+    "src": "LME (saisie manuelle)",
+    "chg_1m_pct": -6.0
+  },
+  "conf_board": {
+    "value": 91.7,
+    "asof": "2026-11-13",
+    "src": "Conference Board (saisie manuelle)"
+  },
+  "ca_lei": {
+    "value": -0.5,
+    "asof": "2026-11-13",
+    "src": "Conference Board CA (saisie manuelle)"
+  },
+  "wcs": {
+    "value": 60.6,
+    "asof": "2026-11-13",
+    "src": "WCS (saisie manuelle)"
+  },
   "matrice": [
-    {"risque": "Inflation collante (>3%)",            "prob": 4, "impact": 4, "plan": "Surpondérer TIPS, réduire duration, favoriser value"},
-    {"risque": "Hausse yields obligataires (>5%)",    "prob": 2, "impact": 5, "plan": "Hedger duration, favoriser court terme, éviter levier"},
-    {"risque": "Retard productivité IA",              "prob": 3, "impact": 4, "plan": "Réduire couche 5 (apps), favoriser couches 1-2 (infra/puces). Sticker shock = signal précoce"},
-    {"risque": "Escalade guerre commerciale",         "prob": 3, "impact": 4, "plan": "Réduire EM Chine, favoriser domestique US, couvrir devises"},
-    {"risque": "Récession Canada (mur hypothécaire)", "prob": 3, "impact": 3, "plan": "Sous-pondérer immo CA, couverture CAD, éviter banques CA"}
+    {
+      "risque": "Inflation collante (>3%)",
+      "prob": 4,
+      "impact": 4,
+      "plan": "Surpondérer TIPS, réduire duration, favoriser value"
+    },
+    {
+      "risque": "Hausse yields obligataires (>5%)",
+      "prob": 2,
+      "impact": 5,
+      "plan": "Hedger duration, favoriser court terme, éviter levier"
+    },
+    {
+      "risque": "Retard productivité IA",
+      "prob": 3,
+      "impact": 4,
+      "plan": "Réduire couche 5 (apps), favoriser couches 1-2 (infra/puces). Sticker shock = signal précoce"
+    },
+    {
+      "risque": "Escalade guerre commerciale",
+      "prob": 3,
+      "impact": 4,
+      "plan": "Réduire EM Chine, favoriser domestique US, couvrir devises"
+    },
+    {
+      "risque": "Récession Canada (mur hypothécaire)",
+      "prob": 3,
+      "impact": 3,
+      "plan": "Sous-pondérer immo CA, couverture CAD, éviter banques CA"
+    }
   ]
 }

@@ -389,35 +389,92 @@ def _diff_ytd(a, b, plus=0.0):
     return _f
 
 
-def _spy_trail_pe():
-    try:
-        return _earn_yield()["trail_pe"]
-    except Exception:  # noqa: BLE001
-        return None
-
-
 def _spx_tech():
     s = ycol("^GSPC")
     return s
 
 
+# ── Valuation multiples (free, no key) ────────────────────────────────────────
+# S&P 500 / S&P 600: "Index Characteristics" on the State Street SPDR fund pages (daily).
+# MSCI EAFE / EM: "Fundamentals" block of the MSCI index factsheets (PDF, month-end).
+BROWSER_UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                            "(KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+              "Accept-Language": "en-US,en;q=0.9"}
+SSGA_PAGES = {
+    "SPYM": "https://www.ssga.com/us/en/individual/etfs/funds/spdr-portfolio-sp-500-etf-spym",
+    "SPSM": "https://www.ssga.com/us/en/individual/etfs/funds/spdr-portfolio-sp-600-small-cap-etf-spsm",
+}
+MSCI_FACTSHEETS = {
+    "EAFE": "https://www.msci.com/documents/10199/822e3d18-16fb-4d23-9295-11bc9e07b8ba",
+    "EM": "https://www.msci.com/documents/10199/c0db0a48-01f2-4ba9-ad01-226fd5678111",
+}
+_pe_cache: dict[str, dict] = {}
+
+
+def ssga_pe(ticker: str) -> dict:
+    """Index trailing P/E and P/E FY1 from a SPDR fund page."""
+    if ticker not in _pe_cache:
+        import html as _html
+        import re
+        raw = _get(SSGA_PAGES[ticker], headers=BROWSER_UA, timeout=40).decode("utf-8", "ignore")
+        txt = re.sub(r"\s+", " ", _html.unescape(re.sub(r"<[^>]+>", " ", raw))).replace("\ufeff", "")
+        m = re.search(r"Index Characteristics as of (\w{3} \d{1,2} \d{4})(.*?)Index Statistics", txt)
+        if not m:
+            raise ValueError(f"SSGA {ticker}: Index Characteristics block not found")
+        block = m.group(2)
+        trail = re.search(r"Price/Earnings (\d+(?:\.\d+)?) ", block)
+        fwd = re.search(r"Price/Earnings Ratio FY1 (\d+(?:\.\d+)?)", block)
+        if not (trail and fwd):
+            raise ValueError(f"SSGA {ticker}: P/E values not found")
+        _pe_cache[ticker] = {"fwd": float(fwd.group(1)), "trail": float(trail.group(1)),
+                             "asof": datetime.strptime(m.group(1), "%b %d %Y").date().isoformat(),
+                             "src": f"State Street SPDR {ticker} (indice, P/E FY1)"}
+    return _pe_cache[ticker]
+
+
+def msci_pe(index: str) -> dict:
+    """Trailing and forward P/E from the MSCI index factsheet (first row = the index itself)."""
+    if index not in _pe_cache:
+        import re
+        from pypdf import PdfReader
+        pdf = _get(MSCI_FACTSHEETS[index], headers=BROWSER_UA, timeout=60)
+        txt = "\n".join(pg.extract_text() or "" for pg in PdfReader(io.BytesIO(pdf)).pages[:2])
+        m = re.search(r"FUNDAMENTALS\s*\((\w{3} \d{1,2}, \d{4})\)\s*Div Yld \(%\) P/E P/E Fwd P/BV\s*"
+                      r"([\d.]+|na) ([\d.]+|na) ([\d.]+|na) ([\d.]+|na)", txt)
+        if not m or "na" in (m.group(3), m.group(4)):
+            raise ValueError(f"MSCI {index}: fundamentals not found")
+        _pe_cache[index] = {"fwd": float(m.group(4)), "trail": float(m.group(3)),
+                            "asof": datetime.strptime(m.group(1), "%b %d, %Y").date().isoformat(),
+                            "src": f"Fiche MSCI {index} (P/E fwd, mensuel)"}
+    return _pe_cache[index]
+
+
+def _pe_row(fetch, key):
+    def _f():
+        d = fetch(key)
+        return {"value": d["fwd"], "comp": d["trail"], "src": d["src"], "asof": d["asof"]}
+    return _f
+
+
+def _pe_gap():
+    a, b = ssga_pe("SPYM"), ssga_pe("SPSM")
+    return {"value": a["fwd"] - b["fwd"], "src": "Calculé (SPDR SPYM - SPSM, P/E FY1)", "asof": a["asof"]}
+
+
+def _erp():
+    d = ssga_pe("SPYM")
+    return {"value": 100 / d["fwd"] - last(fred("DGS10")), "comp": 2.0,
+            "src": f"1/P/E FY1 SPYM - 10 ans ({fred_src('DGS10')})", "asof": asof(fred("DGS10"))}
+
+
 TACT = [
-    ("VALORISATIONS", "P/E Forward S&P 500", "<18x",
-     lambda: {**manual("spx_fwd_pe"), "comp": _spy_trail_pe()}, lambda v: lo(v, 18, 22)),
-    ("VALORISATIONS", "P/E Forward S&P 600", "<20x",
-     lambda: {**manual("sml_fwd_pe"), "comp": MAN["sml_trail_pe"]["value"]}, lambda v: lo(v, 20, 25)),
-    ("VALORISATIONS", "Écart P/E (SPX - S&P600)", "<5x (abs)",
-     lambda: {"value": MAN["spx_fwd_pe"]["value"] - MAN["sml_fwd_pe"]["value"], "src": "Calculé",
-              "asof": MAN["spx_fwd_pe"].get("asof", ""), "manual": True},
+    ("VALORISATIONS", "P/E Forward S&P 500", "<18x", _pe_row(ssga_pe, "SPYM"), lambda v: lo(v, 18, 22)),
+    ("VALORISATIONS", "P/E Forward S&P 600", "<20x", _pe_row(ssga_pe, "SPSM"), lambda v: lo(v, 20, 25)),
+    ("VALORISATIONS", "Écart P/E (SPX - S&P600)", "<5x (abs)", _pe_gap,
      lambda v: "Vert" if abs(v) < 5 else "Jaune" if abs(v) <= 8 else "Rouge"),
-    ("VALORISATIONS", "P/E MSCI EAFE", "<14x",
-     lambda: {**manual("eafe_fwd_pe"), "comp": MAN["eafe_trail_pe"]["value"]}, lambda v: lo(v, 14, 17)),
-    ("VALORISATIONS", "P/E MSCI EM", "<12x",
-     lambda: {**manual("em_fwd_pe"), "comp": MAN["em_trail_pe"]["value"]}, lambda v: lo(v, 12, 15)),
-    ("VALORISATIONS", "Equity Risk Premium (ERP)", ">2.5%",
-     lambda: {"value": 100 / MAN["spx_fwd_pe"]["value"] - last(fred("DGS10")), "comp": 2.0,
-              "src": f"1/P/E fwd - 10 ans ({fred_src('DGS10')})", "asof": asof(fred("DGS10"))},
-     lambda v: hi(v, 2.5, 1.5)),
+    ("VALORISATIONS", "P/E MSCI EAFE", "<14x", _pe_row(msci_pe, "EAFE"), lambda v: lo(v, 14, 17)),
+    ("VALORISATIONS", "P/E MSCI EM", "<12x", _pe_row(msci_pe, "EM"), lambda v: lo(v, 12, 15)),
+    ("VALORISATIONS", "Equity Risk Premium (ERP)", ">2.5%", _erp, lambda v: hi(v, 2.5, 1.5)),
     ("MOMENTUM ETF", "Momentum Small Cap (IWM) 1M%", ">+2%", _ypack("IWM", chg_1m, ytd), lambda v: hi(v, 2, -2)),
     ("MOMENTUM ETF", "Momentum Value (IVE) 1M%", ">+2%", _ypack("IVE", chg_1m, ytd), lambda v: hi(v, 2, -2)),
     ("MOMENTUM ETF", "Momentum EM (EEM) 1M%", ">+2%", _ypack("EEM", chg_1m, ytd), lambda v: hi(v, 2, -2)),

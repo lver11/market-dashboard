@@ -27,7 +27,7 @@ jobs:
           cache: 'pip'
 
       - name: Install dependencies
-        run: pip install pandas yfinance
+        run: pip install pandas yfinance pypdf
 
       - name: Rebuild snapshot from free sources
         env:

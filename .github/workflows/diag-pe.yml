@@ -1,8 +1,0 @@
-name: diag-pe
-on: workflow_dispatch
-jobs:
-  d:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: pip install pypdf && python scripts/diag_pe.py
