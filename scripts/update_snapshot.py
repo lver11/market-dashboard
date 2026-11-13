@@ -486,7 +486,8 @@ TACT = [
     ("CRÉDIT", "Performance dette EM (EMB YTD)", ">0% YTD", _ypack("EMB", ytd, chg_1y), lambda v: hi(v, 2, 0)),
     ("CRÉDIT", "Ratio spread BB/HY total", "<0.6x",
      lambda: {"value": last(fred("BAMLH0A1HYBB")) / last(fred("BAMLH0A0HYM2")), "src": "FRED ICE BofA BB / HY",
-              "asof": asof(fred("BAMLH0A1HYBB"))},
+              "asof": asof(fred("BAMLH0A1HYBB")),
+              "series": _spread_series(fred("BAMLH0A1HYBB"), fred("BAMLH0A0HYM2"), ratio=True)},
      lambda v: lo(v, 0.6, 0.8)),
     ("MOMENTUM", "RSI S&P 500 (14 jours)", "30-70",
      lambda: {"value": rsi(_spx_tech(), 14), "comp": rsi(_spx_tech(), 30), "src": "Calculé (Yahoo ^GSPC)",
@@ -567,7 +568,8 @@ def _tsx_rel():
 
 def _ca_us_10y():
     ca, us = boc("BD.CDN.10YR.DQ.YLD"), fred("DGS10")
-    return {"value": last(ca) - last(us), "src": f"BdC Valet + {fred_src('DGS10')}", "asof": asof(ca)}
+    return {"value": last(ca) - last(us), "src": f"BdC Valet + {fred_src('DGS10')}", "asof": asof(ca),
+            "series": _spread_series(ca, us)}
 
 
 def _cadusd():
@@ -575,11 +577,18 @@ def _cadusd():
     return {"value": last(s), "series": s, "src": "Yahoo CAD=X", "asof": asof(s)}
 
 
+def _spread_series(a: pd.Series, b: pd.Series, ratio: bool = False) -> pd.Series:
+    """a - b (or a / b) on dates where both exist, the lagging leg forward-filled."""
+    j = pd.concat([a, b], axis=1).sort_index().ffill().dropna()
+    j = j[j.index.isin(a.index)]
+    return j.iloc[:, 0] / j.iloc[:, 1] if ratio else j.iloc[:, 0] - j.iloc[:, 1]
+
+
 def _ted():
     cp, tb = fred("DCPF3M"), fred("DTB3")
     j = pd.concat([cp, tb], axis=1).dropna()
     return {"value": float((j.iloc[-1, 0] - j.iloc[-1, 1]) * 100), "src": "FRED DCPF3M - DTB3 (bps)",
-            "asof": j.index[-1].date().isoformat()}
+            "asof": j.index[-1].date().isoformat(), "series": (j.iloc[:, 0] - j.iloc[:, 1]) * 100}
 
 
 def _ff_futures():
@@ -655,7 +664,8 @@ def _boc_last(series, label=None):
 
 def _boc_minus_fed():
     b, f_ = boc("V39079"), fred("DFEDTARU")
-    return {"value": last(b) - last(f_), "src": "BdC V39079 - FRED DFEDTARU", "asof": asof(b)}
+    return {"value": last(b) - last(f_), "src": "BdC V39079 - FRED DFEDTARU", "asof": asof(b),
+            "series": _spread_series(b, f_)}
 
 
 def _tsx_level():
