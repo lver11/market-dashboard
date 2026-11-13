@@ -31,7 +31,7 @@ jobs:
 
       - name: Rebuild snapshot from free sources
         env:
-          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY || vars.FRED_API_KEY }}
         run: python scripts/update_snapshot.py
 
       - name: Commit if changed
