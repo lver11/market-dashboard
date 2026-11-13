@@ -974,14 +974,17 @@ with tab2:
             _counts = ""
             if _row.get("vert") is not None:
                 _counts = f"🟢 {_row['vert']} · 🟡 {_row['jaune']} · 🔴 {_row['rouge']}"
-            _c.metric(_row["cat"], f"{_row['score']}/100", _row.get("trend", ""), delta_color="off")
+            _c.metric(_row["cat"], f"{_row['score']}/100 {_row.get('trend', '')}")
             if _counts:
                 _c.caption(_counts)
 
-        _alerts = [
-            (sec, r) for grp in ("risques", "canada") for sec, rows in _snap.get(grp, {}).items()
-            for r in rows if r.get("signal") == "Rouge"
-        ]
+        _alerts, _seen = [], set()
+        for grp in ("risques", "canada"):
+            for sec, rows in _snap.get(grp, {}).items():
+                for r in rows:
+                    if r.get("signal") == "Rouge" and r["ind"] not in _seen:
+                        _seen.add(r["ind"])
+                        _alerts.append((sec, r))
         if _alerts:
             st.markdown("<p style='color:#F87171;font-size:0.8rem;margin:12px 16px 4px;font-weight:600;'>"
                         f"🔴 Signaux rouges — risques & Canada ({len(_alerts)})</p>", unsafe_allow_html=True)
