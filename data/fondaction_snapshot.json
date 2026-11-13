@@ -1,10 +1,10 @@
 {
  "source": "Sources web gratuites (FRED, Yahoo Finance, Banque du Canada, StatCan)",
  "date": "2026-11-13",
- "generated_utc": "2026-11-13 15:43 UTC",
+ "generated_utc": "2026-11-13 16:59 UTC",
  "stats": {
   "total": 103,
-  "manual": 20,
+  "manual": 15,
   "stale": 0
  },
  "score": [
@@ -19,10 +19,10 @@
   },
   {
    "cat": "Signaux Tactiques",
-   "score": 64,
+   "score": 61,
    "trend": "→",
-   "vert": 9,
-   "jaune": 5,
+   "vert": 8,
+   "jaune": 6,
    "rouge": 4,
    "color": "#F59E0B"
   },
@@ -195,7 +195,7 @@
    },
    {
     "ind": "Performance S&P 500 (YTD%)",
-    "val": "9.862",
+    "val": "9.882",
     "seuil": ">0%",
     "signal": "Vert",
     "tend": "↓",
@@ -255,99 +255,94 @@
   "VALORISATIONS": [
    {
     "ind": "P/E Forward S&P 500",
-    "val": "20.94",
-    "comp": "23.86",
+    "val": "19.92",
+    "comp": "23.53",
     "cible": "<18x",
     "signal": "Jaune",
-    "impl": "20.94 vs 23.86",
-    "src": "Consensus (saisie manuelle) · au 2026-11-13",
-    "manual": true
+    "impl": "19.92 vs 23.53",
+    "src": "State Street SPDR SPYM (indice, P/E FY1) · au 2026-11-12"
    },
    {
     "ind": "P/E Forward S&P 600",
-    "val": "16.52",
-    "comp": "19.39",
+    "val": "14.08",
+    "comp": "16.31",
     "cible": "<20x",
     "signal": "Vert",
-    "impl": "16.52 vs 19.39",
-    "src": "Consensus (saisie manuelle) · au 2026-11-13",
-    "manual": true
+    "impl": "14.08 vs 16.31",
+    "src": "State Street SPDR SPSM (indice, P/E FY1) · au 2026-11-12"
    },
    {
     "ind": "Écart P/E (SPX - S&P600)",
-    "val": "4.42",
+    "val": "5.84",
     "comp": "—",
     "cible": "<5x (abs)",
-    "signal": "Vert",
+    "signal": "Jaune",
     "impl": "",
-    "src": "Calculé · au 2026-11-13",
-    "manual": true
+    "src": "Calculé (SPDR SPYM - SPSM, P/E FY1) · au 2026-11-12"
    },
    {
     "ind": "P/E MSCI EAFE",
-    "val": "16.05",
-    "comp": "17.45",
+    "val": "14.46",
+    "comp": "17.33",
     "cible": "<14x",
     "signal": "Jaune",
-    "impl": "16.05 vs 17.45",
-    "src": "Consensus (saisie manuelle) · au 2026-11-13",
-    "manual": true
+    "impl": "14.46 vs 17.33",
+    "src": "Fiche MSCI EAFE (P/E fwd, mensuel) · au 2026-10-30"
    },
    {
     "ind": "P/E MSCI EM",
-    "val": "10.53",
-    "comp": "12.69",
+    "val": "8.7",
+    "comp": "13.68",
     "cible": "<12x",
     "signal": "Vert",
-    "impl": "10.53 vs 12.69",
-    "src": "Consensus (saisie manuelle) · au 2026-11-13",
-    "manual": true
+    "impl": "8.7 vs 13.68",
+    "src": "Fiche MSCI EM (P/E fwd, mensuel) · au 2026-10-30"
    },
    {
     "ind": "Equity Risk Premium (ERP)",
-    "val": "-0.204",
+    "val": "0.04",
     "comp": "2",
     "cible": ">2.5%",
     "signal": "Rouge",
-    "impl": "-0.204 vs 2",
-    "src": "1/P/E fwd - 10 ans (FRED DGS10) · au 2026-11-10"
+    "impl": "0.04 vs 2",
+    "src": "1/P/E FY1 SPYM - 10 ans (FRED DGS10) · au 2026-11-10"
    }
   ],
   "MOMENTUM ETF": [
    {
     "ind": "Momentum Small Cap (IWM) 1M%",
-    "val": "0.298",
-    "comp": "12.84",
+    "val": "0.407",
+    "comp": "12.96",
     "cible": ">+2%",
     "signal": "Jaune",
-    "impl": "0.298 vs 12.84",
+    "impl": "0.407 vs 12.96",
     "src": "Yahoo IWM · au 2026-11-13"
    },
    {
     "ind": "Momentum Value (IVE) 1M%",
-    "val": "2.474",
-    "comp": "15.20",
+    "val": "2.37",
+    "comp": "15.08",
     "cible": ">+2%",
     "signal": "Vert",
-    "impl": "2.474 vs 15.20",
+    "impl": "2.37 vs 15.08",
     "src": "Yahoo IVE · au 2026-11-13"
    },
    {
     "ind": "Momentum EM (EEM) 1M%",
-    "val": "-5.754",
-    "comp": "10.75",
+    "val": "-5.621",
+    "comp": "10.91",
     "cible": ">+2%",
     "signal": "Rouge",
-    "impl": "-5.754 vs 10.75",
+    "impl": "-5.621 vs 10.91",
     "src": "Yahoo EEM · au 2026-11-13"
    },
    {
     "ind": "Momentum Commodities (DBC) 1M%",
-    "val": "-7.387",
-    "comp": "37.92",
+    "val": "-7.553",
+    "comp": "37.68",
     "cible": ">+2%",
     "signal": "Rouge",
-    "impl": "-7.387 vs 37.92",
+    "impl": "-7.553 vs 37.68",
     "src": "Yahoo DBC · au 2026-11-13"
    }
   ],
@@ -372,11 +367,11 @@
    },
    {
     "ind": "Performance dette EM (EMB YTD)",
-    "val": "-1.067",
-    "comp": "-0.362",
+    "val": "-1.034",
+    "comp": "-0.33",
     "cible": ">0% YTD",
     "signal": "Rouge",
-    "impl": "-1.067 vs -0.362",
+    "impl": "-1.034 vs -0.33",
     "src": "Yahoo EMB · au 2026-11-13"
    },
    {
@@ -392,38 +387,38 @@
   "MOMENTUM": [
    {
     "ind": "RSI S&P 500 (14 jours)",
-    "val": "44.85",
-    "comp": "46.70",
+    "val": "44.92",
+    "comp": "46.74",
     "cible": "30-70",
     "signal": "Vert",
-    "impl": "44.85 vs 46.70",
+    "impl": "44.92 vs 46.74",
     "src": "Calculé (Yahoo ^GSPC) · au 2026-11-13"
    },
    {
     "ind": "S&P 500 vs MA 200 jours",
-    "val": "2.309",
-    "comp": "-1.905",
+    "val": "2.328",
+    "comp": "-1.887",
     "cible": ">0%",
     "signal": "Vert",
-    "impl": "2.309 vs -1.905",
+    "impl": "2.328 vs -1.887",
     "src": "Calculé (Yahoo ^GSPC) · au 2026-11-13"
    },
    {
     "ind": "VIX",
-    "val": "20.62",
-    "comp": "25.27",
+    "val": "20.35",
+    "comp": "23.63",
     "cible": "<20",
     "signal": "Jaune",
-    "impl": "20.62 vs 25.27",
+    "impl": "20.35 vs 23.63",
     "src": "Yahoo ^VIX · au 2026-11-13"
    },
    {
     "ind": "Breadth: RSP vs SPY (+50, proxy)",
-    "val": "55.58",
-    "comp": "5.331",
+    "val": "55.56",
+    "comp": "5.306",
     "cible": ">60",
     "signal": "Jaune",
-    "impl": "55.58 vs 5.331",
+    "impl": "55.56 vs 5.306",
     "src": "Yahoo RSP - SPY · au 2026-11-13"
    }
   ]
@@ -432,7 +427,7 @@
   "IA - COUCHE 1: ÉNERGIE": [
    {
     "ind": "Utilities US (XLU YTD%)",
-    "val": "5.172",
+    "val": "5.28",
     "cible": ">10%",
     "statut": "Jaune",
     "note": "",
@@ -449,7 +444,7 @@
    },
    {
     "ind": "Prix gaz naturel Henry Hub",
-    "val": "3.231",
+    "val": "3.223",
     "cible": ">$3.50/MMBtu",
     "statut": "Jaune",
     "note": "",
@@ -467,7 +462,7 @@
    },
    {
     "ind": "Performance SOX Index (semi) YTD%",
-    "val": "40.08",
+    "val": "40.92",
     "cible": ">0%",
     "statut": "Vert",
     "note": "",
@@ -477,7 +472,7 @@
   "IA - COUCHE 3: INFRASTRUCTURE": [
    {
     "ind": "Perf. hyperscalers (AMZN/GOOG/MSFT/META YTD%)",
-    "val": "2.943",
+    "val": "3.059",
     "cible": ">+10% YTD",
     "statut": "Jaune",
     "note": "",
@@ -485,7 +480,7 @@
    },
    {
     "ind": "Performance Vertiv/Quanta/EQIX",
-    "val": "33.76",
+    "val": "34.80",
     "cible": ">+10% YTD",
     "statut": "Vert",
     "note": "",
@@ -495,7 +490,7 @@
   "IA - COUCHE 5: APPLICATIONS": [
    {
     "ind": "Performance Cloud ETF (WCLD YTD%)",
-    "val": "17.51",
+    "val": "17.65",
     "cible": ">+10% YTD",
     "statut": "Vert",
     "note": "",
@@ -505,7 +500,7 @@
   "GREAT BROADENING": [
    {
     "ind": "Performance relative RTY vs SPX (YTD)",
-    "val": "1.638",
+    "val": "2.084",
     "cible": ">0%",
     "statut": "Vert",
     "note": "",
@@ -513,7 +508,7 @@
    },
    {
     "ind": "Breadth: RSP vs SPY (+50, proxy)",
-    "val": "55.58",
+    "val": "55.56",
     "cible": ">53 (proxy)",
     "statut": "Vert",
     "note": "",
@@ -521,7 +516,7 @@
    },
    {
     "ind": "Performance S&P Equal Weight vs Cap Weight",
-    "val": "5.584",
+    "val": "5.556",
     "cible": ">0%",
     "statut": "Vert",
     "note": "",
@@ -531,7 +526,7 @@
   "COMMODITÉS - RARETÉ": [
    {
     "ind": "Prix cuivre ($/tonne, COMEX)",
-    "val": "13 492",
+    "val": "13 438",
     "cible": ">$9,500/t",
     "statut": "Vert",
     "note": "",
@@ -539,7 +534,7 @@
    },
    {
     "ind": "Prix argent ($/oz)",
-    "val": "49.14",
+    "val": "48.99",
     "cible": ">$50/oz",
     "statut": "Jaune",
     "note": "",
@@ -556,7 +551,7 @@
    },
    {
     "ind": "Mines diversifiées (PICK YTD)",
-    "val": "5.465",
+    "val": "5.593",
     "cible": ">+10% YTD",
     "statut": "Jaune",
     "note": "",
@@ -566,7 +561,7 @@
   "STIMULUS FISCAL US": [
    {
     "ind": "Performance small caps US (IWM YTD)",
-    "val": "12.84",
+    "val": "12.96",
     "cible": ">+10% YTD",
     "statut": "Vert",
     "note": "",
@@ -574,7 +569,7 @@
    },
    {
     "ind": "Performance industrielles US (XLI YTD)",
-    "val": "9.323",
+    "val": "9.213",
     "cible": ">+10% YTD",
     "statut": "Jaune",
     "note": "",
@@ -601,7 +596,7 @@
   "SANTÉ / BIOTECH": [
    {
     "ind": "Performance XBI (Biotech ETF)",
-    "val": "22.60",
+    "val": "22.94",
     "cible": ">+10% YTD",
     "statut": "Vert",
     "note": "",
@@ -609,7 +604,7 @@
    },
    {
     "ind": "Biotech large cap (IBB YTD, proxy FDA)",
-    "val": "25.47",
+    "val": "25.56",
     "cible": ">+5% YTD",
     "statut": "Vert",
     "note": "",
@@ -687,7 +682,7 @@
    },
    {
     "ind": "Fed Funds futures (front month)",
-    "val": "95.83",
+    "val": "95.82",
     "seuil": "<95.50",
     "signal": "Vert",
     "comm": "Trajectoire anticipée",
@@ -723,7 +718,7 @@
   "GÉOPOLITIQUE": [
    {
     "ind": "VIX (Volatilité implicite US)",
-    "val": "20.62",
+    "val": "20.35",
     "seuil": ">30",
     "signal": "Jaune",
     "comm": "Volatilité implicite",
@@ -731,7 +726,7 @@
    },
    {
     "ind": "Prix pétrole Brent",
-    "val": "96.59",
+    "val": "95.94",
     "seuil": ">$80",
     "signal": "Jaune",
     "comm": "Choc pétrolier",
@@ -739,7 +734,7 @@
    },
    {
     "ind": "USD Index (DXY)",
-    "val": "103.3",
+    "val": "103.4",
     "seuil": ">110",
     "signal": "Jaune",
     "comm": "Force dollar",
@@ -782,7 +777,7 @@
    },
    {
     "ind": "Indice TSX vs S&P 500 (rel perf)",
-    "val": "4.001",
+    "val": "4.012",
     "seuil": "<-10%",
     "signal": "Vert",
     "comm": "Sous-performance Canada",
@@ -907,7 +902,7 @@
   "LOGEMENT": [
    {
     "ind": "S&P/TSX REIT (XRE YTD%) - proxy logement",
-    "val": "5.513",
+    "val": "6.319",
     "seuil": ">0%",
     "signal": "Vert",
     "comm": "iShares XRE",
@@ -953,7 +948,7 @@
   "MARCHÉS CA": [
    {
     "ind": "TSX Composite (niveau)",
-    "val": "36 109",
+    "val": "36 119",
     "seuil": "Au-dessus MA200",
     "signal": "Vert",
     "comm": "S&P/TSX Composite",
@@ -961,7 +956,7 @@
    },
    {
     "ind": "TSX Composite (YTD%)",
-    "val": "13.86",
+    "val": "13.89",
     "seuil": ">5%",
     "signal": "Vert",
     "comm": "Performance YTD",
@@ -978,7 +973,7 @@
    },
    {
     "ind": "Perf TSX vs S&P 500 (YTD)",
-    "val": "4.001",
+    "val": "4.012",
     "seuil": ">-5%",
     "signal": "Vert",
     "comm": "Surperformance/sous-perf relative",
@@ -986,7 +981,7 @@
    },
    {
     "ind": "Perf Banques CA (ZEB YTD)",
-    "val": "34.12",
+    "val": "34.24",
     "seuil": ">0%",
     "signal": "Vert",
     "comm": "BMO Equal Weight Banks (proxy S&P/TSX Banks)",
@@ -994,7 +989,7 @@
    },
    {
     "ind": "Perf Énergie CA (XEG YTD)",
-    "val": "50.81",
+    "val": "50.59",
     "seuil": ">0%",
     "signal": "Vert",
     "comm": "iShares S&P/TSX Capped Energy",
@@ -1002,7 +997,7 @@
    },
    {
     "ind": "Perf Matériaux CA (XMA YTD)",
-    "val": "1.649",
+    "val": "2.059",
     "seuil": ">0%",
     "signal": "Vert",
     "comm": "iShares S&P/TSX Capped Materials",
