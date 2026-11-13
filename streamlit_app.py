@@ -974,7 +974,9 @@ with tab2:
             _counts = ""
             if _row.get("vert") is not None:
                 _counts = f"🟢 {_row['vert']} · 🟡 {_row['jaune']} · 🔴 {_row['rouge']}"
-            _c.metric(_row["cat"], f"{_row['score']}/100 {_row.get('trend', '')}")
+            _delta = (_row["score"] - _row["prev_score"]) if _row.get("prev_score") is not None else None
+            _c.metric(_row["cat"], f"{_row['score']}/100 {_row.get('trend', '')}", delta=_delta,
+                      help=(f"Score précédent : {_row['prev_score']}" if _delta is not None else None))
             if _counts:
                 _c.caption(_counts)
 

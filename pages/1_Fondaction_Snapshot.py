@@ -65,6 +65,9 @@ st.html("""
   .tend-up   { color:#34D399; }
   .tend-dn   { color:#F87171; }
   .tend-flat { color:#9CA3AF; }
+  .chg       { display:inline-block; margin-left:6px; font-size:0.68rem; font-weight:600;
+               color:#CBD5E1; white-space:nowrap; cursor:help; }
+  .chg-d     { margin-left:2px; font-size:0.62rem; color:#94A3B8; font-weight:500; }
 
   .subsec-hdr {
     font-size:0.62rem; letter-spacing:0.15em; text-transform:uppercase;
@@ -118,6 +121,26 @@ def src_tag(r: dict) -> str:
     color = "#B45309" if ("non rafraîchi" in src or r.get("manual")) else "#374151"
     label = "✍ " if r.get("manual") else ""
     return f'<br><span style="font-size:0.58rem;color:{color};font-style:normal;">{label}{src}</span>'
+
+
+def chg_html(r: dict) -> str:
+    """▲/▼ vs the previous data point, with the change and the previous value on hover."""
+    c = r.get("chg")
+    if not c or c.get("dir") not in ("up", "down", "flat"):
+        return ""
+    sym = {"up": "▲", "down": "▼", "flat": "="}[c["dir"]]
+    delta = ""
+    try:
+        cur, prev = float(r["num"]), float(c["prev_num"])
+        val = str(r.get("val", ""))
+        dec = len(val.split(".")[1]) if "." in val else 0
+        delta = f"{cur - prev:+,.{dec}f}".replace(",", "\u202f").replace("-", "\u2212")
+    except (KeyError, TypeError, ValueError):
+        pass
+    when = f" ({c['prev_asof']})" if c.get("prev_asof") else ""
+    title = f"Donnée précédente : {c.get('prev', '—')}{when}"
+    return (f'<span class="chg" title="{title}">{sym}'
+            f'{f"<span class=chg-d>{delta}</span>" if delta and c["dir"] != "flat" else ""}</span>')
 
 
 def sig_badge(s: str) -> str:
@@ -603,6 +626,12 @@ for col, d in zip(cols, SCORECARD):
                 f'<span style="color:{tc};font-size:1rem;">{d["trend"]}</span>'
                 f'<span style="color:#6B7280;font-size:0.7rem;"> Tendance</span>'
             )
+        if d.get("prev_score") is not None:
+            _dlt = d["score"] - d["prev_score"]
+            _clr = "#34D399" if _dlt > 0 else "#F87171"
+            sig_html += (f'<div style="font-size:0.7rem;color:{_clr};margin-top:2px;" '
+                         f'title="Score précédent : {d["prev_score"]} ({d.get("prev_date", "")})">'
+                         f'{"▲" if _dlt > 0 else "▼"} {_dlt:+d} vs {d["prev_score"]}</div>')
         st.html(f'<div style="text-align:center;margin-top:-8px;">{sig_html}</div>')
 
 st.html('<hr style="border:none;border-top:1px solid #1F2937;margin:8px 0 16px;">')
@@ -638,10 +667,10 @@ with tab1:
             html += f"""
             <div class="ind-row">
               <span class="ind-name">{r["ind"]}</span>
-              <span class="ind-val">{r["val"]}</span>
+              <span class="ind-val">{r["val"]}{chg_html(r)}</span>
               <span class="ind-seuil">{r["seuil"]}</span>
               {sig_badge(r["signal"])}
-              <span class="ind-tend {tc}">{r["tend"]}</span>
+              <span class="ind-tend {tc}" title="Tendance sur 1 mois">{r["tend"]}</span>
               <span class="ind-note">{r["note"]}{src_tag(r)}</span>
             </div>"""
         st.html(html)
@@ -663,7 +692,7 @@ with tab2:
                 html += f"""
                 <div class="ind-row" style="flex-wrap:wrap;gap:8px;">
                   <span class="ind-name" style="flex:2;">{r["ind"]}</span>
-                  <span class="ind-val">{r["val"]}</span>
+                  <span class="ind-val">{r["val"]}{chg_html(r)}</span>
                   <span class="ind-seuil">{r["cible"]}</span>
                   {sig_badge(r["signal"])}
                   <span class="ind-note" style="flex:100%;padding-top:4px;
@@ -688,7 +717,7 @@ with tab3:
                 html += f"""
                 <div class="ind-row">
                   <span class="ind-name" style="flex:2.5;">{r["ind"]}</span>
-                  <span class="ind-val">{r["val"]}</span>
+                  <span class="ind-val">{r["val"]}{chg_html(r)}</span>
                   <span class="ind-seuil">{r["cible"]}</span>
                   {sig_badge(r["statut"])}
                   <span class="ind-note" style="flex:2.5;">{r["note"]}{src_tag(r)}</span>
@@ -712,7 +741,7 @@ with tab4:
                 html += f"""
                 <div class="ind-row">
                   <span class="ind-name">{r["ind"]}</span>
-                  <span class="ind-val">{r["val"]}</span>
+                  <span class="ind-val">{r["val"]}{chg_html(r)}</span>
                   <span class="ind-seuil">{r["seuil"]}</span>
                   {sig_badge(r["signal"])}
                   <span class="ind-note" style="flex:2;text-align:left;">{r["comm"]}{src_tag(r)}</span>
@@ -770,7 +799,7 @@ with tab5:
             html += f"""
             <div class="ind-row">
               <span class="ind-name">{r["ind"]}</span>
-              <span class="ind-val">{r["val"]}</span>
+              <span class="ind-val">{r["val"]}{chg_html(r)}</span>
               <span class="ind-seuil">{r["seuil"]}</span>
               {sig_badge(r["signal"])}
               <span class="ind-note" style="flex:2;text-align:left;">{r["comm"]}{src_tag(r)}</span>

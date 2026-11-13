@@ -739,6 +739,49 @@ def fmt_val(v) -> str:
     return f"{f:.3f}".rstrip("0").rstrip(".")
 
 
+def _num(x):
+    """Float from a raw value or from a formatted 'val' string; None when not numeric."""
+    if isinstance(x, bool) or x is None:
+        return None
+    if isinstance(x, (int, float)):
+        return None if (isinstance(x, float) and math.isnan(x)) else float(x)
+    try:
+        return float(str(x).replace("\u202f", "").replace("\u2212", "-").replace(" ", "").replace(",", ""))
+    except ValueError:
+        return None
+
+
+def change_of(res: dict, v, old: dict | None) -> dict | None:
+    """Direction vs the previous data point.
+
+    1. When the indicator's series ends on the displayed value, compare with the observation before.
+    2. Otherwise compare with the last *different* value seen in earlier snapshots (carried forward
+       while the value is unchanged, so a monthly figure keeps its arrow until the next release).
+    """
+    cur = _num(v)
+    if cur is None:
+        return None
+    s = res.get("series")
+    if s is not None:
+        s = s.dropna()
+        if len(s) >= 2 and fmt_val(float(s.iloc[-1])) == fmt_val(cur):
+            prev, prev_asof = float(s.iloc[-2]), s.index[-2].date().isoformat()
+            d = "up" if fmt_val(cur) != fmt_val(prev) and cur > prev else \
+                "down" if fmt_val(cur) != fmt_val(prev) and cur < prev else "flat"
+            return {"dir": d, "prev": fmt_val(prev), "prev_num": prev, "prev_asof": prev_asof}
+    if not old:
+        return None
+    old_num = _num(old.get("num", old.get("val")))
+    if old_num is None:
+        return None
+    if fmt_val(old_num) == fmt_val(cur):  # unchanged: keep the last known move
+        return old.get("chg")
+    import re
+    prev_asof = old.get("asof") or (re.search(r"au (\d{4}-\d{2}-\d{2})", old.get("src", "")) or [None, ""])[1]
+    return {"dir": "up" if cur > old_num else "down", "prev": fmt_val(old_num), "prev_num": old_num,
+            "prev_asof": prev_asof}
+
+
 def _src_note(res: dict, stale: bool) -> str:
     bits = [res.get("src", "")]
     if res.get("asof"):
@@ -802,6 +845,13 @@ def evaluate(defs, group: str, prev: dict, kind: str) -> dict:
             row = {"ind": ind, "val": fmt_val(v), "seuil": seuil, "signal": sig, "comm": note, "src": src}
         if res.get("manual"):
             row["manual"] = True
+        n = _num(v)
+        if n is not None:
+            row["num"] = n
+        row["asof"] = res.get("asof", "")
+        chg = change_of(res, v, old.get(ind))
+        if chg:
+            row["chg"] = chg
         out.setdefault(cat, []).append(row)
     return out
 
@@ -847,6 +897,17 @@ def main() -> int:
     g = int(math.floor(sum(x["score"] for x in scorecard[:4]) / 4 + 0.5))
     scorecard.append({"cat": "SCORE GLOBAL", "score": g, "trend": arrow(g), "vert": None, "jaune": None,
                       "rouge": None, "color": "#A78BFA"})
+
+    # Score change vs the last different score of earlier runs (carried forward while unchanged)
+    old_sc = {x["cat"]: x for x in prev.get("score", [])}
+    for x in scorecard:
+        o = old_sc.get(x["cat"])
+        if not o:
+            continue
+        if o["score"] != x["score"]:
+            x["prev_score"], x["prev_date"] = o["score"], prev.get("generated_utc", prev.get("date", ""))
+        elif "prev_score" in o:
+            x["prev_score"], x["prev_date"] = o["prev_score"], o.get("prev_date", "")
 
     matrice = [{**m, "score": m["prob"] * m["impact"]} for m in MAN.get("matrice", [])]
 
