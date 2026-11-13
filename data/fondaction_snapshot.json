@@ -1,7 +1,7 @@
 {
  "source": "Sources web gratuites (FRED, Yahoo Finance, Banque du Canada, StatCan)",
  "date": "2026-11-13",
- "generated_utc": "2026-11-13 16:59 UTC",
+ "generated_utc": "2026-11-13 19:00 UTC",
  "stats": {
   "total": 103,
   "manual": 15,
@@ -19,12 +19,14 @@
   },
   {
    "cat": "Signaux Tactiques",
-   "score": 61,
+   "score": 64,
    "trend": "→",
-   "vert": 8,
-   "jaune": 6,
+   "vert": 9,
+   "jaune": 5,
    "rouge": 4,
-   "color": "#F59E0B"
+   "color": "#F59E0B",
+   "prev_score": 61,
+   "prev_date": "2026-11-13 16:59 UTC"
   },
   {
    "cat": "Thèses Clés",
@@ -37,12 +39,14 @@
   },
   {
    "cat": "Alertes Risques",
-   "score": 65,
+   "score": 68,
    "trend": "→",
-   "vert": 9,
-   "jaune": 8,
+   "vert": 10,
+   "jaune": 7,
    "rouge": 3,
-   "color": "#F87171"
+   "color": "#F87171",
+   "prev_score": 65,
+   "prev_date": "2026-11-13 16:59 UTC"
   },
   {
    "cat": "Canada",
@@ -55,12 +59,14 @@
   },
   {
    "cat": "SCORE GLOBAL",
-   "score": 72,
+   "score": 73,
    "trend": "↑",
    "vert": null,
    "jaune": null,
    "rouge": null,
-   "color": "#A78BFA"
+   "color": "#A78BFA",
+   "prev_score": 72,
+   "prev_date": "2026-11-13 16:59 UTC"
   }
  ],
  "hope": {
@@ -72,7 +78,15 @@
     "signal": "Jaune",
     "tend": "↓",
     "note": "Census Bureau, mensuel (milliers)",
-    "src": "FRED HOUST · au 2026-09-01"
+    "src": "FRED HOUST · au 2026-09-01",
+    "num": 1221.0,
+    "asof": "2026-09-01",
+    "chg": {
+     "dir": "down",
+     "prev": "1 288",
+     "prev_num": 1288.0,
+     "prev_asof": "2026-08-01"
+    }
    },
    {
     "ind": "Permis de construire US",
@@ -81,7 +95,15 @@
     "signal": "Jaune",
     "tend": "↓",
     "note": "Census Bureau, mensuel (milliers)",
-    "src": "FRED PERMIT · au 2026-09-01"
+    "src": "FRED PERMIT · au 2026-09-01",
+    "num": 1398.0,
+    "asof": "2026-09-01",
+    "chg": {
+     "dir": "down",
+     "prev": "1 403",
+     "prev_num": 1403.0,
+     "prev_asof": "2026-08-01"
+    }
    },
    {
     "ind": "Indice NAHB confiance constructeurs",
@@ -91,7 +113,9 @@
     "tend": "→",
     "note": "NAHB, mensuel",
     "src": "NAHB (saisie manuelle) · au 2026-11-13",
-    "manual": true
+    "manual": true,
+    "num": 29.0,
+    "asof": "2026-11-13"
    },
    {
     "ind": "Ventes maisons existantes (M, SAAR)",
@@ -100,7 +124,15 @@
     "signal": "Rouge",
     "tend": "↓",
     "note": "NAR, mensuel (millions)",
-    "src": "FRED EXHOSLUSM495S · au 2026-10-01"
+    "src": "FRED EXHOSLUSM495S · au 2026-10-01",
+    "num": 3.75,
+    "asof": "2026-10-01",
+    "chg": {
+     "dir": "down",
+     "prev": "3.97",
+     "prev_num": 3.97,
+     "prev_asof": "2026-09-01"
+    }
    },
    {
     "ind": "Indice Case-Shiller 20 villes (YoY%)",
@@ -109,7 +141,15 @@
     "signal": "Vert",
     "tend": "↑",
     "note": "S&P, mensuel avec délai",
-    "src": "FRED SPCS20RSA · au 2026-08-01"
+    "src": "FRED SPCS20RSA · au 2026-08-01",
+    "num": 2.6486491443003413,
+    "asof": "2026-08-01",
+    "chg": {
+     "dir": "up",
+     "prev": "2.461",
+     "prev_num": 2.4605462078721496,
+     "prev_asof": "2026-07-01"
+    }
    }
   ],
   "O - Orders": [
@@ -121,7 +161,9 @@
     "tend": "→",
     "note": "ISM, 1er jour ouvrable du mois",
     "src": "ISM (saisie manuelle) · au 2026-11-13",
-    "manual": true
+    "manual": true,
+    "num": 55.5,
+    "asof": "2026-11-13"
    },
    {
     "ind": "ISM New Orders",
@@ -131,7 +173,9 @@
     "tend": "→",
     "note": "ISM, composante clé",
     "src": "ISM (saisie manuelle) · au 2026-11-13",
-    "manual": true
+    "manual": true,
+    "num": 55.5,
+    "asof": "2026-11-13"
    },
    {
     "ind": "Ratio New Orders/Inventories",
@@ -141,7 +185,9 @@
     "tend": "→",
     "note": "New Orders / Inventories",
     "src": "ISM (saisie manuelle) · au 2026-11-13",
-    "manual": true
+    "manual": true,
+    "num": 1.0797665369649805,
+    "asof": "2026-11-13"
    },
    {
     "ind": "PMI Manufacturier Global",
@@ -151,7 +197,9 @@
     "tend": "→",
     "note": "S&P Global/JPM",
     "src": "S&P Global/JPM (saisie manuelle) · au 2026-11-13",
-    "manual": true
+    "manual": true,
+    "num": 52.6,
+    "asof": "2026-11-13"
    },
    {
     "ind": "Commandes biens durables (MoM%)",
@@ -160,7 +208,15 @@
     "signal": "Vert",
     "tend": "↑",
     "note": "Census Bureau",
-    "src": "FRED DGORDER · au 2026-09-01"
+    "src": "FRED DGORDER · au 2026-09-01",
+    "num": 1.912525612866145,
+    "asof": "2026-09-01",
+    "chg": {
+     "dir": "up",
+     "prev": "0.143",
+     "prev_num": 0.14319456746383352,
+     "prev_asof": "2026-08-01"
+    }
    }
   ],
   "P - Profits": [
@@ -172,16 +228,26 @@
     "tend": "→",
     "note": "Consensus BPA forward vs 12 mois",
     "src": "Consensus (saisie manuelle) · au 2026-11-13",
-    "manual": true
+    "manual": true,
+    "num": 10.6,
+    "asof": "2026-11-13"
    },
    {
     "ind": "Earnings Yield S&P 500",
-    "val": "4.191",
+    "val": "4.173",
     "seuil": ">5%",
     "signal": "Jaune",
     "tend": "→",
     "note": "100 / P/E trailing du S&P 500",
-    "src": "Yahoo SPY P/E trailing · au 2026-11-13"
+    "src": "Yahoo SPY P/E trailing · au 2026-11-13",
+    "num": 4.173060490848728,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "down",
+     "prev": "4.191",
+     "prev_num": 4.191,
+     "prev_asof": "2026-11-13"
+    }
    },
    {
     "ind": "Révisions BPA (3 mois)",
@@ -191,16 +257,26 @@
     "tend": "→",
     "note": "Citi Economic Surprise Index",
     "src": "Citi CESI (saisie manuelle) · au 2026-11-13",
-    "manual": true
+    "manual": true,
+    "num": 71.1,
+    "asof": "2026-11-13"
    },
    {
     "ind": "Performance S&P 500 (YTD%)",
-    "val": "9.882",
+    "val": "10.34",
     "seuil": ">0%",
     "signal": "Vert",
     "tend": "↓",
     "note": "S&P 500, rendement YTD",
-    "src": "Yahoo ^GSPC · au 2026-11-13"
+    "src": "Yahoo ^GSPC · au 2026-11-13",
+    "num": 10.343730598568413,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "up",
+     "prev": "9.882",
+     "prev_num": 9.882,
+     "prev_asof": "2026-11-13"
+    }
    }
   ],
   "E - Employment": [
@@ -211,7 +287,15 @@
     "signal": "Vert",
     "tend": "↑",
     "note": "BLS, 1er vendredi du mois",
-    "src": "FRED PAYEMS · au 2026-10-01"
+    "src": "FRED PAYEMS · au 2026-10-01",
+    "num": 165.0,
+    "asof": "2026-10-01",
+    "chg": {
+     "dir": "up",
+     "prev": "60.00",
+     "prev_num": 60.0,
+     "prev_asof": "2026-09-01"
+    }
    },
    {
     "ind": "Taux de chômage U3",
@@ -220,7 +304,15 @@
     "signal": "Vert",
     "tend": "↓",
     "note": "BLS",
-    "src": "FRED UNRATE · au 2026-10-01"
+    "src": "FRED UNRATE · au 2026-10-01",
+    "num": 4.1,
+    "asof": "2026-10-01",
+    "chg": {
+     "dir": "down",
+     "prev": "4.2",
+     "prev_num": 4.2,
+     "prev_asof": "2026-09-01"
+    }
    },
    {
     "ind": "Taux de chômage U6",
@@ -229,7 +321,15 @@
     "signal": "Vert",
     "tend": "↑",
     "note": "BLS, mesure élargie",
-    "src": "FRED U6RATE · au 2026-10-01"
+    "src": "FRED U6RATE · au 2026-10-01",
+    "num": 7.9,
+    "asof": "2026-10-01",
+    "chg": {
+     "dir": "up",
+     "prev": "7.6",
+     "prev_num": 7.6,
+     "prev_asof": "2026-09-01"
+    }
    },
    {
     "ind": "Initial Jobless Claims (4wk avg, k)",
@@ -238,7 +338,15 @@
     "signal": "Vert",
     "tend": "→",
     "note": "DOL, hebdomadaire",
-    "src": "FRED IC4WSA · au 2026-11-07"
+    "src": "FRED IC4WSA · au 2026-11-07",
+    "num": 195.25,
+    "asof": "2026-11-07",
+    "chg": {
+     "dir": "flat",
+     "prev": "195.2",
+     "prev_num": 195.25,
+     "prev_asof": "2026-10-31"
+    }
    },
    {
     "ind": "JOLTS Job Openings (M)",
@@ -247,7 +355,15 @@
     "signal": "Jaune",
     "tend": "↑",
     "note": "BLS, avec délai (millions)",
-    "src": "FRED JTSJOL · au 2026-09-01"
+    "src": "FRED JTSJOL · au 2026-09-01",
+    "num": 7.523,
+    "asof": "2026-09-01",
+    "chg": {
+     "dir": "up",
+     "prev": "7.19",
+     "prev_num": 7.19,
+     "prev_asof": "2026-08-01"
+    }
    }
   ]
  },
@@ -260,7 +376,9 @@
     "cible": "<18x",
     "signal": "Jaune",
     "impl": "19.92 vs 23.53",
-    "src": "State Street SPDR SPYM (indice, P/E FY1) · au 2026-11-12"
+    "src": "State Street SPDR SPYM (indice, P/E FY1) · au 2026-11-12",
+    "num": 19.92,
+    "asof": "2026-11-12"
    },
    {
     "ind": "P/E Forward S&P 600",
@@ -269,7 +387,9 @@
     "cible": "<20x",
     "signal": "Vert",
     "impl": "14.08 vs 16.31",
-    "src": "State Street SPDR SPSM (indice, P/E FY1) · au 2026-11-12"
+    "src": "State Street SPDR SPSM (indice, P/E FY1) · au 2026-11-12",
+    "num": 14.08,
+    "asof": "2026-11-12"
    },
    {
     "ind": "Écart P/E (SPX - S&P600)",
@@ -278,7 +398,9 @@
     "cible": "<5x (abs)",
     "signal": "Jaune",
     "impl": "",
-    "src": "Calculé (SPDR SPYM - SPSM, P/E FY1) · au 2026-11-12"
+    "src": "Calculé (SPDR SPYM - SPSM, P/E FY1) · au 2026-11-12",
+    "num": 5.840000000000002,
+    "asof": "2026-11-12"
    },
    {
     "ind": "P/E MSCI EAFE",
@@ -287,7 +409,9 @@
     "cible": "<14x",
     "signal": "Jaune",
     "impl": "14.46 vs 17.33",
-    "src": "Fiche MSCI EAFE (P/E fwd, mensuel) · au 2026-10-30"
+    "src": "Fiche MSCI EAFE (P/E fwd, mensuel) · au 2026-10-30",
+    "num": 14.46,
+    "asof": "2026-10-30"
    },
    {
     "ind": "P/E MSCI EM",
@@ -296,7 +420,9 @@
     "cible": "<12x",
     "signal": "Vert",
     "impl": "8.7 vs 13.68",
-    "src": "Fiche MSCI EM (P/E fwd, mensuel) · au 2026-10-30"
+    "src": "Fiche MSCI EM (P/E fwd, mensuel) · au 2026-10-30",
+    "num": 8.7,
+    "asof": "2026-10-30"
    },
    {
     "ind": "Equity Risk Premium (ERP)",
@@ -305,45 +431,79 @@
     "cible": ">2.5%",
     "signal": "Rouge",
     "impl": "0.04 vs 2",
-    "src": "1/P/E FY1 SPYM - 10 ans (FRED DGS10) · au 2026-11-10"
+    "src": "1/P/E FY1 SPYM - 10 ans (FRED DGS10) · au 2026-11-10",
+    "num": 0.0400803212851395,
+    "asof": "2026-11-10"
    }
   ],
   "MOMENTUM ETF": [
    {
     "ind": "Momentum Small Cap (IWM) 1M%",
-    "val": "0.407",
-    "comp": "12.96",
+    "val": "0.682",
+    "comp": "13.27",
     "cible": ">+2%",
     "signal": "Jaune",
-    "impl": "0.407 vs 12.96",
-    "src": "Yahoo IWM · au 2026-11-13"
+    "impl": "0.682 vs 13.27",
+    "src": "Yahoo IWM · au 2026-11-13",
+    "num": 0.6816199256674871,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "up",
+     "prev": "0.407",
+     "prev_num": 0.407,
+     "prev_asof": "2026-11-13"
+    }
    },
    {
     "ind": "Momentum Value (IVE) 1M%",
-    "val": "2.37",
-    "comp": "15.08",
+    "val": "2.627",
+    "comp": "15.37",
     "cible": ">+2%",
     "signal": "Vert",
-    "impl": "2.37 vs 15.08",
-    "src": "Yahoo IVE · au 2026-11-13"
+    "impl": "2.627 vs 15.37",
+    "src": "Yahoo IVE · au 2026-11-13",
+    "num": 2.6266665302617564,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "up",
+     "prev": "2.37",
+     "prev_num": 2.37,
+     "prev_asof": "2026-11-13"
+    }
    },
    {
     "ind": "Momentum EM (EEM) 1M%",
-    "val": "-5.621",
-    "comp": "10.91",
+    "val": "-5.245",
+    "comp": "11.35",
     "cible": ">+2%",
     "signal": "Rouge",
-    "impl": "-5.621 vs 10.91",
-    "src": "Yahoo EEM · au 2026-11-13"
+    "impl": "-5.245 vs 11.35",
+    "src": "Yahoo EEM · au 2026-11-13",
+    "num": -5.245465275578487,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "up",
+     "prev": "-5.621",
+     "prev_num": -5.621,
+     "prev_asof": "2026-11-13"
+    }
    },
    {
     "ind": "Momentum Commodities (DBC) 1M%",
-    "val": "-7.553",
-    "comp": "37.68",
+    "val": "-7.526",
+    "comp": "37.72",
     "cible": ">+2%",
     "signal": "Rouge",
-    "impl": "-7.553 vs 37.68",
-    "src": "Yahoo DBC · au 2026-11-13"
+    "impl": "-7.526 vs 37.72",
+    "src": "Yahoo DBC · au 2026-11-13",
+    "num": -7.525825100135808,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "up",
+     "prev": "-7.553",
+     "prev_num": -7.553,
+     "prev_asof": "2026-11-13"
+    }
    }
   ],
   "CRÉDIT": [
@@ -354,7 +514,15 @@
     "cible": "<350 bps",
     "signal": "Vert",
     "impl": "320.0 vs 2.894",
-    "src": "FRED BAMLH0A0HYM2 · au 2026-11-12"
+    "src": "FRED BAMLH0A0HYM2 · au 2026-11-12",
+    "num": 320.0,
+    "asof": "2026-11-12",
+    "chg": {
+     "dir": "down",
+     "prev": "330.0",
+     "prev_num": 330.0,
+     "prev_asof": "2026-11-11"
+    }
    },
    {
     "ind": "Spread IG US (OAS, bps)",
@@ -363,16 +531,32 @@
     "cible": "<100 bps",
     "signal": "Vert",
     "impl": "89.00 vs 7.229",
-    "src": "FRED BAMLC0A0CM · au 2026-11-12"
+    "src": "FRED BAMLC0A0CM · au 2026-11-12",
+    "num": 89.0,
+    "asof": "2026-11-12",
+    "chg": {
+     "dir": "down",
+     "prev": "90.00",
+     "prev_num": 90.0,
+     "prev_asof": "2026-11-11"
+    }
    },
    {
     "ind": "Performance dette EM (EMB YTD)",
-    "val": "-1.034",
-    "comp": "-0.33",
+    "val": "-1.029",
+    "comp": "-0.324",
     "cible": ">0% YTD",
     "signal": "Rouge",
-    "impl": "-1.034 vs -0.33",
-    "src": "Yahoo EMB · au 2026-11-13"
+    "impl": "-1.029 vs -0.324",
+    "src": "Yahoo EMB · au 2026-11-13",
+    "num": -1.028863255406609,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "up",
+     "prev": "-1.034",
+     "prev_num": -1.034,
+     "prev_asof": "2026-11-13"
+    }
    },
    {
     "ind": "Ratio spread BB/HY total",
@@ -381,45 +565,79 @@
     "cible": "<0.6x",
     "signal": "Vert",
     "impl": "",
-    "src": "FRED ICE BofA BB / HY · au 2026-11-12"
+    "src": "FRED ICE BofA BB / HY · au 2026-11-12",
+    "num": 0.571875,
+    "asof": "2026-11-12"
    }
   ],
   "MOMENTUM": [
    {
     "ind": "RSI S&P 500 (14 jours)",
-    "val": "44.92",
-    "comp": "46.74",
+    "val": "46.40",
+    "comp": "47.60",
     "cible": "30-70",
     "signal": "Vert",
-    "impl": "44.92 vs 46.74",
-    "src": "Calculé (Yahoo ^GSPC) · au 2026-11-13"
+    "impl": "46.40 vs 47.60",
+    "src": "Calculé (Yahoo ^GSPC) · au 2026-11-13",
+    "num": 46.40340570798279,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "up",
+     "prev": "44.92",
+     "prev_num": 44.92,
+     "prev_asof": "2026-11-13"
+    }
    },
    {
     "ind": "S&P 500 vs MA 200 jours",
-    "val": "2.328",
-    "comp": "-1.887",
+    "val": "2.756",
+    "comp": "-1.483",
     "cible": ">0%",
     "signal": "Vert",
-    "impl": "2.328 vs -1.887",
-    "src": "Calculé (Yahoo ^GSPC) · au 2026-11-13"
+    "impl": "2.756 vs -1.483",
+    "src": "Calculé (Yahoo ^GSPC) · au 2026-11-13",
+    "num": 2.7555752173042514,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "up",
+     "prev": "2.328",
+     "prev_num": 2.328,
+     "prev_asof": "2026-11-13"
+    }
    },
    {
     "ind": "VIX",
-    "val": "20.35",
-    "comp": "23.63",
+    "val": "19.37",
+    "comp": "17.68",
     "cible": "<20",
-    "signal": "Jaune",
-    "impl": "20.35 vs 23.63",
-    "src": "Yahoo ^VIX · au 2026-11-13"
+    "signal": "Vert",
+    "impl": "19.37 vs 17.68",
+    "src": "Yahoo ^VIX · au 2026-11-13",
+    "num": 19.3700008392334,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "up",
+     "prev": "18.70",
+     "prev_num": 18.700000762939453,
+     "prev_asof": "2026-11-12"
+    }
    },
    {
     "ind": "Breadth: RSP vs SPY (+50, proxy)",
-    "val": "55.56",
-    "comp": "5.306",
+    "val": "55.37",
+    "comp": "5.143",
     "cible": ">60",
     "signal": "Jaune",
-    "impl": "55.56 vs 5.306",
-    "src": "Yahoo RSP - SPY · au 2026-11-13"
+    "impl": "55.37 vs 5.143",
+    "src": "Yahoo RSP - SPY · au 2026-11-13",
+    "num": 55.36881538998097,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "down",
+     "prev": "55.56",
+     "prev_num": 55.56,
+     "prev_asof": "2026-11-13"
+    }
    }
   ]
  },
@@ -427,11 +645,19 @@
   "IA - COUCHE 1: ÉNERGIE": [
    {
     "ind": "Utilities US (XLU YTD%)",
-    "val": "5.28",
+    "val": "5.029",
     "cible": ">10%",
     "statut": "Jaune",
     "note": "",
-    "src": "Yahoo XLU · au 2026-11-13"
+    "src": "Yahoo XLU · au 2026-11-13",
+    "num": 5.028683336079154,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "down",
+     "prev": "5.28",
+     "prev_num": 5.28,
+     "prev_asof": "2026-11-13"
+    }
    },
    {
     "ind": "Prix uranium spot ($/lb)",
@@ -440,15 +666,25 @@
     "statut": "Vert",
     "note": "",
     "src": "UxC spot (saisie manuelle) · au 2026-11-13",
-    "manual": true
+    "manual": true,
+    "num": 90.7,
+    "asof": "2026-11-13"
    },
    {
     "ind": "Prix gaz naturel Henry Hub",
-    "val": "3.223",
+    "val": "3.248",
     "cible": ">$3.50/MMBtu",
     "statut": "Jaune",
     "note": "",
-    "src": "Yahoo NG=F · au 2026-11-13"
+    "src": "Yahoo NG=F · au 2026-11-13",
+    "num": 3.247999906539917,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "down",
+     "prev": "3.34",
+     "prev_num": 3.3399999141693115,
+     "prev_asof": "2026-11-12"
+    }
    }
   ],
   "IA - COUCHE 2: PUCES": [
@@ -458,79 +694,145 @@
     "cible": ">20%",
     "statut": "Vert",
     "note": "",
-    "src": "Yahoo NVDA (trimestre, a/a) · au 2026-11-13"
+    "src": "Yahoo NVDA (trimestre, a/a) · au 2026-11-13",
+    "num": 105.89999999999999,
+    "asof": "2026-11-13"
    },
    {
     "ind": "Performance SOX Index (semi) YTD%",
-    "val": "40.92",
+    "val": "42.63",
     "cible": ">0%",
     "statut": "Vert",
     "note": "",
-    "src": "Yahoo ^SOX · au 2026-11-13"
+    "src": "Yahoo ^SOX · au 2026-11-13",
+    "num": 42.634133563119335,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "up",
+     "prev": "40.92",
+     "prev_num": 40.92,
+     "prev_asof": "2026-11-13"
+    }
    }
   ],
   "IA - COUCHE 3: INFRASTRUCTURE": [
    {
     "ind": "Perf. hyperscalers (AMZN/GOOG/MSFT/META YTD%)",
-    "val": "3.059",
+    "val": "3.762",
     "cible": ">+10% YTD",
     "statut": "Jaune",
     "note": "",
-    "src": "Yahoo AMZN/GOOG/MSFT/META · au 2026-11-13"
+    "src": "Yahoo AMZN/GOOG/MSFT/META · au 2026-11-13",
+    "num": 3.761761792474919,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "up",
+     "prev": "3.059",
+     "prev_num": 3.059,
+     "prev_asof": "2026-11-13"
+    }
    },
    {
     "ind": "Performance Vertiv/Quanta/EQIX",
-    "val": "34.80",
+    "val": "35.31",
     "cible": ">+10% YTD",
     "statut": "Vert",
     "note": "",
-    "src": "Yahoo VRT/PWR/EQIX · au 2026-11-13"
+    "src": "Yahoo VRT/PWR/EQIX · au 2026-11-13",
+    "num": 35.30688274498877,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "up",
+     "prev": "34.80",
+     "prev_num": 34.8,
+     "prev_asof": "2026-11-13"
+    }
    }
   ],
   "IA - COUCHE 5: APPLICATIONS": [
    {
     "ind": "Performance Cloud ETF (WCLD YTD%)",
-    "val": "17.65",
+    "val": "18.82",
     "cible": ">+10% YTD",
     "statut": "Vert",
     "note": "",
-    "src": "Yahoo WCLD · au 2026-11-13"
+    "src": "Yahoo WCLD · au 2026-11-13",
+    "num": 18.82319471159373,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "up",
+     "prev": "17.65",
+     "prev_num": 17.65,
+     "prev_asof": "2026-11-13"
+    }
    }
   ],
   "GREAT BROADENING": [
    {
     "ind": "Performance relative RTY vs SPX (YTD)",
-    "val": "2.084",
+    "val": "1.882",
     "cible": ">0%",
     "statut": "Vert",
     "note": "",
-    "src": "Yahoo ^RUT - ^GSPC · au 2026-11-13"
+    "src": "Yahoo ^RUT - ^GSPC · au 2026-11-13",
+    "num": 1.882423831588941,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "down",
+     "prev": "2.084",
+     "prev_num": 2.084,
+     "prev_asof": "2026-11-13"
+    }
    },
    {
     "ind": "Breadth: RSP vs SPY (+50, proxy)",
-    "val": "55.56",
+    "val": "55.37",
     "cible": ">53 (proxy)",
     "statut": "Vert",
     "note": "",
-    "src": "Yahoo RSP - SPY · au 2026-11-13"
+    "src": "Yahoo RSP - SPY · au 2026-11-13",
+    "num": 55.36881538998097,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "down",
+     "prev": "55.56",
+     "prev_num": 55.56,
+     "prev_asof": "2026-11-13"
+    }
    },
    {
     "ind": "Performance S&P Equal Weight vs Cap Weight",
-    "val": "5.556",
+    "val": "5.369",
     "cible": ">0%",
     "statut": "Vert",
     "note": "",
-    "src": "Yahoo RSP - SPY · au 2026-11-13"
+    "src": "Yahoo RSP - SPY · au 2026-11-13",
+    "num": 5.368815389980975,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "down",
+     "prev": "5.556",
+     "prev_num": 5.556,
+     "prev_asof": "2026-11-13"
+    }
    }
   ],
   "COMMODITÉS - RARETÉ": [
    {
     "ind": "Prix cuivre ($/tonne, COMEX)",
-    "val": "13 438",
+    "val": "13 405",
     "cible": ">$9,500/t",
     "statut": "Vert",
     "note": "",
-    "src": "Yahoo HG=F x 2204.62 · au 2026-11-13"
+    "src": "Yahoo HG=F x 2204.62 · au 2026-11-13",
+    "num": 13405.19218752861,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "down",
+     "prev": "13 630",
+     "prev_num": 13630.062897701262,
+     "prev_asof": "2026-11-12"
+    }
    },
    {
     "ind": "Prix argent ($/oz)",
@@ -538,7 +840,15 @@
     "cible": ">$50/oz",
     "statut": "Jaune",
     "note": "",
-    "src": "Yahoo SI=F · au 2026-11-13"
+    "src": "Yahoo SI=F · au 2026-11-13",
+    "num": 48.9900016784668,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "down",
+     "prev": "49.97",
+     "prev_num": 49.97200012207031,
+     "prev_asof": "2026-11-12"
+    }
    },
    {
     "ind": "Inventaires cuivre LME (tonnes)",
@@ -547,33 +857,59 @@
     "statut": "Vert",
     "note": "",
     "src": "LME (saisie manuelle) · au 2026-11-13",
-    "manual": true
+    "manual": true,
+    "num": 13642.0,
+    "asof": "2026-11-13"
    },
    {
     "ind": "Mines diversifiées (PICK YTD)",
-    "val": "5.593",
+    "val": "5.681",
     "cible": ">+10% YTD",
     "statut": "Jaune",
     "note": "",
-    "src": "Yahoo PICK · au 2026-11-13"
+    "src": "Yahoo PICK · au 2026-11-13",
+    "num": 5.681462280281369,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "up",
+     "prev": "5.593",
+     "prev_num": 5.593,
+     "prev_asof": "2026-11-13"
+    }
    }
   ],
   "STIMULUS FISCAL US": [
    {
     "ind": "Performance small caps US (IWM YTD)",
-    "val": "12.96",
+    "val": "13.27",
     "cible": ">+10% YTD",
     "statut": "Vert",
     "note": "",
-    "src": "Yahoo IWM · au 2026-11-13"
+    "src": "Yahoo IWM · au 2026-11-13",
+    "num": 13.273393980806226,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "up",
+     "prev": "12.96",
+     "prev_num": 12.96,
+     "prev_asof": "2026-11-13"
+    }
    },
    {
     "ind": "Performance industrielles US (XLI YTD)",
-    "val": "9.213",
+    "val": "9.479",
     "cible": ">+10% YTD",
     "statut": "Jaune",
     "note": "",
-    "src": "Yahoo XLI · au 2026-11-13"
+    "src": "Yahoo XLI · au 2026-11-13",
+    "num": 9.479297599626712,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "up",
+     "prev": "9.213",
+     "prev_num": 9.213,
+     "prev_asof": "2026-11-13"
+    }
    },
    {
     "ind": "Consumer Confidence (Conference Board)",
@@ -582,7 +918,9 @@
     "statut": "Jaune",
     "note": "",
     "src": "Conference Board (saisie manuelle) · au 2026-11-13",
-    "manual": true
+    "manual": true,
+    "num": 91.7,
+    "asof": "2026-11-13"
    },
    {
     "ind": "Rendement 10Y US (coût du stimulus)",
@@ -590,25 +928,49 @@
     "cible": "<4.50%",
     "statut": "Jaune",
     "note": "",
-    "src": "FRED DGS10 · au 2026-11-10"
+    "src": "FRED DGS10 · au 2026-11-10",
+    "num": 4.98,
+    "asof": "2026-11-10",
+    "chg": {
+     "dir": "up",
+     "prev": "4.88",
+     "prev_num": 4.88,
+     "prev_asof": "2026-11-09"
+    }
    }
   ],
   "SANTÉ / BIOTECH": [
    {
     "ind": "Performance XBI (Biotech ETF)",
-    "val": "22.94",
+    "val": "23.27",
     "cible": ">+10% YTD",
     "statut": "Vert",
     "note": "",
-    "src": "Yahoo XBI · au 2026-11-13"
+    "src": "Yahoo XBI · au 2026-11-13",
+    "num": 23.26530683825865,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "up",
+     "prev": "22.94",
+     "prev_num": 22.94,
+     "prev_asof": "2026-11-13"
+    }
    },
    {
     "ind": "Biotech large cap (IBB YTD, proxy FDA)",
-    "val": "25.56",
+    "val": "25.76",
     "cible": ">+5% YTD",
     "statut": "Vert",
     "note": "",
-    "src": "Yahoo IBB · au 2026-11-13"
+    "src": "Yahoo IBB · au 2026-11-13",
+    "num": 25.75762498157288,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "up",
+     "prev": "25.56",
+     "prev_num": 25.56,
+     "prev_asof": "2026-11-13"
+    }
    }
   ]
  },
@@ -620,7 +982,15 @@
     "seuil": ">3.0%",
     "signal": "Jaune",
     "comm": "Fed target 2%",
-    "src": "FRED CPILFESL · au 2026-09-01"
+    "src": "FRED CPILFESL · au 2026-09-01",
+    "num": 2.565840844021827,
+    "asof": "2026-09-01",
+    "chg": {
+     "dir": "up",
+     "prev": "2.446",
+     "prev_num": 2.4461631786472537,
+     "prev_asof": "2026-08-01"
+    }
    },
    {
     "ind": "PCE Core (YoY%)",
@@ -628,7 +998,15 @@
     "seuil": ">3.0%",
     "signal": "Rouge",
     "comm": "Mesure préférée Fed",
-    "src": "FRED PCEPILFE · au 2026-09-01"
+    "src": "FRED PCEPILFE · au 2026-09-01",
+    "num": 3.1211596029620203,
+    "asof": "2026-09-01",
+    "chg": {
+     "dir": "up",
+     "prev": "3.034",
+     "prev_num": 3.034442461664799,
+     "prev_asof": "2026-08-01"
+    }
    },
    {
     "ind": "Inflation anticipée 5Y5Y",
@@ -636,7 +1014,15 @@
     "seuil": ">2.5%",
     "signal": "Vert",
     "comm": "Anticipations long terme",
-    "src": "FRED T5YIFR · au 2026-11-12"
+    "src": "FRED T5YIFR · au 2026-11-12",
+    "num": 2.17,
+    "asof": "2026-11-12",
+    "chg": {
+     "dir": "up",
+     "prev": "2.15",
+     "prev_num": 2.15,
+     "prev_asof": "2026-11-10"
+    }
    },
    {
     "ind": "Salaires horaires (YoY%)",
@@ -644,7 +1030,15 @@
     "seuil": ">4.0%",
     "signal": "Vert",
     "comm": "Pression salariale",
-    "src": "FRED CES0500000003 · au 2026-10-01"
+    "src": "FRED CES0500000003 · au 2026-10-01",
+    "num": 3.1207598371777445,
+    "asof": "2026-10-01",
+    "chg": {
+     "dir": "down",
+     "prev": "3.161",
+     "prev_num": 3.1607629427792716,
+     "prev_asof": "2026-09-01"
+    }
    }
   ],
   "TAUX / YIELDS": [
@@ -654,7 +1048,15 @@
     "seuil": ">5.0%",
     "signal": "Jaune",
     "comm": "Bond vigilantes",
-    "src": "FRED DGS10 · au 2026-11-10"
+    "src": "FRED DGS10 · au 2026-11-10",
+    "num": 4.98,
+    "asof": "2026-11-10",
+    "chg": {
+     "dir": "up",
+     "prev": "4.88",
+     "prev_num": 4.88,
+     "prev_asof": "2026-11-09"
+    }
    },
    {
     "ind": "Rendement 2 ans US",
@@ -662,7 +1064,15 @@
     "seuil": ">5.0%",
     "signal": "Jaune",
     "comm": "Attentes Fed",
-    "src": "FRED DGS2 · au 2026-11-10"
+    "src": "FRED DGS2 · au 2026-11-10",
+    "num": 4.73,
+    "asof": "2026-11-10",
+    "chg": {
+     "dir": "up",
+     "prev": "4.56",
+     "prev_num": 4.56,
+     "prev_asof": "2026-11-09"
+    }
    },
    {
     "ind": "Spread 10Y-2Y (courbe, bps)",
@@ -670,7 +1080,15 @@
     "seuil": "<-50bps",
     "signal": "Vert",
     "comm": "Inversion = risque récession",
-    "src": "FRED T10Y2Y · au 2026-11-12"
+    "src": "FRED T10Y2Y · au 2026-11-12",
+    "num": 24.0,
+    "asof": "2026-11-12",
+    "chg": {
+     "dir": "down",
+     "prev": "25.00",
+     "prev_num": 25.0,
+     "prev_asof": "2026-11-10"
+    }
    },
    {
     "ind": "Rendement réel 10Y TIPS",
@@ -678,7 +1096,15 @@
     "seuil": ">2.5%",
     "signal": "Rouge",
     "comm": "Coût réel du capital",
-    "src": "FRED DFII10 · au 2026-11-10"
+    "src": "FRED DFII10 · au 2026-11-10",
+    "num": 2.78,
+    "asof": "2026-11-10",
+    "chg": {
+     "dir": "up",
+     "prev": "2.66",
+     "prev_num": 2.66,
+     "prev_asof": "2026-11-09"
+    }
    },
    {
     "ind": "Fed Funds futures (front month)",
@@ -686,7 +1112,15 @@
     "seuil": "<95.50",
     "signal": "Vert",
     "comm": "Trajectoire anticipée",
-    "src": "Yahoo ZQ=F · au 2026-11-13"
+    "src": "Yahoo ZQ=F · au 2026-11-13",
+    "num": 95.81999969482422,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "down",
+     "prev": "96.12",
+     "prev_num": 96.12000274658203,
+     "prev_asof": "2026-11-12"
+    }
    }
   ],
   "CRÉDIT / LIQUIDITÉ": [
@@ -696,7 +1130,9 @@
     "seuil": ">50bps",
     "signal": "Vert",
     "comm": "Stress de financement court terme (remplace le TED)",
-    "src": "FRED DCPF3M - DTB3 (bps) · au 2026-11-09"
+    "src": "FRED DCPF3M - DTB3 (bps) · au 2026-11-09",
+    "num": -2.999999999999936,
+    "asof": "2026-11-09"
    },
    {
     "ind": "Bilan de la Fed (M$)",
@@ -704,7 +1140,15 @@
     "seuil": "<6,000,000",
     "signal": "Vert",
     "comm": "Liquidité système",
-    "src": "FRED WALCL · au 2026-11-11"
+    "src": "FRED WALCL · au 2026-11-11",
+    "num": 6758867.0,
+    "asof": "2026-11-11",
+    "chg": {
+     "dir": "up",
+     "prev": "6 748 145",
+     "prev_num": 6748145.0,
+     "prev_asof": "2026-11-04"
+    }
    },
    {
     "ind": "Spread HY US OAS (%)",
@@ -712,25 +1156,49 @@
     "seuil": ">5.0 (500 bps)",
     "signal": "Vert",
     "comm": "Proxy stress crédit",
-    "src": "FRED BAMLH0A0HYM2 · au 2026-11-12"
+    "src": "FRED BAMLH0A0HYM2 · au 2026-11-12",
+    "num": 3.2,
+    "asof": "2026-11-12",
+    "chg": {
+     "dir": "down",
+     "prev": "3.3",
+     "prev_num": 3.3,
+     "prev_asof": "2026-11-11"
+    }
    }
   ],
   "GÉOPOLITIQUE": [
    {
     "ind": "VIX (Volatilité implicite US)",
-    "val": "20.35",
+    "val": "19.37",
     "seuil": ">30",
-    "signal": "Jaune",
+    "signal": "Vert",
     "comm": "Volatilité implicite",
-    "src": "Yahoo ^VIX · au 2026-11-13"
+    "src": "Yahoo ^VIX · au 2026-11-13",
+    "num": 19.3700008392334,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "up",
+     "prev": "18.70",
+     "prev_num": 18.700000762939453,
+     "prev_asof": "2026-11-12"
+    }
    },
    {
     "ind": "Prix pétrole Brent",
-    "val": "95.94",
+    "val": "96.12",
     "seuil": ">$80",
     "signal": "Jaune",
     "comm": "Choc pétrolier",
-    "src": "Yahoo BZ=F · au 2026-11-13"
+    "src": "Yahoo BZ=F · au 2026-11-13",
+    "num": 96.12000274658203,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "up",
+     "prev": "95.82",
+     "prev_num": 95.81999969482422,
+     "prev_asof": "2026-11-12"
+    }
    },
    {
     "ind": "USD Index (DXY)",
@@ -738,15 +1206,31 @@
     "seuil": ">110",
     "signal": "Jaune",
     "comm": "Force dollar",
-    "src": "Yahoo DXY · au 2026-11-13"
+    "src": "Yahoo DXY · au 2026-11-13",
+    "num": 103.3759994506836,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "up",
+     "prev": "103.2",
+     "prev_num": 103.16999816894531,
+     "prev_asof": "2026-11-12"
+    }
    },
    {
     "ind": "USD/CNY",
-    "val": "6.661",
+    "val": "6.662",
     "seuil": ">7.5",
     "signal": "Vert",
     "comm": "Tensions Chine",
-    "src": "Yahoo CNY=X · au 2026-11-13"
+    "src": "Yahoo CNY=X · au 2026-11-13",
+    "num": 6.662099838256836,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "down",
+     "prev": "6.67",
+     "prev_num": 6.670300006866455,
+     "prev_asof": "2026-11-12"
+    }
    }
   ],
   "CANADA": [
@@ -756,15 +1240,25 @@
     "seuil": "<-1.0%",
     "signal": "Rouge",
     "comm": "Divergence politique monétaire",
-    "src": "BdC Valet + FRED DGS10 · au 2026-11-12"
+    "src": "BdC Valet + FRED DGS10 · au 2026-11-12",
+    "num": -1.2000000000000006,
+    "asof": "2026-11-12"
    },
    {
     "ind": "CAD/USD",
-    "val": "0.702",
+    "val": "0.701",
     "seuil": "<0.70",
     "signal": "Jaune",
     "comm": "Faiblesse dollar canadien",
-    "src": "Yahoo CAD=X · au 2026-11-13"
+    "src": "Yahoo CAD=X · au 2026-11-13",
+    "num": 0.7009083658814048,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "down",
+     "prev": "0.702",
+     "prev_num": 0.7018578054477053,
+     "prev_asof": "2026-11-12"
+    }
    },
    {
     "ind": "Renouvellements hypothécaires 2026",
@@ -773,15 +1267,24 @@
     "signal": "Jaune",
     "comm": "Mur hypothécaire 2025-2026. ~$300Mds de renouvellements à taux plus élevés.",
     "src": "Interne",
-    "manual": true
+    "manual": true,
+    "asof": ""
    },
    {
     "ind": "Indice TSX vs S&P 500 (rel perf)",
-    "val": "4.012",
+    "val": "3.68",
     "seuil": "<-10%",
     "signal": "Vert",
     "comm": "Sous-performance Canada",
-    "src": "Yahoo ^GSPTSE - ^GSPC · au 2026-11-13"
+    "src": "Yahoo ^GSPTSE - ^GSPC · au 2026-11-13",
+    "num": 3.6799465024444977,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "down",
+     "prev": "4.012",
+     "prev_num": 4.012,
+     "prev_asof": "2026-11-13"
+    }
    }
   ]
  },
@@ -793,7 +1296,15 @@
     "seuil": ">1.5%",
     "signal": "Jaune",
     "comm": "StatCan, trimestriel",
-    "src": "StatCan PIB réel (v62305752) · au 2026-04-01"
+    "src": "StatCan PIB réel (v62305752) · au 2026-04-01",
+    "num": 1.127895912418997,
+    "asof": "2026-04-01",
+    "chg": {
+     "dir": "up",
+     "prev": "0.063",
+     "prev_num": 0.0625889774655608,
+     "prev_asof": "2026-01-01"
+    }
    },
    {
     "ind": "Indice avancé (Conference Board CA)",
@@ -802,7 +1313,9 @@
     "signal": "Rouge",
     "comm": "Indicateur avancé 6 mois",
     "src": "Conference Board CA (saisie manuelle) · au 2026-11-13",
-    "manual": true
+    "manual": true,
+    "num": -0.5,
+    "asof": "2026-11-13"
    },
    {
     "ind": "Ventes au détail (YoY%)",
@@ -810,7 +1323,15 @@
     "seuil": ">2%",
     "signal": "Vert",
     "comm": "StatCan, mensuel",
-    "src": "StatCan Commerce de détail (v52367097) · au 2022-12-01"
+    "src": "StatCan Commerce de détail (v52367097) · au 2022-12-01",
+    "num": 7.256206899546358,
+    "asof": "2022-12-01",
+    "chg": {
+     "dir": "up",
+     "prev": "5.17",
+     "prev_num": 5.16999389402697,
+     "prev_asof": "2022-11-01"
+    }
    }
   ],
   "INFLATION / BoC": [
@@ -820,7 +1341,15 @@
     "seuil": "<2.5%",
     "signal": "Rouge",
     "comm": "Cible BoC 2% (fourchette 1-3%)",
-    "src": "StatCan IPC (v41690973) · au 2026-09-01"
+    "src": "StatCan IPC (v41690973) · au 2026-09-01",
+    "num": 3.092783505154628,
+    "asof": "2026-09-01",
+    "chg": {
+     "dir": "up",
+     "prev": "3.034",
+     "prev_num": 3.033980582524265,
+     "prev_asof": "2026-08-01"
+    }
    },
    {
     "ind": "CPI Core médian (YoY%)",
@@ -828,7 +1357,15 @@
     "seuil": "<2.5%",
     "signal": "Vert",
     "comm": "Mesure préférée BoC",
-    "src": "BdC IPC-méd · au 2026-09-01"
+    "src": "BdC IPC-méd · au 2026-09-01",
+    "num": 1.9,
+    "asof": "2026-09-01",
+    "chg": {
+     "dir": "down",
+     "prev": "2",
+     "prev_num": 2.0,
+     "prev_asof": "2026-08-01"
+    }
    },
    {
     "ind": "Taux directeur BoC",
@@ -836,7 +1373,15 @@
     "seuil": "<3.0%",
     "signal": "Vert",
     "comm": "Banque du Canada",
-    "src": "BdC taux directeur · au 2026-11-12"
+    "src": "BdC taux directeur · au 2026-11-12",
+    "num": 2.5,
+    "asof": "2026-11-12",
+    "chg": {
+     "dir": "flat",
+     "prev": "2.5",
+     "prev_num": 2.5,
+     "prev_asof": "2026-11-11"
+    }
    },
    {
     "ind": "Spread BoC - Fed Funds",
@@ -844,7 +1389,9 @@
     "seuil": ">-1.5%",
     "signal": "Jaune",
     "comm": "Divergence politique monétaire = pression CAD",
-    "src": "BdC V39079 - FRED DFEDTARU · au 2026-11-12"
+    "src": "BdC V39079 - FRED DFEDTARU · au 2026-11-12",
+    "num": -1.5,
+    "asof": "2026-11-12"
    }
   ],
   "EMPLOI": [
@@ -854,7 +1401,15 @@
     "seuil": "<6.5%",
     "signal": "Jaune",
     "comm": "StatCan, mensuel",
-    "src": "StatCan EPA (v2062815) · au 2026-10-01"
+    "src": "StatCan EPA (v2062815) · au 2026-10-01",
+    "num": 6.7,
+    "asof": "2026-10-01",
+    "chg": {
+     "dir": "up",
+     "prev": "6.5",
+     "prev_num": 6.5,
+     "prev_asof": "2026-09-01"
+    }
    },
    {
     "ind": "Création d'emplois (variation mensuelle, k)",
@@ -862,7 +1417,15 @@
     "seuil": ">+25k",
     "signal": "Rouge",
     "comm": "Enquête sur la population active",
-    "src": "StatCan EPA (v2062811) · au 2026-10-01"
+    "src": "StatCan EPA (v2062811) · au 2026-10-01",
+    "num": -4.700000000000728,
+    "asof": "2026-10-01",
+    "chg": {
+     "dir": "up",
+     "prev": "-68.30",
+     "prev_num": -68.29999999999927,
+     "prev_asof": "2026-09-01"
+    }
    }
   ],
   "TAUX / FX": [
@@ -872,7 +1435,15 @@
     "seuil": "<4.0%",
     "signal": "Vert",
     "comm": "GoC 10-year benchmark",
-    "src": "BdC 10 ans · au 2026-11-12"
+    "src": "BdC 10 ans · au 2026-11-12",
+    "num": 3.78,
+    "asof": "2026-11-12",
+    "chg": {
+     "dir": "up",
+     "prev": "3.72",
+     "prev_num": 3.72,
+     "prev_asof": "2026-11-10"
+    }
    },
    {
     "ind": "Rendement 2Y Canada",
@@ -880,7 +1451,15 @@
     "seuil": "<3.5%",
     "signal": "Vert",
     "comm": "Sensible aux décisions BoC",
-    "src": "BdC 2 ans · au 2026-11-12"
+    "src": "BdC 2 ans · au 2026-11-12",
+    "num": 3.33,
+    "asof": "2026-11-12",
+    "chg": {
+     "dir": "up",
+     "prev": "3.25",
+     "prev_num": 3.25,
+     "prev_asof": "2026-11-10"
+    }
    },
    {
     "ind": "Spread 10Y CA-US",
@@ -888,25 +1467,43 @@
     "seuil": ">-1.0%",
     "signal": "Jaune",
     "comm": "Écart yields, indicateur de pression CAD",
-    "src": "BdC Valet + FRED DGS10 · au 2026-11-12"
+    "src": "BdC Valet + FRED DGS10 · au 2026-11-12",
+    "num": -1.2000000000000006,
+    "asof": "2026-11-12"
    },
    {
     "ind": "CAD/USD",
-    "val": "0.702",
+    "val": "0.701",
     "seuil": ">0.72",
     "signal": "Jaune",
     "comm": "Faiblesse CAD pression sur importations",
-    "src": "Yahoo CAD=X · au 2026-11-13"
+    "src": "Yahoo CAD=X · au 2026-11-13",
+    "num": 0.7009083658814048,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "down",
+     "prev": "0.702",
+     "prev_num": 0.7018578054477053,
+     "prev_asof": "2026-11-12"
+    }
    }
   ],
   "LOGEMENT": [
    {
     "ind": "S&P/TSX REIT (XRE YTD%) - proxy logement",
-    "val": "6.319",
+    "val": "5.983",
     "seuil": ">0%",
     "signal": "Vert",
     "comm": "iShares XRE",
-    "src": "Yahoo XRE.TO · au 2026-11-13"
+    "src": "Yahoo XRE.TO · au 2026-11-13",
+    "num": 5.9834541456550205,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "down",
+     "prev": "6.319",
+     "prev_num": 6.319,
+     "prev_asof": "2026-11-13"
+    }
    },
    {
     "ind": "Mises en chantier CA (k SAAR)",
@@ -914,7 +1511,15 @@
     "seuil": ">220k",
     "signal": "Vert",
     "comm": "SCHL, mensuel",
-    "src": "StatCan SCHL (v52300157) · au 2026-09-01"
+    "src": "StatCan SCHL (v52300157) · au 2026-09-01",
+    "num": 248.896,
+    "asof": "2026-09-01",
+    "chg": {
+     "dir": "up",
+     "prev": "242.2",
+     "prev_num": 242.223,
+     "prev_asof": "2026-08-01"
+    }
    },
    {
     "ind": "Renouvellements hypothécaires 2025-2026",
@@ -923,7 +1528,8 @@
     "signal": "Rouge",
     "comm": "Mur hypothécaire: renouvellements à taux plus élevés",
     "src": "Interne",
-    "manual": true
+    "manual": true,
+    "asof": ""
    }
   ],
   "COMMERCE": [
@@ -933,7 +1539,15 @@
     "seuil": ">0",
     "signal": "Vert",
     "comm": "StatCan, mensuel. Exposition tarifs US.",
-    "src": "StatCan balance commerciale BdP (v87008984) · au 2026-09-01"
+    "src": "StatCan balance commerciale BdP (v87008984) · au 2026-09-01",
+    "num": 5.3501,
+    "asof": "2026-09-01",
+    "chg": {
+     "dir": "up",
+     "prev": "4.951",
+     "prev_num": 4.9513,
+     "prev_asof": "2026-08-01"
+    }
    },
    {
     "ind": "Prix pétrole WCS (Western Canadian Select)",
@@ -942,25 +1556,43 @@
     "signal": "Vert",
     "comm": "Clé pour secteur énergie + dollar canadien",
     "src": "WCS (saisie manuelle) · au 2026-11-13",
-    "manual": true
+    "manual": true,
+    "num": 60.6,
+    "asof": "2026-11-13"
    }
   ],
   "MARCHÉS CA": [
    {
     "ind": "TSX Composite (niveau)",
-    "val": "36 119",
+    "val": "36 160",
     "seuil": "Au-dessus MA200",
     "signal": "Vert",
     "comm": "S&P/TSX Composite",
-    "src": "Yahoo ^GSPTSE · au 2026-11-13"
+    "src": "Yahoo ^GSPTSE · au 2026-11-13",
+    "num": 36160.1015625,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "up",
+     "prev": "36 137",
+     "prev_num": 36137.19921875,
+     "prev_asof": "2026-11-12"
+    }
    },
    {
     "ind": "TSX Composite (YTD%)",
-    "val": "13.89",
+    "val": "14.02",
     "seuil": ">5%",
     "signal": "Vert",
     "comm": "Performance YTD",
-    "src": "Yahoo ^GSPTSE · au 2026-11-13"
+    "src": "Yahoo ^GSPTSE · au 2026-11-13",
+    "num": 14.023677101012911,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "up",
+     "prev": "13.89",
+     "prev_num": 13.89,
+     "prev_asof": "2026-11-13"
+    }
    },
    {
     "ind": "P/E Forward TSX",
@@ -969,39 +1601,73 @@
     "signal": "Jaune",
     "comm": "Valorisation relative TSX",
     "src": "Consensus (saisie manuelle) · au 2026-11-13",
-    "manual": true
+    "manual": true,
+    "num": 17.4,
+    "asof": "2026-11-13"
    },
    {
     "ind": "Perf TSX vs S&P 500 (YTD)",
-    "val": "4.012",
+    "val": "3.68",
     "seuil": ">-5%",
     "signal": "Vert",
     "comm": "Surperformance/sous-perf relative",
-    "src": "Yahoo ^GSPTSE - ^GSPC · au 2026-11-13"
+    "src": "Yahoo ^GSPTSE - ^GSPC · au 2026-11-13",
+    "num": 3.6799465024444977,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "down",
+     "prev": "4.012",
+     "prev_num": 4.012,
+     "prev_asof": "2026-11-13"
+    }
    },
    {
     "ind": "Perf Banques CA (ZEB YTD)",
-    "val": "34.24",
+    "val": "34.40",
     "seuil": ">0%",
     "signal": "Vert",
     "comm": "BMO Equal Weight Banks (proxy S&P/TSX Banks)",
-    "src": "Yahoo ZEB.TO · au 2026-11-13"
+    "src": "Yahoo ZEB.TO · au 2026-11-13",
+    "num": 34.39660768479313,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "up",
+     "prev": "34.24",
+     "prev_num": 34.24,
+     "prev_asof": "2026-11-13"
+    }
    },
    {
     "ind": "Perf Énergie CA (XEG YTD)",
-    "val": "50.59",
+    "val": "51.44",
     "seuil": ">0%",
     "signal": "Vert",
     "comm": "iShares S&P/TSX Capped Energy",
-    "src": "Yahoo XEG.TO · au 2026-11-13"
+    "src": "Yahoo XEG.TO · au 2026-11-13",
+    "num": 51.44207019619142,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "up",
+     "prev": "50.59",
+     "prev_num": 50.59,
+     "prev_asof": "2026-11-13"
+    }
    },
    {
     "ind": "Perf Matériaux CA (XMA YTD)",
-    "val": "2.059",
+    "val": "2.131",
     "seuil": ">0%",
     "signal": "Vert",
     "comm": "iShares S&P/TSX Capped Materials",
-    "src": "Yahoo XMA.TO · au 2026-11-13"
+    "src": "Yahoo XMA.TO · au 2026-11-13",
+    "num": 2.131060941655427,
+    "asof": "2026-11-13",
+    "chg": {
+     "dir": "up",
+     "prev": "2.059",
+     "prev_num": 2.059,
+     "prev_asof": "2026-11-13"
+    }
    }
   ]
  },
