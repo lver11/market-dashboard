@@ -1,0 +1,30 @@
+name: diag-statcan
+on: workflow_dispatch
+jobs:
+  d:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          python3 - <<'PY'
+          import json, urllib.request
+          vecs=[62305752,52367097,41690973,2062815,2062811,52300157,87008955]
+          body=json.dumps([{"vectorId":v} for v in vecs]).encode()
+          req=urllib.request.Request("https://www150.statcan.gc.ca/t1/wds/rest/getSeriesInfoFromVector",data=body,headers={"Content-Type":"application/json"})
+          for o in json.load(urllib.request.urlopen(req,timeout=30)):
+              ob=o.get("object",{})
+              print(ob.get("vectorId"), ob.get("productId"), ob.get("coordinate"), ob.get("SeriesTitleEn"), "| scalar", ob.get("scalarFactorCode"))
+          # trade balance: table 12-10-0011, try coordinates
+          for coord in ["1.3.1.2.1.0.0.0.0.0","1.3.1.1.1.0.0.0.0.0","1.1.1.2.1.0.0.0.0.0","1.3.2.2.1.0.0.0.0.0"]:
+              body=json.dumps([{"productId":12100011,"coordinate":coord,"latestN":2}]).encode()
+              req=urllib.request.Request("https://www150.statcan.gc.ca/t1/wds/rest/getDataFromCubePidCoordAndLatestNPeriods",data=body,headers={"Content-Type":"application/json"})
+              try:
+                  r=json.load(urllib.request.urlopen(req,timeout=30))[0]
+                  ob=r.get("object") or {}
+                  print("coord",coord,r.get("status"),ob.get("vectorId"),[(p["refPer"],p["value"]) for p in ob.get("vectorDataPoint",[])])
+              except Exception as e: print("coord",coord,"ERR",e)
+          body=json.dumps([{"productId":12100011}]).encode()
+          req=urllib.request.Request("https://www150.statcan.gc.ca/t1/wds/rest/getCubeMetadata",data=body,headers={"Content-Type":"application/json"})
+          md=json.load(urllib.request.urlopen(req,timeout=60))[0]["object"]
+          for d in md["dimension"]:
+              print("DIM",d["dimensionPositionId"],d["dimensionNameEn"],[(m["memberId"],m["memberNameEn"]) for m in d["member"]][:12])
+          PY
